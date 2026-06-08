@@ -248,15 +248,17 @@
   :host {
     width: 17rem;
     flex: 0 0 17rem;
-    height: 100dvh;
+    height: auto;
   }
 
   .sidebar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
     height: 100dvh;
     transform: none;
     width: 17rem;
+    z-index: 10;
   }
 
   .sidebar__mobile-close {
