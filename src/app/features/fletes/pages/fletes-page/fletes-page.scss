@@ -1,0 +1,403 @@
+:host {
+  display: block;
+}
+
+.fletes-page {
+  display: grid;
+  gap: 1.25rem;
+  padding: 4.8rem clamp(1.25rem, 3vw, 2rem) 2.5rem;
+}
+
+/* ── Header ── */
+
+.fletes-page__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.fletes-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  flex-shrink: 0;
+  border: 1.5px solid var(--of-border);
+  border-radius: var(--of-radius-sm);
+  background: transparent;
+  color: var(--of-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+  margin-top: 0.3rem;
+}
+
+.fletes-page__back svg {
+  width: 14px;
+  height: 14px;
+}
+
+.fletes-page__back:hover {
+  border-color: var(--of-primary);
+  color: var(--of-primary);
+  background: var(--of-primary-softer);
+}
+
+.fletes-page__actions-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fletes-page__header h1 {
+  margin: 0;
+  color: var(--of-title);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.fletes-page__subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--of-text-muted);
+  font-size: 0.87rem;
+}
+
+.fletes-page__add-btn {
+  flex-shrink: 0;
+  padding: 0.55rem 1.2rem;
+  border: 0;
+  border-radius: var(--of-radius-sm);
+  background: var(--of-primary);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.fletes-page__add-btn:hover {
+  opacity: 0.85;
+}
+
+.fletes-page__error {
+  padding: 0.85rem 1rem;
+  border-radius: var(--of-radius-sm);
+  border-left: 3px solid var(--of-danger);
+  background: var(--of-danger-soft);
+  color: var(--of-danger);
+  font-size: 0.87rem;
+  font-weight: 500;
+}
+
+.fletes-page__loading,
+.fletes-page__empty {
+  color: var(--of-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* ── Calculator result ── */
+
+.calc-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.5rem 2rem;
+  border-radius: var(--of-radius-lg);
+  background: var(--of-primary);
+  color: var(--of-on-dark);
+  text-align: center;
+}
+
+.calc-result__label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calc-result__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.calc-result__price {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
+}
+
+.calc-result__notes {
+  font-size: 0.82rem;
+  opacity: 0.65;
+  max-width: 28ch;
+}
+
+.calc-result__clear {
+  margin-top: 0.5rem;
+  padding: 0.3rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.calc-result__clear:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ── Search ── */
+
+.fletes-page__search-wrap {
+  position: relative;
+}
+
+.fletes-page__search {
+  width: 100%;
+  padding: 0.7rem 1.25rem;
+  border: 1.5px solid var(--of-border);
+  border-radius: var(--of-radius-sm);
+  background: #fff;
+  color: var(--of-text);
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 160ms ease;
+}
+
+.fletes-page__search:focus {
+  border-color: var(--of-primary);
+}
+
+/* ── Zones list ── */
+
+.zones-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.zone-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--of-radius-sm);
+  border: 1.5px solid var(--of-border);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.zone-card:hover {
+  border-color: var(--of-primary);
+  background: var(--of-primary-softer);
+}
+
+.zone-card--selected {
+  border-color: var(--of-primary);
+  background: var(--of-primary-soft);
+}
+
+.zone-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.zone-card__name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--of-title);
+}
+
+.zone-card__notes {
+  font-size: 0.78rem;
+  color: var(--of-text-muted);
+}
+
+.zone-card__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.zone-card__price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--of-accent);
+}
+
+.zone-card__actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.zone-card__btn {
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--of-border);
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.zone-card__btn--edit {
+  color: var(--of-text);
+}
+
+.zone-card__btn--edit:hover {
+  background: var(--of-primary-softer);
+  border-color: var(--of-primary);
+  color: var(--of-primary);
+}
+
+.zone-card__btn--delete {
+  color: var(--of-danger);
+  border-color: transparent;
+}
+
+.zone-card__btn--delete:hover {
+  background: var(--of-danger-soft);
+  border-color: var(--of-danger);
+}
+
+/* ── Modal ── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--of-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  width: min(100%, 420px);
+  padding: 2rem;
+  border-radius: var(--of-radius-lg);
+  background: #fff;
+  display: grid;
+  gap: 1.1rem;
+}
+
+.modal__title {
+  margin: 0;
+  color: var(--of-title);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.modal__error {
+  margin: 0;
+  color: var(--of-danger);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.modal__field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.modal__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--of-text-muted);
+}
+
+.modal__input {
+  padding: 0.65rem 1rem;
+  border: 1.5px solid var(--of-border);
+  border-radius: var(--of-radius-sm);
+  background: var(--of-bg);
+  color: var(--of-text);
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 160ms ease;
+}
+
+.modal__input:focus {
+  border-color: var(--of-primary);
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.modal__btn {
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--of-radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.modal__btn--cancel {
+  border: 1.5px solid var(--of-border);
+  background: transparent;
+  color: var(--of-text-muted);
+}
+
+.modal__btn--cancel:hover {
+  border-color: var(--of-border-strong);
+  color: var(--of-text);
+}
+
+.modal__btn--save {
+  border: 0;
+  background: var(--of-primary);
+  color: #fff;
+}
+
+.modal__btn--save:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.modal__btn--save:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 959px) {
+  .fletes-page {
+    padding-top: 5.4rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .fletes-page {
+    padding-top: 2rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .fletes-page__header {
+    flex-direction: column;
+  }
+}

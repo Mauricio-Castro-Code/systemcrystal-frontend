@@ -1,0 +1,34 @@
+<div class="confirm-dialog">
+  <div class="confirm-dialog__icon-wrap" [class.confirm-dialog__icon-wrap--danger]="data.danger !== false">
+    <mat-icon>delete_forever</mat-icon>
+  </div>
+
+  <h2 class="confirm-dialog__title" mat-dialog-title>{{ data.title }}</h2>
+
+  <mat-dialog-content class="confirm-dialog__content">
+    <p class="confirm-dialog__message">{{ data.message }}</p>
+    @if (data.detail) {
+      <p class="confirm-dialog__detail">{{ data.detail }}</p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="confirm-dialog__actions">
+    <button
+      class="confirm-dialog__btn confirm-dialog__btn--cancel"
+      mat-stroked-button
+      type="button"
+      (click)="cancel()"
+    >
+      {{ data.cancelLabel ?? 'Cancelar' }}
+    </button>
+
+    <button
+      class="confirm-dialog__btn confirm-dialog__btn--confirm"
+      mat-raised-button
+      type="button"
+      (click)="confirm()"
+    >
+      {{ data.confirmLabel ?? 'Eliminar' }}
+    </button>
+  </mat-dialog-actions>
+</div>

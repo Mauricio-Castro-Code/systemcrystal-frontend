@@ -1,0 +1,186 @@
+<div class="ac-page">
+
+  <!-- Header -->
+  <div class="ac-page__header">
+    <button class="ac-back" type="button" (click)="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg>
+      Volver
+    </button>
+
+    <div class="ac-page__title-block">
+      <h1>Contabilidad</h1>
+      <p class="ac-page__subtitle">Analisis de ventas por mes y productos mas rentados</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="ac-state ac-state--loading">
+      <div class="ac-spinner"></div>
+      <span>Cargando datos...</span>
+    </div>
+  } @else if (error()) {
+    <div class="ac-state ac-state--error">{{ error() }}</div>
+  } @else if (overview(); as data) {
+
+    <!-- Year selector -->
+    <div class="ac-year-bar">
+      <span class="ac-year-bar__label">Ano fiscal</span>
+      <div class="ac-year-bar__tabs">
+        @for (year of data.availableYears; track year) {
+          <button
+            class="ac-year-tab"
+            [class.ac-year-tab--active]="year === data.selectedYear"
+            type="button"
+            (click)="selectYear(year)"
+          >{{ year }}</button>
+        }
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="ac-summary">
+      <div class="ac-card ac-card--primary">
+        <span class="ac-card__eyebrow">Total {{ data.selectedYear }}</span>
+        <strong class="ac-card__value">{{ formatCurrency(data.summary.yearRevenue) }}</strong>
+        <span class="ac-card__detail">{{ data.summary.totalOrders }} notas confirmadas</span>
+      </div>
+      <div class="ac-card">
+        <span class="ac-card__eyebrow">Mes actual</span>
+        <strong class="ac-card__value">{{ formatCurrency(data.summary.monthRevenue) }}</strong>
+      </div>
+      <div class="ac-card" [class.ac-card--up]="(data.summary.yoyPct ?? 0) > 0" [class.ac-card--down]="(data.summary.yoyPct ?? 0) < 0">
+        <span class="ac-card__eyebrow">vs {{ data.summary.prevYear }} (Ene–{{ currentMonthLabel() }})</span>
+        @if (data.summary.yoyPct !== null) {
+          <strong class="ac-card__value">
+            {{ data.summary.yoyPct > 0 ? '+' : '' }}{{ data.summary.yoyPct }}%
+          </strong>
+          <span class="ac-card__detail">
+            {{ formatCurrency(data.summary.ytdRevenue) }} vs {{ formatCurrency(data.summary.prevYtdRevenue) }}
+          </span>
+        } @else {
+          <strong class="ac-card__value">—</strong>
+          <span class="ac-card__detail">Sin datos del {{ data.summary.prevYear }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Monthly chart -->
+    <div class="ac-panel">
+      <div class="ac-panel__header">
+        <div>
+          <h2 class="ac-panel__title">Ventas por mes — {{ data.selectedYear }}</h2>
+          <p class="ac-panel__hint">Total de notas confirmadas por fecha de evento</p>
+        </div>
+      </div>
+
+      @let maxVal = getMaxValue(data.monthlySales);
+
+      <div class="ac-bar-chart">
+        @for (point of data.monthlySales; track point.month) {
+          <div class="ac-bar-chart__col">
+            @if (point.value > 0) {
+              <span class="ac-bar-chart__amount">{{ formatCurrency(point.value) }}</span>
+            } @else {
+              <span class="ac-bar-chart__amount ac-bar-chart__amount--zero">—</span>
+            }
+            <div class="ac-bar-chart__track">
+              <div
+                class="ac-bar-chart__fill"
+                [style.height.%]="(point.value / maxVal) * 100"
+                [class.ac-bar-chart__fill--empty]="point.value === 0"
+              ></div>
+            </div>
+            <span class="ac-bar-chart__label">{{ point.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Top products -->
+    <div class="ac-panel">
+      <div class="ac-panel__header">
+        <div>
+          <h2 class="ac-panel__title">Productos mas rentados</h2>
+          <p class="ac-panel__hint">Top 15 — {{ data.selectedYear }}</p>
+        </div>
+        <div class="ac-sort-toggle">
+          <button
+            class="ac-sort-btn"
+            [class.ac-sort-btn--active]="productsSort() === 'qty'"
+            type="button"
+            (click)="setSortProducts('qty')"
+          >Cantidad</button>
+          <button
+            class="ac-sort-btn"
+            [class.ac-sort-btn--active]="productsSort() === 'revenue'"
+            type="button"
+            (click)="setSortProducts('revenue')"
+          >Dinero</button>
+        </div>
+      </div>
+
+      @let sorted = getSortedProducts(data.topProducts);
+      @let maxQty = getMaxQty(sorted);
+      @let maxRev = getMaxRevenue(sorted);
+
+      <div class="ac-h-chart">
+        @for (product of sorted; track product.name) {
+          <div class="ac-h-chart__row">
+            <span class="ac-h-chart__name" [title]="product.name">{{ product.name }}</span>
+            <div class="ac-h-chart__track">
+              <div
+                class="ac-h-chart__fill"
+                [style.width.%]="productsSort() === 'revenue'
+                  ? (product.totalRevenue / maxRev) * 100
+                  : (product.totalQty / maxQty) * 100"
+              ></div>
+            </div>
+            <span class="ac-h-chart__qty">
+              {{ productsSort() === 'revenue' ? formatCurrency(product.totalRevenue) : product.totalQty }}
+            </span>
+            <span class="ac-h-chart__rev">
+              {{ productsSort() === 'revenue' ? product.totalQty + ' uds' : formatCurrency(product.totalRevenue) }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Top colors -->
+    @if (data.topColors.length) {
+      <div class="ac-panel">
+        <div class="ac-panel__header">
+          <div>
+            <h2 class="ac-panel__title">Colores mas rentados — manteleria</h2>
+            <p class="ac-panel__hint">Unidades de manteleria por color — {{ data.selectedYear }}</p>
+          </div>
+        </div>
+
+        @let maxCount = getMaxCount(data.topColors);
+
+        <div class="ac-color-chart">
+          @for (item of data.topColors; track item.color) {
+            <div class="ac-color-row">
+              <div
+                class="ac-color-swatch"
+                [style.background]="colorToHex(item.color)"
+                [class.ac-color-swatch--light]="colorIsLight(item.color)"
+              ></div>
+              <span class="ac-color-name">{{ item.color }}</span>
+              <div class="ac-color-track">
+                <div
+                  class="ac-color-fill"
+                  [style.width.%]="(item.count / maxCount) * 100"
+                  [style.background]="colorToHex(item.color)"
+                  [class.ac-color-fill--light]="colorIsLight(item.color)"
+                ></div>
+              </div>
+              <span class="ac-color-count">{{ item.count }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  }
+</div>

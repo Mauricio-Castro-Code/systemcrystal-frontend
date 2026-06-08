@@ -1,0 +1,31 @@
+<div class="main-layout">
+  <div
+    class="main-layout__backdrop"
+    *ngIf="isSidebarOpen()"
+    (click)="closeSidebar()"
+  ></div>
+
+  <app-sidebar
+    [navigationItems]="navigationItems()"
+    [activeItemId]="activeItemId()"
+    [userName]="userSession()?.displayName ?? 'Equipo Crystal Alquiler'"
+    [isMobileOpen]="isSidebarOpen()"
+    (requestClose)="closeSidebar()"
+    (logoutRequested)="signOut()"
+  />
+
+  <section class="main-layout__content-shell">
+    <button
+      class="main-layout__menu-toggle"
+      type="button"
+      aria-label="Abrir menu lateral"
+      (click)="toggleSidebar()"
+    >
+      <app-icon name="menu" />
+    </button>
+
+    <main class="main-layout__content">
+      <router-outlet />
+    </main>
+  </section>
+</div>

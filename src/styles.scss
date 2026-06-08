@@ -1,1 +1,325 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$blue-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Inter,
+      density: 0,
+    )
+  );
+}
+
+:root {
+  color-scheme: light;
+  --of-bg: #f2f2f2;
+  --of-bg-strong: #e7ebf1;
+  --of-surface-rgb: 242, 242, 242;
+  --of-surface-strong-rgb: 242, 242, 242;
+  --of-primary-rgb: 29, 47, 88;
+  --of-accent-rgb: 39, 119, 64;
+  --of-surface: rgba(var(--of-surface-rgb), 0.9);
+  --of-surface-strong: #f2f2f2;
+  --of-surface-muted: #e9edf2;
+  --of-border: rgba(29, 47, 88, 0.12);
+  --of-border-strong: rgba(29, 47, 88, 0.2);
+  --of-title: #1d2f58;
+  --of-text: #2a3d66;
+  --of-text-muted: #5d6b88;
+  --of-primary: #1d2f58;
+  --of-primary-strong: #142244;
+  --of-accent: #277740;
+  --of-accent-strong: #1d5b31;
+  --of-accent-soft: rgba(39, 119, 64, 0.14);
+  --of-primary-soft: rgba(29, 47, 88, 0.1);
+  --of-primary-softer: rgba(29, 47, 88, 0.06);
+  --of-danger: #c43030;
+  --of-danger-soft: rgba(196, 48, 48, 0.1);
+  --of-overlay: rgba(29, 47, 88, 0.32);
+  --of-on-dark: rgba(242, 242, 242, 0.94);
+  --of-on-dark-muted: rgba(242, 242, 242, 0.72);
+  --of-shadow-soft: 0 1px 3px rgba(29, 47, 88, 0.08), 0 1px 2px rgba(29, 47, 88, 0.04);
+  --of-shadow-strong: 0 4px 16px rgba(29, 47, 88, 0.1), 0 2px 4px rgba(29, 47, 88, 0.05);
+  --of-radius-lg: 16px;
+  --of-radius-md: 12px;
+  --of-radius-sm: 8px;
+  --of-font-title: 'Inter', sans-serif;
+  --of-font-body: 'Inter', sans-serif;
+
+  /* ── Escala de espaciado (base 8px) ── */
+  --of-sp-1: 0.25rem;
+  --of-sp-2: 0.5rem;
+  --of-sp-3: 0.75rem;
+  --of-sp-4: 1rem;
+  --of-sp-5: 1.25rem;
+  --of-sp-6: 1.5rem;
+  --of-sp-8: 2rem;
+  --of-sp-10: 2.5rem;
+
+  /* ── Escala tipográfica ── */
+  --of-fs-xs: 0.75rem;
+  --of-fs-sm: 0.8125rem;
+  --of-fs-base: 0.875rem;
+  --of-fs-md: 1rem;
+  --of-fs-lg: 1.125rem;
+  --of-fs-xl: 1.25rem;
+  --of-fs-2xl: 1.5rem;
+
+  /* ── Card tokens (sin glassmorphism para mejor rendimiento) ── */
+  --of-glass: #ffffff;
+  --of-glass-strong: #ffffff;
+  --of-glass-dark: rgba(29, 47, 88, 0.94);
+  --of-glass-dark-strong: rgba(29, 47, 88, 1);
+  --of-glass-blur: none;
+  --of-glass-blur-strong: none;
+  --of-glass-border: 1px solid rgba(29, 47, 88, 0.1);
+  --of-glass-border-subtle: 1px solid rgba(29, 47, 88, 0.07);
+  --of-glass-border-dark: 1px solid rgba(255, 255, 255, 0.08);
+  --of-glass-highlight: none;
+  --of-glass-shadow: 0 1px 3px rgba(29, 47, 88, 0.07), 0 1px 2px rgba(29, 47, 88, 0.04);
+  --of-glass-shadow-elevated: 0 4px 12px rgba(29, 47, 88, 0.09), 0 2px 4px rgba(29, 47, 88, 0.05);
+
+  --mat-sys-primary: var(--of-primary);
+  --mat-sys-on-primary: #f2f2f2;
+  --mat-sys-secondary: var(--of-accent);
+  --mat-sys-tertiary: var(--of-accent);
+  --mat-sys-surface: var(--of-surface-strong);
+  --mat-sys-surface-container: var(--of-surface-muted);
+  --mat-sys-surface-container-high: var(--of-surface);
+  --mat-sys-surface-container-highest: var(--of-surface-strong);
+  --mat-sys-background: var(--of-bg);
+  --mat-sys-on-surface: var(--of-title);
+  --mat-sys-on-surface-variant: var(--of-text-muted);
+  --mat-sys-outline: rgba(var(--of-primary-rgb), 0.2);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--of-font-body);
+  color: var(--of-text);
+  background: var(--of-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(var(--of-accent-rgb), 0.18);
+  color: var(--of-title);
+}
+
+/* ── Focus ring accesible ── */
+:focus-visible {
+  outline: 2px solid var(--of-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Reduced motion: respeta preferencias del SO ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Utilidad de card ── */
+.of-card {
+  background: #fff;
+  border: 1px solid var(--of-border);
+  border-radius: var(--of-radius-md);
+  box-shadow: var(--of-glass-shadow);
+}
+
+/* ── Utilidades de botón ── */
+.of-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 1.125rem;
+  border: 1px solid transparent;
+  border-radius: var(--of-radius-sm);
+  font-family: var(--of-font-body);
+  font-size: var(--of-fs-base);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--of-primary);
+    color: #fff;
+    border-color: var(--of-primary);
+
+    &:hover:not(:disabled) {
+      background: var(--of-primary-strong);
+    }
+  }
+
+  &--accent {
+    background: var(--of-accent);
+    color: #fff;
+    border-color: var(--of-accent);
+
+    &:hover:not(:disabled) {
+      background: var(--of-accent-strong);
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--of-text);
+    border-color: var(--of-border);
+
+    &:hover:not(:disabled) {
+      background: var(--of-primary-softer);
+      border-color: var(--of-border-strong);
+    }
+  }
+}
+
+/* ── Overrides globales de Angular Material Table ──
+   Centraliza los estilos de tabla para todas las vistas. */
+.mat-mdc-table {
+  font-family: 'Inter', sans-serif !important;
+  background: transparent !important;
+}
+
+.mat-mdc-header-row {
+  background: var(--of-surface-muted) !important;
+}
+
+.mat-mdc-header-cell {
+  color: var(--of-title) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: var(--of-fs-sm) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  border-bottom-color: var(--of-border) !important;
+}
+
+.mat-mdc-cell {
+  font-family: 'Inter', sans-serif !important;
+  color: var(--of-text) !important;
+  border-bottom-color: var(--of-border) !important;
+  font-size: var(--of-fs-base) !important;
+}
+
+.mat-mdc-row {
+  transition: background-color 150ms ease !important;
+}
+
+.mat-mdc-row:hover {
+  background: rgba(var(--of-accent-rgb), 0.04) !important;
+}
+
+.mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: none !important;
+}
+
+.mat-mdc-paginator {
+  font-family: 'Inter', sans-serif !important;
+  background: transparent !important;
+}
+
+.mat-sort-header-content {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.mat-mdc-icon-button {
+  color: var(--of-title) !important;
+}
+
+/* ── Overrides globales de formularios Material ── */
+.mat-mdc-text-field-wrapper {
+  border-radius: var(--of-radius-sm) !important;
+  background: var(--of-surface-strong) !important;
+}
+
+.mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* ── Utilidad de página ── */
+.of-page {
+  display: grid;
+  gap: 1.25rem;
+  padding: 4.8rem clamp(1.25rem, 3vw, 2rem) 2rem;
+
+  @media (min-width: 960px) {
+    padding-top: 2rem;
+  }
+
+  @media (max-width: 959px) {
+    padding-top: 5.4rem;
+  }
+}
+
+.of-page__breadcrumb {
+  margin: 0;
+  color: var(--of-accent);
+  font-size: var(--of-fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.of-page__title {
+  margin: 0.75rem 0 0;
+  color: var(--of-title);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.of-page__subtitle {
+  margin: 0.75rem 0 0;
+  max-width: 48rem;
+  color: var(--of-text-muted);
+  font-size: var(--of-fs-base);
+  line-height: 1.7;
+}

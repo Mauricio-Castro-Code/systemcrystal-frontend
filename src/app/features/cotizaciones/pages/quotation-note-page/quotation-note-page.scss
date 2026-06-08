@@ -1,0 +1,392 @@
+:host {
+  display: block;
+}
+
+.quotation-note-page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 1240px;
+  padding: 4.8rem clamp(1.25rem, 3vw, 2rem) 2rem;
+}
+
+.quotation-note-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.quotation-note-page__breadcrumbs {
+  margin: 0;
+  color: var(--of-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quotation-note-page__header h1 {
+  margin: 0.75rem 0 0;
+  color: var(--of-title);
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.quotation-note-page__description {
+  margin: 0.75rem 0 0;
+  max-width: 38rem;
+  color: var(--of-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.quotation-note-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.quotation-note-page__actions button[mat-raised-button] {
+  background: linear-gradient(135deg, var(--of-accent), var(--of-accent-strong));
+  color: #fff;
+  font-weight: 700;
+}
+
+.quotation-note-page__feedback {
+  padding: 0.85rem 1rem;
+  border-radius: var(--of-radius-sm);
+  border-left: 3px solid var(--of-danger);
+  background: rgba(196, 48, 48, 0.05);
+  color: var(--of-danger);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+/* ── PDF Preview card ── */
+
+.quotation-note-page__preview-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  border: var(--of-glass-border);
+  border-radius: var(--of-radius-lg);
+  background: var(--of-glass);
+  box-shadow:
+    var(--of-glass-shadow),
+    var(--of-glass-highlight);
+}
+
+.quotation-note-page__preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.quotation-note-page__preview-eyebrow {
+  margin: 0;
+  color: var(--of-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quotation-note-page__preview-header h2 {
+  margin: 0.45rem 0 0;
+  color: var(--of-title);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.quotation-note-page__preview-description,
+.quotation-note-page__preview-empty p {
+  margin: 0.55rem 0 0;
+  color: var(--of-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.quotation-note-page__preview-frame {
+  width: 100%;
+  min-height: 940px;
+  border: 0;
+  border-radius: var(--of-radius-md);
+  background: #fff;
+}
+
+.quotation-note-page__preview-empty {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: start;
+  padding: 1.15rem;
+  border-radius: var(--of-radius-md);
+  background: var(--of-surface-muted);
+}
+
+.quotation-note-page__preview-empty h3 {
+  margin: 0;
+  color: var(--of-title);
+}
+
+/* ── Detail sheet ── */
+
+.quotation-note-sheet {
+  display: grid;
+  gap: 1.35rem;
+  padding: clamp(1.35rem, 3vw, 2rem);
+  border: var(--of-glass-border);
+  border-radius: var(--of-radius-lg);
+  background: var(--of-glass-strong);
+  box-shadow:
+    var(--of-glass-shadow-elevated),
+    var(--of-glass-highlight);
+}
+
+.quotation-note-sheet__topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid rgba(var(--of-primary-rgb), 0.08);
+}
+
+.quotation-note-sheet__eyebrow {
+  margin: 0;
+  color: var(--of-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quotation-note-sheet__topbar h2 {
+  margin: 0.65rem 0 0;
+  color: var(--of-title);
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.quotation-note-sheet__subtitle {
+  margin: 0.65rem 0 0;
+  color: var(--of-text-muted);
+  font-size: 0.9rem;
+}
+
+.quotation-note-sheet__meta {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 240px;
+  padding: 0.9rem 1rem;
+  border-radius: var(--of-radius-sm);
+  background: linear-gradient(135deg, rgba(var(--of-accent-rgb), 0.06), rgba(var(--of-primary-rgb), 0.03));
+  border: 1px solid rgba(var(--of-accent-rgb), 0.08);
+}
+
+.quotation-note-sheet__meta span,
+.quotation-note-sheet__grid span {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--of-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.quotation-note-sheet__meta strong,
+.quotation-note-sheet__grid strong {
+  color: var(--of-title);
+  line-height: 1.55;
+}
+
+.quotation-note-sheet__section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.quotation-note-sheet__section-heading h3 {
+  margin: 0;
+  color: var(--of-title);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.quotation-note-sheet__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.quotation-note-sheet__grid article {
+  min-height: 5.2rem;
+  padding: 0.9rem;
+  border-radius: var(--of-radius-sm);
+  background: var(--of-surface-muted);
+  border: 1px solid rgba(var(--of-primary-rgb), 0.04);
+}
+
+.quotation-note-sheet__grid--three-columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quotation-note-sheet__table-wrap {
+  overflow-x: auto;
+}
+
+.quotation-note-sheet__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.quotation-note-sheet__table th,
+.quotation-note-sheet__table td {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(var(--of-primary-rgb), 0.06);
+}
+
+.quotation-note-sheet__table th {
+  color: var(--of-title);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(var(--of-primary-rgb), 0.03);
+}
+
+.quotation-note-sheet__empty-row {
+  color: var(--of-text-muted);
+  text-align: center;
+}
+
+/* ── Summary grid ── */
+
+.quotation-note-sheet__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.quotation-note-sheet__summary div {
+  padding: 0.9rem;
+  border-radius: var(--of-radius-sm);
+  background: var(--of-surface-muted);
+  border: 1px solid rgba(var(--of-primary-rgb), 0.04);
+}
+
+.quotation-note-sheet__summary span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--of-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.quotation-note-sheet__summary strong {
+  color: var(--of-title);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.quotation-note-sheet__summary-total {
+  border: 1px solid rgba(var(--of-accent-rgb), 0.15) !important;
+  background: linear-gradient(135deg, rgba(var(--of-accent-rgb), 0.08), rgba(var(--of-accent-rgb), 0.02)) !important;
+}
+
+/* ── Empty state ── */
+
+.quotation-note-page__empty {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  padding: 2rem;
+  border-radius: var(--of-radius-lg);
+  border: var(--of-glass-border);
+  background: var(--of-glass);
+  box-shadow: var(--of-glass-shadow);
+}
+
+.quotation-note-page__empty h2 {
+  margin: 0;
+  color: var(--of-title);
+}
+
+.quotation-note-page__empty p {
+  margin: 0;
+  color: var(--of-text-muted);
+}
+
+:host ::ng-deep .mat-mdc-button,
+:host ::ng-deep .mat-mdc-outlined-button,
+:host ::ng-deep .mat-mdc-raised-button {
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 959px) {
+  .quotation-note-page {
+    padding-top: 5.4rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .quotation-note-page {
+    padding-top: 2rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .quotation-note-page__header,
+  .quotation-note-page__preview-header,
+  .quotation-note-sheet__topbar,
+  .quotation-note-sheet__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .quotation-note-page__header,
+  .quotation-note-page__preview-header,
+  .quotation-note-sheet__topbar {
+    display: grid;
+  }
+
+  .quotation-note-sheet__grid,
+  .quotation-note-sheet__grid--three-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .quotation-note-page__preview-frame {
+    min-height: 680px;
+  }
+}
+
+@media print {
+  :host ::ng-deep app-sidebar,
+  :host ::ng-deep .main-layout__menu-toggle,
+  .quotation-note-page__header,
+  .quotation-note-page__preview-card {
+    display: none !important;
+  }
+
+  :host ::ng-deep .main-layout,
+  :host ::ng-deep .main-layout__content-shell,
+  :host ::ng-deep .main-layout__content {
+    display: block !important;
+    min-height: auto !important;
+    background: var(--of-surface-strong) !important;
+  }
+
+  .quotation-note-page {
+    padding: 0 !important;
+  }
+
+  .quotation-note-sheet {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

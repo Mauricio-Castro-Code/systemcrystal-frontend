@@ -1,0 +1,168 @@
+<section class="order-records-page">
+  <header class="order-records-page__header">
+    <div>
+      <p class="order-records-page__breadcrumbs">Crystal Alquiler / Notas</p>
+      <h1>Notas Activas</h1>
+      <p class="order-records-page__description">
+        Consulta las notas confirmadas que siguen vigentes en operacion con
+        numeracion tipo <strong>0001-26</strong>.
+      </p>
+    </div>
+  </header>
+
+  <section class="order-records-page__toolbar">
+    <mat-form-field class="order-records-page__search" appearance="outline">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [formControl]="searchControl"
+        placeholder="Buscar por ID de pedido o nombre de cliente..."
+      />
+    </mat-form-field>
+
+    <mat-form-field class="order-records-page__sort" appearance="outline">
+      <mat-label>Ordenar por</mat-label>
+      <mat-select
+        [value]="selectedSort()"
+        (valueChange)="selectSort($event)"
+      >
+        @for (option of sortOptions; track option.key) {
+          <mat-option [value]="option.key">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </section>
+
+  <section class="order-records-page__folders">
+    @for (folder of folderCards(); track trackFolderOption($index, folder)) {
+      <button
+        type="button"
+        class="order-records-page__folder-card"
+        [class.order-records-page__folder-card--active]="selectedFolder() === folder.key"
+        (click)="selectFolder(folder.key)"
+      >
+        <span class="order-records-page__folder-label">{{ folder.label }}</span>
+        <strong class="order-records-page__folder-count">{{ folder.count }}</strong>
+      </button>
+    }
+  </section>
+
+  @if (errorMessage()) {
+    <section class="order-records-page__feedback">
+      {{ errorMessage() }}
+    </section>
+  } @else if (isLoading() && dataSource.data.length === 0) {
+    <section class="order-records-page__feedback">
+      Cargando notas activas reales...
+    </section>
+  }
+
+  <section class="order-records-page__table-card">
+    <div class="order-records-page__table-header">
+      <div>
+        <p class="order-records-page__table-eyebrow">Operacion vigente</p>
+        <h2>Notas activas por carpeta operativa</h2>
+      </div>
+    </div>
+
+    <div class="order-records-page__table-wrap">
+      @if (!isLoading() && dataSource.data.length === 0) {
+        <section class="order-records-page__feedback">
+          @if (searchTerm() || selectedFolder() !== 'all') {
+            No hay notas activas que coincidan con el filtro seleccionado.
+          } @else {
+            Todavia no hay notas activas guardadas en la base.
+          }
+        </section>
+      } @else {
+        <table mat-table [dataSource]="dataSource" class="order-records-table">
+          <ng-container matColumnDef="orderId">
+            <th mat-header-cell *matHeaderCellDef>ID Pedido</th>
+            <td mat-cell *matCellDef="let record">
+              <strong class="order-records-table__id">{{ record.orderId }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="clientName">
+            <th mat-header-cell *matHeaderCellDef>Cliente</th>
+            <td mat-cell *matCellDef="let record">{{ record.clientName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="folders">
+            <th mat-header-cell *matHeaderCellDef>Carpetas</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="order-records-table__folders">
+                @for (folderLabel of record.folderLabels; track folderLabel) {
+                  <span class="order-records-table__folder-chip">{{ folderLabel }}</span>
+                }
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="deliveryDate">
+            <th mat-header-cell *matHeaderCellDef>Fecha Entrega</th>
+            <td mat-cell *matCellDef="let record">
+              {{ record.quotation.schedule.deliveryDate | date: 'dd MMM y' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="totalEstimated">
+            <th mat-header-cell *matHeaderCellDef>Total</th>
+            <td mat-cell *matCellDef="let record">
+              <strong class="order-records-table__total">
+                {{ record.totalEstimated | currency: 'MXN':'symbol-narrow':'1.0-0' }}
+              </strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="order-records-table__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Ver ' + record.orderId"
+                  (click)="handleView(record)"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Editar ' + record.orderId"
+                  (click)="handleEdit(record)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Eliminar ' + record.orderId"
+                  (click)="handleDelete(record)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      }
+    </div>
+
+    <mat-paginator
+      [pageSize]="5"
+      [pageSizeOptions]="[5, 10, 20]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </section>
+
+  @if (actionMessage()) {
+    <section class="order-records-page__feedback">
+      {{ actionMessage() }}
+    </section>
+  }
+</section>

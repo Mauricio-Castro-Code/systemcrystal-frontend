@@ -1,0 +1,77 @@
+<section class="dashboard-page">
+
+  <header class="dashboard-page__header">
+    <div class="dashboard-page__intro">
+      <h1>Panel de Control</h1>
+      <p class="dashboard-page__greeting">
+        Hola, <strong>{{ userSession()?.displayName }}</strong>
+        @if (generatedAt()) {
+          &nbsp;· Actualizado {{ generatedAt() | date: 'dd MMM, HH:mm' }}
+        }
+      </p>
+    </div>
+
+    <button
+      class="dashboard-page__refresh"
+      type="button"
+      [disabled]="isLoading()"
+      (click)="reloadDashboard()"
+    >
+      {{ isLoading() ? 'Actualizando...' : 'Recargar' }}
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="dashboard-page__alert">{{ summaryMessage() }}</div>
+  }
+
+  <app-stat-cards [stats]="stats()" />
+
+  <app-order-agenda-board [groups]="orderGroups()" />
+
+  <section class="dashboard-page__range-panel">
+    <h2 class="dashboard-page__range-title">Notas por rango de entrega</h2>
+
+    <div class="dashboard-page__range-controls">
+      <mat-form-field appearance="outline">
+        <mat-label>Desde</mat-label>
+        <input
+          matInput
+          [matDatepicker]="deliveryDateFromPicker"
+          [formControl]="deliveryDateFromControl"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="deliveryDateFromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #deliveryDateFromPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Hasta</mat-label>
+        <input
+          matInput
+          [matDatepicker]="deliveryDateToPicker"
+          [formControl]="deliveryDateToControl"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="deliveryDateToPicker"></mat-datepicker-toggle>
+        <mat-datepicker #deliveryDateToPicker></mat-datepicker>
+      </mat-form-field>
+
+      <button
+        class="dashboard-page__range-submit"
+        type="button"
+        [disabled]="isLoading()"
+        (click)="applyDeliveryRange()"
+      >
+        {{ isLoading() ? 'Consultando...' : 'Aplicar' }}
+      </button>
+    </div>
+
+    @if (deliveryRangeErrorMessage()) {
+      <p class="dashboard-page__range-feedback">{{ deliveryRangeErrorMessage() }}</p>
+    }
+  </section>
+
+  @if (deliveryRangeGroup().length > 0) {
+    <app-order-agenda-board [groups]="deliveryRangeGroup()" />
+  }
+
+</section>

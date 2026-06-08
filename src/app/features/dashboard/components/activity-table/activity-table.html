@@ -1,0 +1,38 @@
+<section class="activity-table-card">
+  <div class="activity-table-card__header">
+    <div>
+      <p class="activity-table-card__eyebrow">Actividad reciente</p>
+      <h2>Ultimos movimientos de pedidos</h2>
+    </div>
+
+    <span class="activity-table-card__meta">Actualizado en tiempo real</span>
+  </div>
+
+  <div class="activity-table-card__table-wrap">
+    <table class="activity-table">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Monto</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let activity of activities(); trackBy: trackByActivityId">
+          <td [attr.data-label]="'Cliente'">{{ activity.client }}</td>
+          <td [attr.data-label]="'Fecha'">{{ activity.date | date: 'dd MMM y' }}</td>
+          <td [attr.data-label]="'Monto'">
+            {{ activity.amount | currency: 'MXN':'symbol-narrow':'1.0-0' }}
+          </td>
+          <td [attr.data-label]="'Estado'">
+            <span class="badge" [ngClass]="resolveStatusClass(activity.status)">
+              {{ activity.status }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

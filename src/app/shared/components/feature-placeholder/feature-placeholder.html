@@ -1,0 +1,14 @@
+<section class="feature-placeholder">
+  <span class="feature-placeholder__badge">{{ badge() }}</span>
+
+  <div class="feature-placeholder__content">
+    <h1>{{ title() }}</h1>
+    <p>{{ description() }}</p>
+  </div>
+
+  @if (actionLabel() && actionRoute()) {
+    <a class="feature-placeholder__action" [routerLink]="actionRoute()">
+      {{ actionLabel() }}
+    </a>
+  }
+</section>

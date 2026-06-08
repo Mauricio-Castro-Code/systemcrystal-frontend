@@ -1,0 +1,50 @@
+<div class="rename-dialog">
+  <div class="rename-dialog__icon-wrap">
+    <mat-icon>edit_note</mat-icon>
+  </div>
+
+  <h2 class="rename-dialog__title" mat-dialog-title>Cambiar folio</h2>
+
+  <mat-dialog-content class="rename-dialog__content">
+    <p class="rename-dialog__message">
+      Folio actual: <strong>{{ data.currentOrderId }}</strong>
+    </p>
+
+    <mat-form-field class="rename-dialog__field" appearance="outline">
+      <mat-label>Nuevo folio</mat-label>
+      <input
+        matInput
+        [formControl]="folioControl"
+        placeholder="Ej: 0416-26"
+        maxlength="20"
+        (keydown.enter)="confirm()"
+      />
+      @if (folioControl.hasError('required')) {
+        <mat-error>El folio es obligatorio.</mat-error>
+      }
+      @if (folioControl.hasError('maxlength')) {
+        <mat-error>Máximo 20 caracteres.</mat-error>
+      }
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="rename-dialog__actions">
+    <button
+      class="rename-dialog__btn rename-dialog__btn--cancel"
+      mat-stroked-button
+      type="button"
+      (click)="cancel()"
+    >
+      Cancelar
+    </button>
+
+    <button
+      class="rename-dialog__btn rename-dialog__btn--confirm"
+      mat-raised-button
+      type="button"
+      (click)="confirm()"
+    >
+      Guardar folio
+    </button>
+  </mat-dialog-actions>
+</div>

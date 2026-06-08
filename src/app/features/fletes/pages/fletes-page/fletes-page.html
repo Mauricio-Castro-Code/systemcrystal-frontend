@@ -1,0 +1,144 @@
+<div class="fletes-page">
+
+  <div class="fletes-page__header">
+    <button class="fletes-page__back" type="button" (click)="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg>
+      Volver
+    </button>
+
+    <div>
+      <h1>Zonas de Flete</h1>
+      <p class="fletes-page__subtitle">
+        Tarifas por colonia — al escribir una colonia en una nota el sistema sugiere el precio automaticamente
+      </p>
+    </div>
+  </div>
+
+  <div class="fletes-page__actions-row">
+    @if (isAdmin()) {
+      <button class="fletes-page__add-btn" type="button" (click)="openCreateForm()">
+        + Agregar colonia
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="fletes-page__error">{{ error() }}</div>
+  }
+
+  <!-- Search -->
+  <div class="fletes-page__search-wrap">
+    <input
+      class="fletes-page__search"
+      type="search"
+      placeholder="Buscar colonia..."
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+    />
+  </div>
+
+  @if (loading()) {
+    <p class="fletes-page__loading">Cargando zonas...</p>
+  } @else {
+    <div class="zones-list">
+      @if (filteredZones().length === 0) {
+        <p class="fletes-page__empty">
+          @if (zones().length === 0) {
+            No hay zonas registradas aun. Los admins pueden agregar colonias con su tarifa.
+          } @else {
+            No se encontraron colonias con ese nombre.
+          }
+        </p>
+      }
+      @for (zone of filteredZones(); track zone.id) {
+        <div class="zone-card">
+          <div class="zone-card__info">
+            <span class="zone-card__name">{{ zone.name }}</span>
+            @if (zone.notes) {
+              <span class="zone-card__notes">{{ zone.notes }}</span>
+            }
+          </div>
+          <div class="zone-card__right">
+            <span class="zone-card__price">{{ formatCurrency(zone.price) }}</span>
+            @if (isAdmin()) {
+              <div class="zone-card__actions">
+                <button
+                  class="zone-card__btn zone-card__btn--edit"
+                  type="button"
+                  (click)="openEditForm(zone)"
+                >Editar</button>
+                <button
+                  class="zone-card__btn zone-card__btn--delete"
+                  type="button"
+                  (click)="deleteZone(zone)"
+                >Eliminar</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>
+
+<!-- Zone form modal -->
+@if (formVisible()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2 class="modal__title">
+        {{ editingZone() ? 'Editar colonia' : 'Agregar colonia' }}
+      </h2>
+
+      @if (formError()) {
+        <p class="modal__error">{{ formError() }}</p>
+      }
+
+      <div class="modal__field">
+        <label class="modal__label">Nombre de la colonia</label>
+        <input
+          class="modal__input"
+          type="text"
+          placeholder="Ej. Universidades"
+          [ngModel]="formName()"
+          (ngModelChange)="formName.set($event)"
+        />
+      </div>
+
+      <div class="modal__field">
+        <label class="modal__label">Costo de flete ($)</label>
+        <input
+          class="modal__input"
+          type="number"
+          min="0"
+          step="10"
+          [ngModel]="formPrice()"
+          (ngModelChange)="formPrice.set(+$event)"
+        />
+      </div>
+
+      <div class="modal__field">
+        <label class="modal__label">Notas (opcional)</label>
+        <input
+          class="modal__input"
+          type="text"
+          placeholder="Ej. Solo si hay acceso vehicular"
+          [ngModel]="formNotes()"
+          (ngModelChange)="formNotes.set($event)"
+        />
+      </div>
+
+      <div class="modal__actions">
+        <button class="modal__btn modal__btn--cancel" type="button" (click)="closeForm()">
+          Cancelar
+        </button>
+        <button
+          class="modal__btn modal__btn--save"
+          type="button"
+          [disabled]="saving()"
+          (click)="saveZone()"
+        >{{ saving() ? 'Guardando...' : 'Guardar' }}</button>
+      </div>
+    </div>
+  </div>
+}

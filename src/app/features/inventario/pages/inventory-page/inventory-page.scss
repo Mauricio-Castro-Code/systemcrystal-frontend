@@ -1,0 +1,231 @@
+:host {
+  display: block;
+}
+
+.inventory-page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 1280px;
+  padding: 4.8rem clamp(1.25rem, 3vw, 2rem) 2rem;
+}
+
+.inventory-page__breadcrumbs {
+  margin: 0;
+  color: var(--of-accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.inventory-page__header h1 {
+  margin: 1rem 0 0;
+  color: var(--of-title);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+}
+
+.inventory-page__description {
+  margin: 1rem 0 0;
+  max-width: 52rem;
+  color: var(--of-text-muted);
+  line-height: 1.75;
+}
+
+.inventory-page__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.inventory-page__search {
+  flex: 1 1 320px;
+}
+
+.inventory-page__refresh {
+  min-height: 3rem;
+  padding: 0 1.2rem;
+  border: 1px solid rgba(var(--of-accent-rgb), 0.2);
+  border-radius: 999px;
+  background: rgba(var(--of-surface-strong-rgb), 0.45);
+  color: var(--of-accent-strong);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.inventory-page__refresh:hover {
+  background: rgba(var(--of-surface-strong-rgb), 0.65);
+  border-color: rgba(var(--of-accent-rgb), 0.32);
+}
+
+.inventory-page__grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.4fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.inventory-page__state {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  border: var(--of-glass-border);
+  background: var(--of-glass);
+  box-shadow: var(--of-glass-shadow);
+}
+
+.inventory-page__state strong {
+  display: block;
+  color: var(--of-title);
+}
+
+.inventory-page__state p {
+  margin: 0.45rem 0 0;
+  color: var(--of-text-muted);
+  line-height: 1.6;
+}
+
+.inventory-page__state--error {
+  border-color: rgba(var(--of-primary-rgb), 0.18);
+  background: rgba(var(--of-primary-rgb), 0.04);
+}
+
+.inventory-card {
+  border-radius: 18px;
+  border: var(--of-glass-border);
+  background: var(--of-glass);
+  box-shadow:
+    var(--of-glass-shadow),
+    var(--of-glass-highlight);
+}
+
+.inventory-card__content {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.inventory-card__content--table {
+  grid-template-columns: 1fr;
+}
+
+.inventory-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.inventory-form__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inventory-card__action-message {
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  background: rgba(var(--of-primary-rgb), 0.04);
+  color: var(--of-text-muted);
+  line-height: 1.65;
+}
+
+.inventory-table__wrap {
+  overflow-x: auto;
+}
+
+.inventory-table {
+  width: 100%;
+}
+
+.inventory-table__name {
+  color: var(--of-title);
+}
+
+.inventory-table__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.inventory-page__empty {
+  padding: 2rem 1rem 1rem;
+  text-align: center;
+}
+
+.inventory-page__empty strong {
+  display: block;
+  color: var(--of-title);
+}
+
+.inventory-page__empty p {
+  margin: 0.5rem 0 0;
+  color: var(--of-text-muted);
+}
+
+:host ::ng-deep .mat-mdc-card-header {
+  padding-bottom: 0;
+}
+
+:host ::ng-deep .mat-mdc-card-title {
+  color: var(--of-title);
+  font-size: 1.18rem;
+  font-weight: 700;
+}
+
+:host ::ng-deep .mat-mdc-card-subtitle {
+  color: var(--of-text-muted);
+}
+
+:host ::ng-deep .mat-mdc-form-field,
+:host ::ng-deep .mat-mdc-button,
+:host ::ng-deep .mat-mdc-raised-button,
+:host ::ng-deep .mat-mdc-outlined-button,
+:host ::ng-deep .mat-mdc-header-cell,
+:host ::ng-deep .mat-mdc-cell {
+  font-family: 'Inter', sans-serif;
+}
+
+:host ::ng-deep .mat-mdc-text-field-wrapper {
+  border-radius: 8px;
+  background: var(--of-surface-strong);
+}
+
+:host ::ng-deep .mat-mdc-raised-button {
+  background: var(--of-accent);
+  color: var(--of-title);
+  font-weight: 700;
+}
+
+:host ::ng-deep .mat-mdc-header-row {
+  background: var(--of-surface-muted);
+}
+
+:host ::ng-deep .mat-mdc-header-cell {
+  color: var(--of-title);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+:host ::ng-deep .mat-mdc-row:hover {
+  background: rgba(var(--of-accent-rgb), 0.05);
+}
+
+@media (max-width: 959px) {
+  .inventory-page {
+    padding-top: 5.4rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .inventory-page {
+    padding-top: 2rem;
+  }
+}
+
+@media (max-width: 1080px) {
+  .inventory-page__grid {
+    grid-template-columns: 1fr;
+  }
+}

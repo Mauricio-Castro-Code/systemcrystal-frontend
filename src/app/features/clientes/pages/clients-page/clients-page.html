@@ -1,0 +1,135 @@
+<section class="clients-page">
+  <header class="clients-page__header">
+    <div>
+      <p class="clients-page__breadcrumbs">Crystal Alquiler / Clientes</p>
+      <h1>Base de Clientes</h1>
+      <p class="clients-page__description">
+        Administra tu directorio comercial y localiza rapidamente clientes por
+        nombre o telefono.
+      </p>
+    </div>
+  </header>
+
+  <section class="clients-page__actions">
+    <mat-form-field class="clients-page__search" appearance="outline">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [formControl]="searchControl"
+        placeholder="Buscar por nombre de cliente o numero de telefono..."
+      />
+    </mat-form-field>
+
+    <button class="clients-page__refresh" type="button" (click)="reloadClients()">
+      {{ isLoading() ? 'Actualizando...' : 'Recargar clientes' }}
+    </button>
+  </section>
+
+  @if (copyFeedback()) {
+    <section class="clients-page__feedback">
+      {{ copyFeedback() }}
+    </section>
+  }
+
+  @if (errorMessage()) {
+    <section class="clients-page__state clients-page__state--error">
+      <strong>No fue posible cargar el directorio real.</strong>
+      <p>{{ errorMessage() }}</p>
+    </section>
+  } @else if (isLoading() && dataSource.data.length === 0) {
+    <section class="clients-page__state clients-page__state--loading">
+      <strong>Cargando clientes reales...</strong>
+      <p>Consultando el backend para obtener el directorio comercial actual.</p>
+    </section>
+  }
+
+  <section class="clients-page__table-card">
+    <div class="clients-page__table-header">
+      <div>
+        <p class="clients-page__table-eyebrow">Directorio comercial</p>
+        <h2>Clientes registrados</h2>
+        <span class="clients-page__table-meta">
+          {{ totalClients() }} cliente{{ totalClients() === 1 ? '' : 's' }} sincronizados
+        </span>
+      </div>
+    </div>
+
+    <div class="clients-page__table-wrap">
+      <table mat-table [dataSource]="dataSource" matSort class="clients-table">
+        <ng-container matColumnDef="clientName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre del Cliente</th>
+          <td mat-cell *matCellDef="let client">
+            <div class="clients-table__name-block">
+              <strong class="clients-table__name">{{ client.clientName }}</strong>
+              @if (client.mergedRecords > 1) {
+                <span class="clients-table__merge-badge">
+                  {{ client.mergedRecords }} registros
+                </span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="phoneNumber">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Numero Celular</th>
+          <td mat-cell *matCellDef="let client">
+            <button
+              class="clients-table__copy-button"
+              type="button"
+              (click)="copyPhoneNumber(client.phoneNumber)"
+            >
+              <span>{{ client.phoneNumber }}</span>
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="address">
+          <th mat-header-cell *matHeaderCellDef>Direccion</th>
+          <td mat-cell *matCellDef="let client">
+            <span class="clients-table__address">{{ client.address }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="mergedRecords">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Consolidado</th>
+          <td mat-cell *matCellDef="let client">
+            <strong>{{ client.mergedRecords }}</strong>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let client">
+            <button
+              class="clients-table__details-button"
+              type="button"
+              (click)="viewClientDetails(client)"
+            >
+              <mat-icon>visibility</mat-icon>
+              <span>Ver detalle</span>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      @if (!isLoading() && !errorMessage() && dataSource.filteredData.length === 0) {
+        <div class="clients-page__empty">
+          <strong>No hay clientes para mostrar.</strong>
+          <p>
+            El directorio real esta vacio o tu filtro actual no coincide con ningun registro.
+          </p>
+        </div>
+      }
+    </div>
+
+    <mat-paginator
+      [pageSize]="5"
+      [pageSizeOptions]="[5, 10, 20]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </section>
+</section>

@@ -1,0 +1,162 @@
+<section class="client-detail-page">
+  @if (isLoading()) {
+    <section class="client-detail-page__state">
+      <h2>Cargando cliente</h2>
+      <p>Consultando historial, direcciones y pedidos reales desde el backend...</p>
+    </section>
+  } @else if (clientProfile(); as profile) {
+    <header class="client-detail-page__header">
+      <div>
+        <p class="client-detail-page__breadcrumbs">Crystal Alquiler / Clientes / {{ profile.id }}</p>
+        <h1>{{ profile.clientName }}</h1>
+        <p class="client-detail-page__description">
+          Ficha consolidada del cliente con su historial operativo y las direcciones que ya se han usado en notas y pedidos.
+        </p>
+      </div>
+
+      <div class="client-detail-page__actions">
+        <button mat-stroked-button type="button" (click)="goBack()">
+          Volver a Clientes
+        </button>
+        <button mat-raised-button type="button" (click)="createQuotation()">
+          <mat-icon>note_add</mat-icon>
+          Cargar en Nueva Cotizacion
+        </button>
+      </div>
+    </header>
+
+    <section class="client-detail-page__summary-grid">
+      <article class="client-detail-card">
+        <span>Contacto</span>
+        <strong>{{ profile.contactPerson || 'Pendiente' }}</strong>
+      </article>
+      <article class="client-detail-card">
+        <span>Celular</span>
+        <strong>{{ profile.phoneNumber || 'Pendiente' }}</strong>
+      </article>
+      <article class="client-detail-card">
+        <span>Correo</span>
+        <strong>{{ profile.email || 'Sin correo' }}</strong>
+      </article>
+      <article class="client-detail-card">
+        <span>Registros Consolidados</span>
+        <strong>{{ profile.mergedRecords }}</strong>
+      </article>
+    </section>
+
+    <section class="client-detail-page__panel">
+      <div class="client-detail-page__panel-header">
+        <div>
+          <p class="client-detail-page__panel-eyebrow">Consolidacion</p>
+          <h2>Registros Unificados</h2>
+        </div>
+      </div>
+
+      <div class="client-detail-page__codes">
+        @for (clientCode of profile.mergedClientCodes; track clientCode) {
+          <span class="client-detail-page__code">{{ clientCode }}</span>
+        } @empty {
+          <span class="client-detail-page__code">Sin codigos relacionados</span>
+        }
+      </div>
+    </section>
+
+    <section class="client-detail-page__content-grid">
+      <section class="client-detail-page__panel">
+        <div class="client-detail-page__panel-header">
+          <div>
+            <p class="client-detail-page__panel-eyebrow">Direcciones</p>
+            <h2>{{ addressCount() }} direccion{{ addressCount() === 1 ? '' : 'es' }} detectada{{ addressCount() === 1 ? '' : 's' }}</h2>
+          </div>
+        </div>
+
+        <div class="client-detail-page__address-list">
+          @for (address of profile.addresses; track address.address) {
+            <article class="client-detail-address">
+              <strong>{{ address.address }}</strong>
+              <p>{{ address.reference || 'Sin referencia registrada.' }}</p>
+              <div class="client-detail-address__meta">
+                <span>{{ address.usageCount }} uso{{ address.usageCount === 1 ? '' : 's' }}</span>
+                <span>{{ address.lastUsedAt | date: 'dd MMM y, h:mm a' }}</span>
+              </div>
+            </article>
+          } @empty {
+            <article class="client-detail-page__empty">
+              <strong>Sin direcciones registradas</strong>
+              <p>Este cliente todavia no tiene direcciones almacenadas en su historial real.</p>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="client-detail-page__panel">
+        <div class="client-detail-page__panel-header">
+          <div>
+            <p class="client-detail-page__panel-eyebrow">Historial</p>
+            <h2>{{ orderCount() }} pedido{{ orderCount() === 1 ? '' : 's' }} confirmado{{ orderCount() === 1 ? '' : 's' }}</h2>
+          </div>
+        </div>
+
+        @if (profile.orderHistory.length > 0) {
+          <div class="client-detail-page__table-wrap">
+            <table class="client-history-table">
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Evento</th>
+                  <th>Total</th>
+                  <th>Direccion</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of profile.orderHistory; track order.orderId) {
+                  <tr>
+                    <td>
+                      <div class="client-history-table__primary">
+                        <strong>{{ order.orderId }}</strong>
+                        <small>{{ order.confirmedAt | date: 'dd MMM y' }}</small>
+                      </div>
+                    </td>
+                    <td>{{ order.eventDate | date: 'dd MMM y' }}</td>
+                    <td>
+                      {{ order.totalEstimated | currency: 'MXN':'symbol-narrow':'1.0-0' }}
+                    </td>
+                    <td>
+                      <div class="client-history-table__address">
+                        <strong>{{ order.address }}</strong>
+                        <small>{{ order.reference || 'Sin referencia' }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        class="client-history-table__action"
+                        type="button"
+                        (click)="openOrder(order.orderId)"
+                      >
+                        Ver nota
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <article class="client-detail-page__empty">
+            <strong>Sin historial de pedidos</strong>
+            <p>Este cliente aun no tiene pedidos confirmados registrados en la base.</p>
+          </article>
+        }
+      </section>
+    </section>
+  } @else {
+    <section class="client-detail-page__state">
+      <h2>Cliente no encontrado</h2>
+      <p>{{ errorMessage() || 'No fue posible localizar la ficha del cliente solicitado.' }}</p>
+      <button mat-raised-button type="button" (click)="goBack()">
+        Volver a Clientes
+      </button>
+    </section>
+  }
+</section>

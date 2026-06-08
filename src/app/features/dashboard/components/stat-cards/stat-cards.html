@@ -1,0 +1,16 @@
+<section class="stat-cards" aria-label="Resumen operativo">
+  <article class="stat-card" *ngFor="let stat of stats(); trackBy: trackByStatId">
+    <div class="stat-card__top">
+      <div>
+        <p class="stat-card__title">{{ stat.title }}</p>
+        <strong class="stat-card__value">{{ stat.value }}</strong>
+      </div>
+
+      <div class="stat-card__icon">
+        <app-icon [name]="stat.icon" />
+      </div>
+    </div>
+
+    <p class="stat-card__helper">{{ stat.helperText }}</p>
+  </article>
+</section>

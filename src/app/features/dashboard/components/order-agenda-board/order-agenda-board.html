@@ -1,0 +1,52 @@
+<section class="order-agenda-board" aria-label="Agenda operativa de pedidos">
+  <article
+    class="order-agenda-board__group"
+    *ngFor="let group of groups(); trackBy: trackByGroupId"
+    [class.order-agenda-board__group--today]="group.id === 'today'"
+    [class.order-agenda-board__group--tomorrow]="group.id === 'tomorrow'"
+    [class.order-agenda-board__group--weekend]="group.id === 'weekend'"
+    [class.order-agenda-board__group--delivery-range]="group.id === 'delivery-range'"
+  >
+    <header class="order-agenda-board__group-header">
+      <div>
+        <p class="order-agenda-board__eyebrow">
+          {{ resolveEyebrow(group) }}
+        </p>
+        <h2>{{ group.title }}</h2>
+        <p class="order-agenda-board__subtitle">{{ group.subtitle }}</p>
+      </div>
+
+      <span class="order-agenda-board__count">{{ group.orders.length }}</span>
+    </header>
+
+    @if (group.orders.length > 0) {
+      <div class="order-agenda-board__table-head">
+        <span>ID</span>
+        <span>Nombre</span>
+        <span>Domicilio</span>
+        <span>Total</span>
+      </div>
+
+      <div class="order-agenda-board__list">
+        <article
+          class="order-agenda-board__row"
+          *ngFor="let order of group.orders; trackBy: trackByOrderId"
+        >
+          <strong class="order-agenda-board__order-id">{{ order.id }}</strong>
+          <div class="order-agenda-board__client">
+            <strong>{{ order.clientName }}</strong>
+          </div>
+          <p class="order-agenda-board__address">{{ order.address }}</p>
+          <strong class="order-agenda-board__total">
+            {{ order.total | currency: 'MXN':'symbol-narrow':'1.0-0' }}
+          </strong>
+        </article>
+      </div>
+    } @else {
+      <div class="order-agenda-board__empty">
+        <strong>Sin pedidos cargados</strong>
+        <p>{{ group.emptyMessage }}</p>
+      </div>
+    }
+  </article>
+</section>

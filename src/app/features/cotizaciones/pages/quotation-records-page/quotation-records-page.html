@@ -1,0 +1,125 @@
+<section class="quotation-records-page">
+  <header class="quotation-records-page__header">
+    <div>
+      <p class="quotation-records-page__breadcrumbs">Crystal Alquiler / Cotizaciones</p>
+      <h1>Cotizaciones Activas</h1>
+      <p class="quotation-records-page__description">
+        Consulta las cotizaciones activas en borrador con folios tipo
+        <strong>001COTI-26</strong> y confirmalas como pedido cuando el cliente
+        autorice la nota.
+      </p>
+    </div>
+  </header>
+
+  <section class="quotation-records-page__toolbar">
+    <mat-form-field class="quotation-records-page__search" appearance="outline">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [formControl]="searchControl"
+        placeholder="Buscar por ID de cotizacion o nombre de cliente..."
+      />
+    </mat-form-field>
+  </section>
+
+  @if (errorMessage()) {
+    <section class="quotation-records-page__feedback">
+      {{ errorMessage() }}
+    </section>
+  } @else if (isLoading() && dataSource.data.length === 0) {
+    <section class="quotation-records-page__feedback">
+      Cargando cotizaciones reales...
+    </section>
+  }
+
+  <section class="quotation-records-page__table-card">
+    <div class="quotation-records-page__table-header">
+      <div>
+        <p class="quotation-records-page__table-eyebrow">Borradores operativos</p>
+        <h2>Cotizaciones pendientes de cierre</h2>
+      </div>
+    </div>
+
+    <div class="quotation-records-page__table-wrap">
+      @if (!isLoading() && dataSource.filteredData.length === 0 && dataSource.data.length === 0) {
+        <section class="quotation-records-page__feedback">
+          Todavia no hay cotizaciones guardadas en la base.
+        </section>
+      } @else {
+        <table mat-table [dataSource]="dataSource" class="quotation-records-table">
+          <ng-container matColumnDef="quotationId">
+            <th mat-header-cell *matHeaderCellDef>ID Cotizacion</th>
+            <td mat-cell *matCellDef="let record">
+              <strong class="quotation-records-table__id">{{ record.quotationId }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="clientName">
+            <th mat-header-cell *matHeaderCellDef>Cliente</th>
+            <td mat-cell *matCellDef="let record">{{ record.clientName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Fecha de Registro</th>
+            <td mat-cell *matCellDef="let record">{{ record.date | date: 'dd MMM y' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="quotation-records-table__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Ver ' + record.quotationId"
+                  (click)="handleView(record)"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Editar ' + record.quotationId"
+                  (click)="handleEdit(record)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Confirmar ' + record.quotationId"
+                  (click)="handleConfirm(record)"
+                >
+                  <mat-icon>task_alt</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Eliminar ' + record.quotationId"
+                  (click)="handleDelete(record)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      }
+    </div>
+
+    <mat-paginator
+      [pageSize]="5"
+      [pageSizeOptions]="[5, 10, 20]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </section>
+
+  @if (actionMessage()) {
+    <section class="quotation-records-page__feedback">
+      {{ actionMessage() }}
+    </section>
+  }
+</section>

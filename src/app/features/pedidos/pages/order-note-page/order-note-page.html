@@ -1,0 +1,437 @@
+<section class="order-note-page">
+  @if (isLoading()) {
+    <section class="order-note-page__empty">
+      <h2>Cargando pedido</h2>
+      <p>Consultando la nota real desde el backend...</p>
+    </section>
+  } @else if (orderRecord(); as record) {
+    <header class="order-note-page__header">
+      <div>
+        <p class="order-note-page__breadcrumbs">
+          Crystal Alquiler / {{ sectionLabel() }} / {{ record.orderId }}
+        </p>
+        <h1>Nota del Pedido {{ record.orderId }}</h1>
+        <p class="order-note-page__description">
+          Vista lista para impresion o guardado en PDF del pedido confirmado.
+        </p>
+      </div>
+
+      <div class="order-note-page__actions">
+        <button mat-stroked-button type="button" (click)="goBack()">
+          {{ backLabel() }}
+        </button>
+        <button mat-stroked-button type="button" (click)="goToEdit()">
+          <mat-icon>edit</mat-icon>
+          Editar Pedido
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="isDownloadingPdf()"
+          (click)="downloadPdf()"
+        >
+          <mat-icon>file_download</mat-icon>
+          Descargar PDF
+        </button>
+        <button
+          mat-raised-button
+          type="button"
+          color="primary"
+          (click)="sendWhatsApp()"
+        >
+          <mat-icon>send</mat-icon>
+          Enviar por WhatsApp
+        </button>
+      </div>
+    </header>
+
+    @if (record.isCancelled) {
+      <div class="cancelled-banner">
+        <span class="cancelled-banner__icon">⚠️</span>
+        <span>Esta nota está <strong>cancelada</strong> — no cuenta en contabilidad pero queda en el registro.</span>
+        @if (isAdmin()) {
+          <button class="cancelled-banner__restore" type="button" [disabled]="isTogglingCancel()" (click)="toggleCancel()">
+            Reactivar nota
+          </button>
+        }
+      </div>
+    }
+
+    @if (isAdmin()) {
+      <div class="cancel-action-row">
+        @if (!record.isCancelled) {
+          <button class="cancel-action-btn" type="button" [disabled]="isTogglingCancel()" (click)="toggleCancel()">
+            {{ isTogglingCancel() ? 'Procesando...' : 'Cancelar nota' }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (loadErrorMessage()) {
+      <section class="order-note-page__feedback">
+        {{ loadErrorMessage() }}
+      </section>
+    }
+
+    <section class="order-note-page__workflow-grid">
+      <article class="order-note-page__workflow-card">
+        <div class="order-note-page__workflow-heading">
+          <div>
+            <p class="order-note-page__workflow-eyebrow">Carpetas de negocio</p>
+            <h2>Estado actual de la nota</h2>
+          </div>
+        </div>
+
+        <div class="order-note-page__folder-list">
+          @for (folderLabel of record.folderLabels; track folderLabel) {
+            <span class="order-note-page__folder-chip">{{ folderLabel }}</span>
+          }
+        </div>
+
+        <div class="order-note-page__status-grid">
+          <article>
+            <span>Operacion</span>
+            <strong>{{ record.operationalStatusLabel }}</strong>
+          </article>
+          <article>
+            <span>Cobranza</span>
+            <strong>{{ record.billingStatusLabel }}</strong>
+          </article>
+          <article>
+            <span>Cliente</span>
+            <strong>{{ record.clientName }}</strong>
+          </article>
+        </div>
+      </article>
+
+      <article class="order-note-page__workflow-card">
+        <div class="order-note-page__workflow-heading">
+          <div>
+            <p class="order-note-page__workflow-eyebrow">Movimiento operativo</p>
+            <h2>Mover entre carpetas</h2>
+          </div>
+        </div>
+
+        <div class="order-note-page__workflow-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Estado operativo</mat-label>
+            <mat-select [formControl]="operationalStatusControl">
+              @for (option of operationalStatusOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estado de cobranza</mat-label>
+            <mat-select [formControl]="billingStatusControl">
+              @for (option of billingStatusOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="order-note-page__workflow-comment">
+            <mat-label>Comentario del movimiento</mat-label>
+            <textarea
+              matInput
+              rows="3"
+              [formControl]="workflowCommentControl"
+              placeholder="Ej. Ya fue entregado en salon principal y queda saldo pendiente."
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="order-note-page__workflow-actions">
+          <button
+            mat-raised-button
+            type="button"
+            [disabled]="isSavingWorkflow() || !hasWorkflowChanges()"
+            (click)="saveWorkflowChanges()"
+          >
+            <mat-icon>folder_open</mat-icon>
+            Guardar Movimiento
+          </button>
+        </div>
+      </article>
+    </section>
+
+    @if (workflowMessage()) {
+      <section class="order-note-page__feedback">
+        {{ workflowMessage() }}
+      </section>
+    }
+
+    <section class="order-note-page__preview-card">
+      <div class="order-note-page__workflow-heading">
+        <div>
+          <p class="order-note-page__workflow-eyebrow">Vista Exacta</p>
+          <h2>PDF generado desde Excel</h2>
+          <p class="order-note-page__preview-description">
+            Esta vista respeta el formato operativo real de tu nota, incluyendo logos, clausulas y acomodo original.
+          </p>
+        </div>
+
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="isLoadingPdfPreview()"
+          (click)="refreshPdfPreview()"
+        >
+          <mat-icon>refresh</mat-icon>
+          Actualizar Vista
+        </button>
+      </div>
+
+      @if (isLoadingPdfPreview()) {
+        <section class="order-note-page__preview-empty">
+          <h3>Generando vista previa</h3>
+          <p>Excel esta preparando el PDF real de la nota...</p>
+        </section>
+      } @else if (pdfPreviewUrl(); as previewUrl) {
+        <iframe
+          class="order-note-page__preview-frame"
+          [src]="previewUrl"
+          title="Vista previa PDF de la nota"
+        ></iframe>
+      } @else {
+        <section class="order-note-page__preview-empty">
+          <h3>No fue posible mostrar el PDF</h3>
+          <p>
+            {{
+              pdfPreviewErrorMessage()
+                || 'La vista previa del documento no pudo generarse en este momento.'
+            }}
+          </p>
+        </section>
+      }
+    </section>
+
+    <article class="order-note-sheet">
+      <section class="order-note-sheet__topbar">
+        <div>
+          <p class="order-note-sheet__eyebrow">Documento Operativo</p>
+          <h2>Nota {{ record.orderId }}</h2>
+          <p class="order-note-sheet__subtitle">
+            Confirmacion interna del equipo, fechas y logistica comprometida con el cliente.
+          </p>
+        </div>
+
+        <aside class="order-note-sheet__meta">
+          <div>
+            <span>Folio</span>
+            <strong>{{ record.orderId }}</strong>
+          </div>
+          <div>
+            <span>Fecha de Registro</span>
+            <strong>{{ toDate(record.date) | date: 'dd MMM y' }}</strong>
+          </div>
+          <div>
+            <span>Estado</span>
+            <strong class="order-note-sheet__status">{{ record.operationalStatusLabel }}</strong>
+          </div>
+          <div>
+            <span>Total Estimado</span>
+            <strong>{{ record.totalEstimated | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="order-note-sheet__section">
+        <div class="order-note-sheet__section-heading">
+          <h3>Cliente y Ubicacion</h3>
+        </div>
+
+        <div class="order-note-sheet__grid">
+          <article>
+            <span>Cliente</span>
+            <strong>{{ record.quotation.clientInfo.fullName }}</strong>
+          </article>
+          <article>
+            <span>Celular</span>
+            <strong>{{ record.quotation.clientInfo.phoneNumber || 'Sin telefono' }}</strong>
+          </article>
+          <article>
+            <span>Cumpleanos</span>
+            <strong>{{ toDate(record.quotation.clientInfo.birthDate) | date: 'dd MMM y' }}</strong>
+          </article>
+          <article>
+            <span>Direccion</span>
+            <strong>{{ record.quotation.clientInfo.address || 'Sin direccion' }}</strong>
+          </article>
+          <article>
+            <span>Colonia</span>
+            <strong>{{ record.quotation.clientInfo.neighborhood || 'Sin colonia' }}</strong>
+          </article>
+          <article>
+            <span>Referencias</span>
+            <strong>{{ record.quotation.clientInfo.reference || 'Sin referencias' }}</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="order-note-sheet__section">
+        <div class="order-note-sheet__section-heading">
+          <h3>Programacion</h3>
+        </div>
+
+        <div class="order-note-sheet__grid order-note-sheet__grid--three-columns">
+          <article>
+            <span>Entrega</span>
+            <strong>{{ toDate(record.quotation.schedule.deliveryDate) | date: 'dd MMM y' }}</strong>
+          </article>
+          <article>
+            <span>Evento</span>
+            <strong>{{ toDate(record.quotation.schedule.eventDate) | date: 'dd MMM y' }}</strong>
+          </article>
+          <article>
+            <span>Recoleccion</span>
+            <strong>{{ toDate(record.quotation.schedule.collectionDate) | date: 'dd MMM y' }}</strong>
+          </article>
+        </div>
+
+        <div class="order-note-sheet__grid">
+          <article>
+            <span>Instrucciones de Entrega</span>
+            <strong>
+              {{
+                record.quotation.clientInfo.deliveryInstructions
+                  || 'Sin instrucciones de entrega'
+              }}
+            </strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="order-note-sheet__section">
+        <div class="order-note-sheet__section-heading">
+          <h3>Equipo Confirmado</h3>
+        </div>
+
+        <div class="order-note-sheet__table-wrap">
+          <table class="order-note-sheet__table">
+            <thead>
+              <tr>
+                <th>Cantidad</th>
+                <th>Equipo</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of record.quotation.equipmentItems; track item.equipment + $index) {
+                <tr>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ item.equipment }}</td>
+                  <td>{{ item.unitPrice | currency: 'MXN' : 'symbol' : '1.0-0' }}</td>
+                  <td>{{ item.total | currency: 'MXN' : 'symbol' : '1.0-0' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="order-note-sheet__empty-row">
+                    Esta nota aun no tiene equipo confirmado.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="order-note-sheet__summary">
+        <div>
+          <span>Subtotal</span>
+          <strong>{{ record.quotation.summary.subtotal | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Flete</span>
+          <strong>{{ record.quotation.summary.freight | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>IVA</span>
+          <strong>{{ record.quotation.summary.taxAmount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Deposito</span>
+          <strong>
+            {{ record.quotation.summary.securityDeposit | currency: 'MXN' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+        <div>
+          <span>Descuento</span>
+          <strong>{{ record.quotation.summary.discount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Anticipo</span>
+          <strong>{{ record.quotation.summary.advancePayment | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div class="order-note-sheet__summary-total">
+          <span>Total a Pagar</span>
+          <strong>
+            {{ record.quotation.summary.totalEstimated | currency: 'MXN' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+        <div class="order-note-sheet__summary-total">
+          <span>Resta a Pagar</span>
+          <strong>
+            {{ record.quotation.summary.balanceDue | currency: 'MXN' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+      </section>
+    </article>
+
+    <section class="order-note-page__history-card">
+      <div class="order-note-page__workflow-heading">
+        <div>
+          <p class="order-note-page__workflow-eyebrow">Historial</p>
+          <h2>Trazabilidad de la nota</h2>
+        </div>
+      </div>
+
+      <div class="order-note-page__history-list">
+        @for (event of record.workflowHistory ?? []; track event.id) {
+          <article class="order-note-page__history-item">
+            <div class="order-note-page__history-meta">
+              <span>{{ event.categoryLabel }}</span>
+              <strong>{{ event.toStatusLabel }}</strong>
+            </div>
+
+            <p class="order-note-page__history-transition">
+              @if (event.fromStatusLabel && event.fromStatusLabel !== 'Sin estado previo') {
+                {{ event.fromStatusLabel }} -> {{ event.toStatusLabel }}
+              } @else {
+                Estado inicial -> {{ event.toStatusLabel }}
+              }
+            </p>
+
+            @if (event.comment) {
+              <p class="order-note-page__history-comment">{{ event.comment }}</p>
+            }
+
+            <div class="order-note-page__history-footer">
+              <span>{{ event.createdAt | date: 'dd MMM y, h:mm a' }}</span>
+              <span>{{ event.changedBy }}</span>
+            </div>
+          </article>
+        } @empty {
+          <section class="order-note-page__feedback">
+            Esta nota todavia no tiene movimientos registrados en su historial.
+          </section>
+        }
+      </div>
+    </section>
+  } @else {
+    <section class="order-note-page__empty">
+      <h2>Pedido no encontrado</h2>
+      <p>
+        {{
+          loadErrorMessage()
+            || 'El registro solicitado ya no existe o no pudo cargarse correctamente.'
+        }}
+      </p>
+      <button mat-raised-button type="button" (click)="goBack()">
+        {{ backLabel() }}
+      </button>
+    </section>
+  }
+</section>

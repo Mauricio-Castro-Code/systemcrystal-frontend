@@ -1,0 +1,68 @@
+<aside class="sidebar" [class.sidebar--open]="isMobileOpen()">
+  <div class="sidebar__panel">
+    <div class="sidebar__header">
+      <div class="sidebar__brand">
+        <div class="sidebar__brand-mark">
+          <img src="logo.png" alt="Crystal" class="sidebar__brand-logo" />
+        </div>
+
+        <div class="sidebar__brand-copy">
+          <strong>Crystal</strong>
+          <span>Alquiladora</span>
+        </div>
+      </div>
+
+      <button
+        class="sidebar__mobile-close"
+        type="button"
+        aria-label="Cerrar menu lateral"
+        (click)="closeOnMobileNavigation()"
+      >
+        <app-icon name="x" />
+      </button>
+    </div>
+
+    <nav class="sidebar__nav" aria-label="Navegacion principal">
+      <ul class="sidebar__nav-list">
+        <li class="sidebar__nav-item" *ngFor="let item of navigationItems(); trackBy: trackByItemId">
+          <ng-container *ngIf="item.route; else disabledItem">
+            <a
+              class="sidebar__link"
+              [class.sidebar__link--active]="item.id === activeItemId()"
+              [routerLink]="item.route"
+              (click)="closeOnMobileNavigation()"
+            >
+              <span class="sidebar__indicator"></span>
+              <app-icon [name]="item.icon" />
+              <span>{{ item.label }}</span>
+            </a>
+          </ng-container>
+
+          <ng-template #disabledItem>
+            <button
+              class="sidebar__link sidebar__link--muted"
+              type="button"
+              [disabled]="item.disabled"
+            >
+              <span class="sidebar__indicator"></span>
+              <app-icon [name]="item.icon" />
+              <span>{{ item.label }}</span>
+            </button>
+          </ng-template>
+        </li>
+      </ul>
+    </nav>
+
+    <footer class="sidebar__footer">
+      <div class="sidebar__user">
+        <span class="sidebar__user-label">Sesion actual</span>
+        <strong>{{ userName() }}</strong>
+      </div>
+
+      <button class="sidebar__logout" type="button" (click)="requestLogout()">
+        <app-icon name="log-out" />
+        <span>Cerrar Sesion</span>
+      </button>
+    </footer>
+  </div>
+</aside>

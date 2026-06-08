@@ -1,0 +1,280 @@
+<section class="quotation-note-page">
+  @if (isLoading()) {
+    <section class="quotation-note-page__empty">
+      <h2>Cargando cotizacion</h2>
+      <p>Consultando el borrador real desde el backend...</p>
+    </section>
+  } @else if (quotationRecord(); as record) {
+    <header class="quotation-note-page__header">
+      <div>
+        <p class="quotation-note-page__breadcrumbs">
+          Crystal Alquiler / Cotizaciones / {{ record.quotationId }}
+        </p>
+        <h1>Cotizacion {{ record.quotationId }}</h1>
+        <p class="quotation-note-page__description">
+          Vista lista para impresion o envio previo a la confirmacion del cliente.
+        </p>
+      </div>
+
+      <div class="quotation-note-page__actions">
+        <button mat-stroked-button type="button" (click)="goBack()">
+          Volver al Registro
+        </button>
+        <button mat-stroked-button type="button" [disabled]="isSubmitting()" (click)="goToEdit()">
+          <mat-icon>edit</mat-icon>
+          Editar Cotizacion
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="isSubmitting() || isDownloadingPdf()"
+          (click)="downloadPdf()"
+        >
+          <mat-icon>file_download</mat-icon>
+          Descargar PDF
+        </button>
+        <button mat-raised-button type="button" [disabled]="isSubmitting()" (click)="confirmOrder()">
+          <mat-icon>task_alt</mat-icon>
+          Confirmar Pedido
+        </button>
+      </div>
+    </header>
+
+    @if (loadErrorMessage()) {
+      <section class="quotation-note-page__feedback">
+        {{ loadErrorMessage() }}
+      </section>
+    }
+
+    <section class="quotation-note-page__preview-card">
+      <div class="quotation-note-page__preview-header">
+        <div>
+          <p class="quotation-note-page__preview-eyebrow">Vista Exacta</p>
+          <h2>PDF generado desde Excel</h2>
+          <p class="quotation-note-page__preview-description">
+            Esta vista conserva el formato real de tu plantilla, incluyendo logos, clausulas y distribucion.
+          </p>
+        </div>
+
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="isLoadingPdfPreview()"
+          (click)="refreshPdfPreview()"
+        >
+          <mat-icon>refresh</mat-icon>
+          Actualizar Vista
+        </button>
+      </div>
+
+      @if (isLoadingPdfPreview()) {
+        <section class="quotation-note-page__preview-empty">
+          <h3>Generando vista previa</h3>
+          <p>Excel esta preparando el PDF real de la cotizacion...</p>
+        </section>
+      } @else if (pdfPreviewUrl(); as previewUrl) {
+        <iframe
+          class="quotation-note-page__preview-frame"
+          [src]="previewUrl"
+          title="Vista previa PDF de la cotizacion"
+        ></iframe>
+      } @else {
+        <section class="quotation-note-page__preview-empty">
+          <h3>No fue posible mostrar el PDF</h3>
+          <p>
+            {{
+              pdfPreviewErrorMessage()
+                || 'La vista previa del documento no pudo generarse en este momento.'
+            }}
+          </p>
+        </section>
+      }
+    </section>
+
+    <article class="quotation-note-sheet">
+      <section class="quotation-note-sheet__topbar">
+        <div>
+          <p class="quotation-note-sheet__eyebrow">Documento Comercial</p>
+          <h2>Cotizacion {{ record.quotationId }}</h2>
+          <p class="quotation-note-sheet__subtitle">
+            Resumen editable del borrador comercial antes de confirmarlo como pedido.
+          </p>
+        </div>
+
+        <aside class="quotation-note-sheet__meta">
+          <div>
+            <span>Folio</span>
+            <strong>{{ record.quotationId }}</strong>
+          </div>
+          <div>
+            <span>Fecha de Registro</span>
+            <strong>{{ toDate(record.date) | date: 'dd MMM y' }}</strong>
+          </div>
+          <div>
+            <span>Total Estimado</span>
+            <strong>{{ record.totalEstimated | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="quotation-note-sheet__section">
+        <div class="quotation-note-sheet__section-heading">
+          <h3>Cliente y Ubicacion</h3>
+        </div>
+
+        <div class="quotation-note-sheet__grid">
+          <article>
+            <span>Cliente</span>
+            <strong>{{ record.quotation.clientInfo.fullName }}</strong>
+          </article>
+          <article>
+            <span>Celular</span>
+            <strong>{{ record.quotation.clientInfo.phoneNumber || 'Sin telefono' }}</strong>
+          </article>
+          <article>
+            <span>Cumpleanos</span>
+            <strong>
+              {{
+                toDate(record.quotation.clientInfo.birthDate) | date: 'dd MMM y'
+              }}
+            </strong>
+          </article>
+          <article>
+            <span>Direccion</span>
+            <strong>{{ record.quotation.clientInfo.address || 'Sin direccion' }}</strong>
+          </article>
+          <article>
+            <span>Colonia</span>
+            <strong>{{ record.quotation.clientInfo.neighborhood || 'Sin colonia' }}</strong>
+          </article>
+          <article>
+            <span>Referencias</span>
+            <strong>{{ record.quotation.clientInfo.reference || 'Sin referencias' }}</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="quotation-note-sheet__section">
+        <div class="quotation-note-sheet__section-heading">
+          <h3>Programacion</h3>
+        </div>
+
+        <div class="quotation-note-sheet__grid quotation-note-sheet__grid--three-columns">
+          <article>
+            <span>Entrega</span>
+            <strong>{{ toDate(record.quotation.schedule.deliveryDate) | date: 'dd MMM y' }}</strong>
+          </article>
+          <article>
+            <span>Evento</span>
+            <strong>{{ toDate(record.quotation.schedule.eventDate) | date: 'dd MMM y' }}</strong>
+          </article>
+          <article>
+            <span>Recoleccion</span>
+            <strong>{{ toDate(record.quotation.schedule.collectionDate) | date: 'dd MMM y' }}</strong>
+          </article>
+        </div>
+
+        <div class="quotation-note-sheet__grid">
+          <article>
+            <span>Instrucciones de Entrega</span>
+            <strong>
+              {{
+                record.quotation.clientInfo.deliveryInstructions
+                  || 'Sin instrucciones de entrega'
+              }}
+            </strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="quotation-note-sheet__section">
+        <div class="quotation-note-sheet__section-heading">
+          <h3>Equipo Cotizado</h3>
+        </div>
+
+        <div class="quotation-note-sheet__table-wrap">
+          <table class="quotation-note-sheet__table">
+            <thead>
+              <tr>
+                <th>Cantidad</th>
+                <th>Equipo</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of record.quotation.equipmentItems; track item.equipment + $index) {
+                <tr>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ item.equipment }}</td>
+                  <td>{{ item.unitPrice | currency: 'MXN' : 'symbol' : '1.0-0' }}</td>
+                  <td>{{ item.total | currency: 'MXN' : 'symbol' : '1.0-0' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="quotation-note-sheet__empty-row">
+                    Esta cotizacion aun no tiene equipo capturado.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="quotation-note-sheet__summary">
+        <div>
+          <span>Subtotal</span>
+          <strong>{{ record.quotation.summary.subtotal | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Flete</span>
+          <strong>{{ record.quotation.summary.freight | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>IVA</span>
+          <strong>{{ record.quotation.summary.taxAmount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Deposito</span>
+          <strong>
+            {{ record.quotation.summary.securityDeposit | currency: 'MXN' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+        <div>
+          <span>Descuento</span>
+          <strong>{{ record.quotation.summary.discount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Anticipo</span>
+          <strong>{{ record.quotation.summary.advancePayment | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+        </div>
+        <div class="quotation-note-sheet__summary-total">
+          <span>Total a Pagar</span>
+          <strong>
+            {{ record.quotation.summary.totalEstimated | currency: 'MXN' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+        <div class="quotation-note-sheet__summary-total">
+          <span>Resta a Pagar</span>
+          <strong>
+            {{ record.quotation.summary.balanceDue | currency: 'MXN' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+      </section>
+    </article>
+  } @else {
+    <section class="quotation-note-page__empty">
+      <h2>Cotizacion no encontrada</h2>
+      <p>
+        {{
+          loadErrorMessage()
+            || 'El borrador solicitado ya no existe o no pudo cargarse correctamente.'
+        }}
+      </p>
+      <button mat-raised-button type="button" (click)="goBack()">
+        Volver al Registro
+      </button>
+    </section>
+  }
+</section>

@@ -1,0 +1,131 @@
+<div class="login-page">
+
+  <div class="login-page__brand">
+    <div class="login-page__logo">
+      <img src="logo.png" alt="Alquiladora Crystal" />
+    </div>
+    <h1 class="login-page__title">Alquiladora Crystal</h1>
+    <p class="login-page__subtitle">Sistema administrativo</p>
+  </div>
+
+  @if (authMode() === 'login') {
+    <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+
+      <div class="login-form__field">
+        <input
+          id="identifier"
+          type="text"
+          formControlName="identifier"
+          placeholder="Correo o usuario"
+          autocomplete="username"
+        />
+        @if (hasLoginFieldError('identifier')) {
+          <small>Captura tu correo o un usuario valido.</small>
+        }
+      </div>
+
+      <div class="login-form__field">
+        <input
+          id="login-password"
+          type="password"
+          formControlName="password"
+          placeholder="Contraseña"
+          autocomplete="current-password"
+        />
+        @if (hasLoginFieldError('password')) {
+          <small>La contraseña debe tener al menos 6 caracteres.</small>
+        }
+      </div>
+
+      @if (authError()) {
+        <p class="login-form__error">{{ authError() }}</p>
+      }
+
+      <button class="login-form__submit" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+    </form>
+
+    <button class="login-page__switch" type="button" (click)="setAuthMode('register')">
+      ¿Primera vez? Crear acceso
+    </button>
+
+  } @else {
+    <form class="login-form" [formGroup]="registerForm" (ngSubmit)="submitRegistration()" novalidate>
+
+      <!-- Role selector -->
+      <div class="role-selector">
+        <button
+          type="button"
+          class="role-selector__btn"
+          [class.role-selector__btn--active]="selectedRole === 'ventas'"
+          (click)="setRole('ventas')"
+        >
+          <span class="role-selector__icon">🛒</span>
+          Ventas
+        </button>
+        <button
+          type="button"
+          class="role-selector__btn"
+          [class.role-selector__btn--active]="selectedRole === 'admin'"
+          (click)="setRole('admin')"
+        >
+          <span class="role-selector__icon">🔑</span>
+          Admin
+        </button>
+      </div>
+
+      <div class="login-form__field">
+        <input
+          id="register-email"
+          type="email"
+          formControlName="email"
+          placeholder="Correo"
+          autocomplete="email"
+        />
+        @if (hasRegisterFieldError('email')) {
+          <small>Captura un correo valido.</small>
+        }
+      </div>
+
+      <div class="login-form__field">
+        <input
+          id="register-password"
+          type="password"
+          formControlName="password"
+          placeholder="Contraseña (minimo 8 caracteres)"
+          autocomplete="new-password"
+        />
+        @if (hasRegisterFieldError('password')) {
+          <small>La contraseña debe tener al menos 8 caracteres.</small>
+        }
+      </div>
+
+      <div class="login-form__field">
+        <input
+          id="registration-key"
+          type="password"
+          formControlName="registrationKey"
+          placeholder="Clave de registro"
+          autocomplete="one-time-code"
+        />
+        @if (hasRegisterFieldError('registrationKey')) {
+          <small>La clave de registro es obligatoria.</small>
+        }
+      </div>
+
+      @if (authError()) {
+        <p class="login-form__error">{{ authError() }}</p>
+      }
+
+      <button class="login-form__submit" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creando acceso...' : 'Crear acceso' }}
+      </button>
+    </form>
+
+    <button class="login-page__switch" type="button" (click)="setAuthMode('login')">
+      ¿Ya tienes acceso? Iniciar sesion
+    </button>
+  }
+
+</div>
