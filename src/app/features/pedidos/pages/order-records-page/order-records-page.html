@@ -37,16 +37,39 @@
         <span class="order-records-page__selection-count">
           {{ selectedCount() }} nota{{ selectedCount() > 1 ? 's' : '' }} seleccionada{{ selectedCount() > 1 ? 's' : '' }}
         </span>
-        <button
-          mat-raised-button
-          color="accent"
-          type="button"
-          [disabled]="isCollecting()"
-          (click)="handleMarkAsCollected()"
-        >
-          <mat-icon>done_all</mat-icon>
-          Marcar como Recogidas
-        </button>
+
+        <div class="order-records-page__selection-actions">
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="isCollecting()"
+            (click)="handleMarkAsScheduled()"
+          >
+            <mat-icon>event</mat-icon>
+            Programadas
+          </button>
+
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="isCollecting()"
+            (click)="handleMarkAsDelivered()"
+          >
+            <mat-icon>local_shipping</mat-icon>
+            Entregadas
+          </button>
+
+          <button
+            mat-raised-button
+            color="accent"
+            type="button"
+            [disabled]="isCollecting()"
+            (click)="handleMarkAsCollected()"
+          >
+            <mat-icon>done_all</mat-icon>
+            Recogidas
+          </button>
+        </div>
       </div>
     }
   </section>

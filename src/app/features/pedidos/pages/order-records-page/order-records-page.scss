@@ -55,12 +55,32 @@
   border-radius: 8px;
   background: rgba(var(--of-accent-rgb), 0.08);
   border: 1px solid rgba(var(--of-accent-rgb), 0.2);
+  flex-wrap: wrap;
 }
 
 .order-records-page__selection-count {
   color: var(--of-accent-strong);
   font-weight: 600;
   font-size: 0.95rem;
+}
+
+.order-records-page__selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .order-records-page__selection-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .order-records-page__selection-actions button {
+    flex: 1 1 auto;
+  }
 }
 
 .order-records-page__folders {

@@ -25,6 +25,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 
 import { QuotationRecordsService } from '../../../../core/services/quotation-records.service';
+import { FolioStrategyService } from '../../../../core/services/folio-strategy.service';
 import { QuotationRecord } from '../../models/quotation-record.model';
 
 @Component({
@@ -47,6 +48,7 @@ import { QuotationRecord } from '../../models/quotation-record.model';
 export class QuotationRecordsPageComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly quotationRecordsService = inject(QuotationRecordsService);
+  private readonly folioStrategyService = inject(FolioStrategyService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
 
@@ -105,9 +107,16 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
       return;
     }
 
+    const folioStrategy = await this.folioStrategyService.resolve();
+
+    if (folioStrategy === null) {
+      return;
+    }
+
     try {
       const createdOrder = await this.quotationRecordsService.confirmDraftAsOrder(
         record.quotationId,
+        folioStrategy,
       );
 
       if (!createdOrder) {

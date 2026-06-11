@@ -45,6 +45,7 @@ import { InventoryItem } from '../../../inventario/models/inventory-item.model';
 import { InventoryService } from '../../../../core/services/inventory.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
 import { QuotationRecordsService } from '../../../../core/services/quotation-records.service';
+import { FolioStrategyService } from '../../../../core/services/folio-strategy.service';
 import { ClientDirectoryService } from '../../../../core/services/client-directory.service';
 import { FreightZonesService } from '../../../../core/services/freight-zones.service';
 import { FreightZone } from '../../../fletes/models/freight-zone.model';
@@ -113,6 +114,7 @@ export class NewQuotationPageComponent {
   private readonly inventoryService = inject(InventoryService);
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly quotationRecordsService = inject(QuotationRecordsService);
+  private readonly folioStrategyService = inject(FolioStrategyService);
   private readonly clientDirectoryService = inject(ClientDirectoryService);
   private readonly freightZonesService = inject(FreightZonesService);
   private readonly route = inject(ActivatedRoute);
@@ -324,11 +326,18 @@ export class NewQuotationPageComponent {
       return;
     }
 
+    const folioStrategy = await this.folioStrategyService.resolve();
+
+    if (folioStrategy === null) {
+      return;
+    }
+
     this.isSaving.set(true);
 
     try {
       const createdOrder = await this.orderRecordsService.createConfirmedOrder({
         quotation: this.buildQuotationSnapshot(),
+        folioStrategy,
       });
 
       this.actionMessage.set(
@@ -410,6 +419,12 @@ export class NewQuotationPageComponent {
       return;
     }
 
+    const folioStrategy = await this.folioStrategyService.resolve();
+
+    if (folioStrategy === null) {
+      return;
+    }
+
     this.isSaving.set(true);
 
     try {
@@ -425,6 +440,7 @@ export class NewQuotationPageComponent {
 
       const createdOrder = await this.quotationRecordsService.confirmDraftAsOrder(
         updatedQuotation.quotationId,
+        folioStrategy,
       );
 
       if (!createdOrder) {
