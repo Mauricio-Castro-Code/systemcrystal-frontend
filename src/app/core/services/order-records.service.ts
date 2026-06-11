@@ -12,8 +12,20 @@ import {
   OrderWorkflowEventRecord,
 } from '../../features/pedidos/models/order-record.model';
 
+export type FolioStrategy = 'fill' | 'sequential';
+
+export interface FolioOptions {
+  yearSuffix: string;
+  fillValue: number;
+  sequentialValue: number;
+  fillFolio: string;
+  sequentialFolio: string;
+  hasGap: boolean;
+}
+
 interface CreateOrderRecordInput {
   quotation: QuotationNote;
+  folioStrategy?: FolioStrategy;
 }
 
 interface UpdateOrderStatusesInput {
@@ -158,15 +170,27 @@ export class OrderRecordsService {
     }
   }
 
+  async getFolioOptions(): Promise<FolioOptions> {
+    const headers = this.requireAuthHeaders();
+
+    return firstValueFrom(
+      this.http.get<FolioOptions>(`${API_BASE_URL}/orders/folio-options/`, {
+        headers,
+      }),
+    );
+  }
+
   async createConfirmedOrder(input: CreateOrderRecordInput): Promise<OrderRecord> {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
     try {
       const createdOrder = await firstValueFrom(
-        this.http.post<OrderRecord>(`${API_BASE_URL}/orders/`, input.quotation, {
-          headers,
-        }),
+        this.http.post<OrderRecord>(
+          `${API_BASE_URL}/orders/`,
+          { ...input.quotation, folioStrategy: input.folioStrategy ?? 'fill' },
+          { headers },
+        ),
       );
 
       this.loadedState.set(true);

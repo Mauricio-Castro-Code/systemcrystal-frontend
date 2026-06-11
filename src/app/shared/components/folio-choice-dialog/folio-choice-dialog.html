@@ -1,0 +1,44 @@
+<div class="folio-dialog">
+  <div class="folio-dialog__icon-wrap">
+    <mat-icon>tag</mat-icon>
+  </div>
+
+  <h2 class="folio-dialog__title" mat-dialog-title>Hay un folio disponible</h2>
+
+  <mat-dialog-content class="folio-dialog__content">
+    <p class="folio-dialog__message">
+      Se detecto un hueco en la numeracion. ¿Que folio quieres usar para esta nota?
+    </p>
+
+    <button
+      type="button"
+      class="folio-dialog__option"
+      (click)="choose('fill')"
+    >
+      <span class="folio-dialog__option-label">Rellenar hueco</span>
+      <strong class="folio-dialog__option-folio">{{ data.fillFolio }}</strong>
+      <span class="folio-dialog__option-hint">Reutiliza el numero libre mas bajo</span>
+    </button>
+
+    <button
+      type="button"
+      class="folio-dialog__option folio-dialog__option--sequential"
+      (click)="choose('sequential')"
+    >
+      <span class="folio-dialog__option-label">Secuencial</span>
+      <strong class="folio-dialog__option-folio">{{ data.sequentialFolio }}</strong>
+      <span class="folio-dialog__option-hint">Continua despues del ultimo folio</span>
+    </button>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="folio-dialog__actions">
+    <button
+      class="folio-dialog__cancel"
+      mat-stroked-button
+      type="button"
+      (click)="cancel()"
+    >
+      Cancelar
+    </button>
+  </mat-dialog-actions>
+</div>

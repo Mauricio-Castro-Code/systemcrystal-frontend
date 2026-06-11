@@ -248,22 +248,57 @@ export class OrderRecordsPageComponent implements AfterViewInit {
       return;
     }
 
+    await this.applyBulkOperationalStatus(
+      selectedIds,
+      'RECOGIDO',
+      'recogidas',
+      `Recogido por: ${personName.trim()}`,
+    );
+  }
+
+  async handleMarkAsDelivered(): Promise<void> {
+    const selectedIds = Array.from(this.selectedOrderIds());
+
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    await this.applyBulkOperationalStatus(selectedIds, 'ENTREGADO', 'entregadas');
+  }
+
+  async handleMarkAsScheduled(): Promise<void> {
+    const selectedIds = Array.from(this.selectedOrderIds());
+
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    await this.applyBulkOperationalStatus(selectedIds, 'PROGRAMADA', 'programadas');
+  }
+
+  private async applyBulkOperationalStatus(
+    selectedIds: string[],
+    operationalStatus: OrderRecord['operationalStatus'],
+    actionLabel: string,
+    comment = '',
+  ): Promise<void> {
     this.isCollecting.set(true);
     try {
       await this.orderRecordsService.updateMultipleOrderStatuses(selectedIds, {
-        operationalStatus: 'RECOGIDO',
-        comment: `Recogido por: ${personName.trim()}`,
+        operationalStatus,
+        comment,
       });
 
       this.selectedOrderIds.set(new Set());
+      const plural = selectedIds.length > 1;
       this.actionMessage.set(
-        `${selectedIds.length} nota${selectedIds.length > 1 ? 's' : ''} marcada${selectedIds.length > 1 ? 's' : ''} como recogidas.`,
+        `${selectedIds.length} nota${plural ? 's' : ''} marcada${plural ? 's' : ''} como ${actionLabel}.`,
       );
     } catch (error) {
       this.actionMessage.set(
         error instanceof Error
           ? error.message
-          : 'No fue posible marcar las notas como recogidas.',
+          : `No fue posible marcar las notas como ${actionLabel}.`,
       );
     } finally {
       this.isCollecting.set(false);
