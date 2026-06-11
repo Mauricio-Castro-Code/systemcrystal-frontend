@@ -35,6 +35,8 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .order-records-page__search {
@@ -43,6 +45,22 @@
 
 .order-records-page__sort {
   width: min(100%, 16rem);
+}
+
+.order-records-page__selection-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(var(--of-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--of-accent-rgb), 0.2);
+}
+
+.order-records-page__selection-count {
+  color: var(--of-accent-strong);
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .order-records-page__folders {
