@@ -240,6 +240,30 @@
   }
 }
 
+/* Movil: tabla compacta (sin carpetas ni fecha) para una lectura eficiente */
+@media (max-width: 600px) {
+  .order-records-page {
+    gap: 1rem;
+  }
+
+  .order-records-page__table-card {
+    padding: 0.75rem 0.6rem 0;
+  }
+
+  .order-records-page__table-wrap {
+    overflow-x: visible;
+  }
+
+  .order-records-table .mat-column-folders,
+  .order-records-table .mat-column-deliveryDate {
+    display: none;
+  }
+
+  .order-records-table__actions {
+    gap: 0;
+  }
+}
+
 @media (min-width: 960px) {
   .order-records-page {
     padding-top: 2rem;

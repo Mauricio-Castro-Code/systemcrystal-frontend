@@ -210,6 +210,18 @@
   width: 100%;
 }
 
+/* Movil: oculta la columna Total (de solo lectura; el subtotal sale en el pie)
+   y mantiene un ancho minimo usable con scroll interno en la tarjeta. */
+@media (max-width: 600px) {
+  .equipment-table {
+    min-width: 420px;
+  }
+
+  .equipment-table .mat-column-total {
+    display: none;
+  }
+}
+
 .equipment-table-footer {
   display: flex;
   align-items: center;
