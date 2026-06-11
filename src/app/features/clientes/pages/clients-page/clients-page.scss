@@ -318,3 +318,46 @@
     width: 100%;
   }
 }
+
+/* Movil: la tabla muestra solo el nombre del cliente y el acceso al detalle */
+@media (max-width: 600px) {
+  .clients-page {
+    gap: 1rem;
+  }
+
+  .clients-page__table-card {
+    padding: 0.75rem 0.6rem 0;
+  }
+
+  .clients-page__table-wrap {
+    overflow-x: visible;
+  }
+
+  .clients-table .mat-column-phoneNumber,
+  .clients-table .mat-column-address,
+  .clients-table .mat-column-mergedRecords {
+    display: none;
+  }
+
+  /* La columna de acciones queda compacta: solo el icono */
+  .clients-table .mat-column-actions {
+    width: 3rem;
+    text-align: right;
+  }
+
+  .clients-table__details-button {
+    gap: 0;
+    padding: 0.5rem;
+    border-radius: 50%;
+  }
+
+  .clients-table__details-button span {
+    display: none;
+  }
+
+  .clients-table__details-button .mat-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+}

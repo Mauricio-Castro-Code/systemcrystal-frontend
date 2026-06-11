@@ -156,3 +156,26 @@
     padding-top: 2rem;
   }
 }
+
+/* Movil: tabla compacta (sin fecha de registro) */
+@media (max-width: 600px) {
+  .quotation-records-page {
+    gap: 1rem;
+  }
+
+  .quotation-records-page__table-card {
+    padding: 0.75rem 0.6rem 0;
+  }
+
+  .quotation-records-page__table-wrap {
+    overflow-x: visible;
+  }
+
+  .quotation-records-table .mat-column-date {
+    display: none;
+  }
+
+  .quotation-records-table__actions {
+    gap: 0;
+  }
+}

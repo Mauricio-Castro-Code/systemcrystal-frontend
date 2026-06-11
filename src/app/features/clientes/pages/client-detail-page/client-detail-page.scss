@@ -287,3 +287,17 @@
     min-width: 760px;
   }
 }
+
+/* Movil: el historial cabe sin scroll mostrando solo Pedido, Total y Accion */
+@media (max-width: 600px) {
+  .client-history-table {
+    min-width: 0;
+  }
+
+  .client-history-table th:nth-child(2),
+  .client-history-table td:nth-child(2),
+  .client-history-table th:nth-child(4),
+  .client-history-table td:nth-child(4) {
+    display: none;
+  }
+}

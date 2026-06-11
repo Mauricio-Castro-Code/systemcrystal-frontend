@@ -120,6 +120,8 @@ body {
   background: var(--of-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Evita que cualquier elemento ancho (tablas, etc.) ensanche la pagina en movil */
+  overflow-x: hidden;
 }
 
 button,
@@ -327,4 +329,52 @@ a {
   color: var(--of-text-muted);
   font-size: var(--of-fs-base);
   line-height: 1.7;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Refinamientos globales para movil (telefonos ≤ 600px)
+   Aplican a todas las paginas para una vista compacta y sin
+   desbordes horizontales por tablas u otros elementos anchos.
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Cualquier contenedor de tabla con scroll propio se mantiene
+     dentro de la pantalla y permite desplazamiento tactil suave. */
+  [class$='__table-wrap'],
+  [class*='__table-wrap '] {
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  /* Tablas Material mas compactas en celulares */
+  .mat-mdc-table .mat-mdc-header-cell,
+  .mat-mdc-table .mat-mdc-cell {
+    padding: 0 0.5rem !important;
+    font-size: 0.85rem;
+  }
+
+  .mat-mdc-table .mat-mdc-header-cell:first-of-type,
+  .mat-mdc-table .mat-mdc-cell:first-of-type {
+    padding-left: 0.25rem !important;
+  }
+
+  /* Paginador compacto: oculta el selector de tamano de pagina
+     (poco util en celular) y reduce el espaciado. */
+  .mat-mdc-paginator .mat-mdc-paginator-page-size {
+    display: none !important;
+  }
+
+  .mat-mdc-paginator .mat-mdc-paginator-range-label {
+    margin: 0 0.5rem !important;
+  }
+
+  .mat-mdc-paginator .mat-mdc-paginator-container {
+    padding: 0 0.25rem !important;
+    justify-content: center;
+  }
+
+  /* Las tarjetas con grid interno (formulario + tabla, etc.) se
+     apilan en una sola columna. */
+  .of-page {
+    gap: 1rem;
+  }
 }
