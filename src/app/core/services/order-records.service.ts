@@ -291,6 +291,49 @@ export class OrderRecordsService {
     this.archivedRecordsState.update(patch);
   }
 
+  async updateMultipleOrderStatuses(
+    orderIds: string[],
+    input: UpdateOrderStatusesInput,
+  ): Promise<void> {
+    const headers = this.requireAuthHeaders();
+    this.errorState.set('');
+
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${API_BASE_URL}/orders/bulk-update-status/`, {
+          orderIds,
+          ...input,
+        }, { headers }),
+      );
+
+      const patch = (records: OrderRecord[]) =>
+        records.map((r) =>
+          orderIds.includes(r.orderId)
+            ? {
+                ...r,
+                operationalStatus: input.operationalStatus ?? r.operationalStatus,
+                operationalStatusLabel: input.operationalStatus
+                  ? this.resolveOperationalStatusLabel(input.operationalStatus as OrderOperationalStatus)
+                  : r.operationalStatusLabel,
+                billingStatus: input.billingStatus ?? r.billingStatus,
+                billingStatusLabel: input.billingStatus
+                  ? this.resolveBillingStatusLabel(input.billingStatus as OrderBillingStatus)
+                  : r.billingStatusLabel,
+              }
+            : r,
+        );
+      this.recordsState.update(patch);
+      this.archivedRecordsState.update(patch);
+    } catch (error) {
+      const message = this.resolveHttpError(
+        error,
+        'No fue posible actualizar el estado de las notas seleccionadas.',
+      );
+      this.errorState.set(message);
+      throw new Error(message);
+    }
+  }
+
   async downloadOrderExcel(orderId: string): Promise<void> {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');

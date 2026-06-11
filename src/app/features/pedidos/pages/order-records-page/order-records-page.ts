@@ -16,6 +16,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom, startWith } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -46,6 +47,7 @@ import { OrderRecordsService } from '../../../../core/services/order-records.ser
     CurrencyPipe,
     DatePipe,
     MatButtonModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -69,6 +71,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   readonly sortOptions = NOTE_SORT_OPTIONS;
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly displayedColumns = [
+    'select',
     'orderId',
     'clientName',
     'folders',
@@ -83,6 +86,8 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   readonly isLoading = this.orderRecordsService.isLoading;
   readonly errorMessage = this.orderRecordsService.errorMessage;
   readonly dataSource = new MatTableDataSource<OrderRecord>([]);
+  readonly selectedOrderIds = signal<Set<string>>(new Set());
+  readonly isCollecting = signal(false);
   readonly filteredRecords = computed(() => {
     const records = this.orderRecordsService.orderRecords();
     const searchTerm = this.searchTerm();
@@ -111,6 +116,12 @@ export class OrderRecordsPageComponent implements AfterViewInit {
       count: this.countRecordsForFolder(option),
     })),
   );
+  readonly selectedCount = computed(() => this.selectedOrderIds().size);
+  readonly allSelected = computed(() => {
+    const visibleIds = this.filteredRecords().map((r) => r.orderId);
+    const selectedIds = this.selectedOrderIds();
+    return visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+  });
 
   constructor() {
     effect(() => {
@@ -184,6 +195,79 @@ export class OrderRecordsPageComponent implements AfterViewInit {
 
   trackFolderOption(index: number, option: NoteFolderOption): string {
     return `${index}-${option.key}`;
+  }
+
+  toggleSelectOrder(orderId: string): void {
+    this.selectedOrderIds.update((selected) => {
+      const newSelected = new Set(selected);
+      if (newSelected.has(orderId)) {
+        newSelected.delete(orderId);
+      } else {
+        newSelected.add(orderId);
+      }
+      return newSelected;
+    });
+  }
+
+  toggleSelectAll(): void {
+    const visibleIds = this.filteredRecords().map((r) => r.orderId);
+    const isCurrentlyAllSelected = this.allSelected();
+
+    if (isCurrentlyAllSelected) {
+      this.selectedOrderIds.update((selected) => {
+        const newSelected = new Set(selected);
+        visibleIds.forEach((id) => newSelected.delete(id));
+        return newSelected;
+      });
+    } else {
+      this.selectedOrderIds.update((selected) => {
+        const newSelected = new Set(selected);
+        visibleIds.forEach((id) => newSelected.add(id));
+        return newSelected;
+      });
+    }
+  }
+
+  isOrderSelected(orderId: string): boolean {
+    return this.selectedOrderIds().has(orderId);
+  }
+
+  async handleMarkAsCollected(): Promise<void> {
+    const selectedIds = Array.from(this.selectedOrderIds());
+
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    const personName = prompt(
+      `Marcar ${selectedIds.length} nota${selectedIds.length > 1 ? 's' : ''} como recogidas.\n\n¿Quién las recogió?`,
+      '',
+    );
+
+    if (!personName || !personName.trim()) {
+      return;
+    }
+
+    this.isCollecting.set(true);
+    try {
+      await this.orderRecordsService.updateMultipleOrderStatuses(selectedIds, {
+        operationalStatus: 'RECOGIDO',
+        comment: `Recogido por: ${personName.trim()}`,
+      });
+
+      this.selectedOrderIds.set(new Set());
+      this.actionMessage.set(
+        `${selectedIds.length} nota${selectedIds.length > 1 ? 's' : ''} marcada${selectedIds.length > 1 ? 's' : ''} como recogidas.`,
+      );
+    } catch (error) {
+      this.actionMessage.set(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible marcar las notas como recogidas.',
+      );
+    } finally {
+      this.isCollecting.set(false);
+    }
   }
 
   private countRecordsForFolder(option: NoteFolderOption): number {
