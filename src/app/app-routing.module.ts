@@ -12,11 +12,13 @@ export const appRoutes: Routes = [
   },
   {
     path: 'login',
+    title: 'Acceso',
     loadChildren: () =>
       import('./features/auth/auth.routes').then((module) => module.AUTH_ROUTES),
   },
   {
     path: 'dashboard',
+    title: 'Dashboard',
     canActivate: [authGuard],
     loadChildren: () =>
       import('./features/dashboard/dashboard.routes').then(
@@ -25,6 +27,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'clientes',
+    title: 'Clientes',
     canActivate: [authGuard],
     loadChildren: () =>
       import('./features/clientes/clientes.routes').then(
@@ -33,6 +36,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'inventario',
+    title: 'Inventario',
     canActivate: [authGuard],
     loadChildren: () =>
       import('./features/inventario/inventario.routes').then(
@@ -41,6 +45,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'cotizaciones',
+    title: 'Cotizaciones',
     canActivate: [authGuard],
     loadChildren: () =>
       import('./features/cotizaciones/cotizaciones.routes').then(
@@ -49,6 +54,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'pedidos',
+    title: 'Notas',
     canActivate: [authGuard],
     loadChildren: () =>
       import('./features/pedidos/pedidos.routes').then(
@@ -57,6 +63,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'contabilidad',
+    title: 'Contabilidad',
     canActivate: [adminGuard],
     loadChildren: () =>
       import('./features/contabilidad/contabilidad.routes').then(
@@ -65,6 +72,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'fletes',
+    title: 'Fletes',
     canActivate: [authGuard],
     loadChildren: () =>
       import('./features/fletes/fletes.routes').then(
