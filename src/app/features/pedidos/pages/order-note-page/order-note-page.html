@@ -34,6 +34,15 @@
           Descargar PDF
         </button>
         <button
+          mat-stroked-button
+          type="button"
+          [disabled]="isDownloadingExcel()"
+          (click)="downloadExcel()"
+        >
+          <mat-icon>table_view</mat-icon>
+          Descargar Excel
+        </button>
+        <button
           mat-raised-button
           type="button"
           color="primary"

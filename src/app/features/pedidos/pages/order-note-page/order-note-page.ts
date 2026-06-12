@@ -78,6 +78,7 @@ export class OrderNotePageComponent implements OnDestroy {
   readonly orderRecord = computed(() => this.orderRecordsService.getOrderById(this.orderId));
   readonly isLoading = signal(true);
   readonly isDownloadingPdf = signal(false);
+  readonly isDownloadingExcel = signal(false);
   readonly isLoadingPdfPreview = signal(true);
   readonly loadErrorMessage = signal('');
   readonly workflowMessage = signal('');
@@ -179,6 +180,23 @@ export class OrderNotePageComponent implements OnDestroy {
       );
     } finally {
       this.isDownloadingPdf.set(false);
+    }
+  }
+
+  async downloadExcel(): Promise<void> {
+    this.isDownloadingExcel.set(true);
+    this.loadErrorMessage.set('');
+
+    try {
+      await this.orderRecordsService.downloadOrderExcel(this.orderId);
+    } catch (error) {
+      this.loadErrorMessage.set(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible descargar el Excel de la nota.',
+      );
+    } finally {
+      this.isDownloadingExcel.set(false);
     }
   }
 

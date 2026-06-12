@@ -371,14 +371,9 @@ export class OrderRecordsService {
         }),
       );
 
-      this.triggerBrowserDownload(
-        response.body,
-        this.resolveDownloadFileName(
-          response.headers.get('content-disposition'),
-          `${orderId}.xlsx`,
-        ),
-        'archivo Excel',
-      );
+      // El nombre del archivo es siempre el folio (no dependemos del header
+      // Content-Disposition, que entre dominios no se expone al navegador).
+      this.triggerBrowserDownload(response.body, `${orderId}.xlsx`, 'archivo Excel');
     } catch (error) {
       const message = this.resolveHttpError(
         error,
@@ -429,14 +424,9 @@ export class OrderRecordsService {
         }),
       );
 
-      this.triggerBrowserDownload(
-        response.body,
-        this.resolveDownloadFileName(
-          response.headers.get('content-disposition'),
-          `${orderId}.pdf`,
-        ),
-        'PDF',
-      );
+      // El nombre del archivo es siempre el folio (no dependemos del header
+      // Content-Disposition, que entre dominios no se expone al navegador).
+      this.triggerBrowserDownload(response.body, `${orderId}.pdf`, 'PDF');
     } catch (error) {
       const message = this.resolveHttpError(
         error,
@@ -796,24 +786,6 @@ export class OrderRecordsService {
     }
 
     return null;
-  }
-
-  private resolveDownloadFileName(
-    contentDisposition: string | null,
-    fallbackFileName: string,
-  ): string {
-    if (!contentDisposition) {
-      return fallbackFileName;
-    }
-
-    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
-
-    if (utf8Match?.[1]) {
-      return decodeURIComponent(utf8Match[1]);
-    }
-
-    const plainMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
-    return plainMatch?.[1]?.trim() || fallbackFileName;
   }
 
   private triggerBrowserDownload(
