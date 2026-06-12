@@ -9,11 +9,14 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 
 import { QuotationRecordsService } from '../../../../core/services/quotation-records.service';
+import { WhatsAppMessageDialogComponent } from '../../../../shared/components/whatsapp-message-dialog/whatsapp-message-dialog';
 
 @Component({
   selector: 'app-quotation-note-page',
@@ -27,6 +30,7 @@ export class QuotationNotePageComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly quotationRecordsService = inject(QuotationRecordsService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly dialog = inject(MatDialog);
   private pdfObjectUrl: string | null = null;
 
   readonly quotationId = this.route.snapshot.paramMap.get('quotationId') ?? '';
@@ -117,19 +121,45 @@ export class QuotationNotePageComponent implements OnDestroy {
     await this.loadPdfPreview();
   }
 
-  sendWhatsApp(): void {
+  async sendWhatsApp(): Promise<void> {
     const record = this.quotationRecord();
     if (!record || typeof window === 'undefined') return;
+
+    const name = record.quotation.clientInfo.fullName;
+    const defaultMessage = `Hola ${name}, le compartimos su cotización ${record.quotationId}. Quedamos a sus órdenes.`;
+
+    const ref = this.dialog.open(WhatsAppMessageDialogComponent, {
+      width: '460px',
+      data: { message: defaultMessage },
+      autoFocus: false,
+    });
+
+    const editedMessage: string | null = await firstValueFrom(ref.afterClosed());
+
+    if (!editedMessage) {
+      return;
+    }
+
+    // Descarga el PDF para adjuntarlo manualmente en el chat.
+    try {
+      await this.quotationRecordsService.downloadQuotationPdf(this.quotationId);
+    } catch (error) {
+      this.loadErrorMessage.set(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible descargar el PDF de la cotizacion.',
+      );
+    }
 
     const rawPhone = record.quotation.clientInfo.phoneNumber ?? '';
     const digits = rawPhone.replace(/\D/g, '');
     const phone = digits.length === 10 ? `52${digits}` : digits;
-    const name = record.quotation.clientInfo.fullName;
-    const message = encodeURIComponent(
-      `Hola ${name}, le compartimos su cotización ${record.quotationId}. Quedamos a sus órdenes.`,
-    );
 
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank', 'noopener,noreferrer');
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(editedMessage)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
   }
 
   private async loadQuotationRecord(): Promise<void> {

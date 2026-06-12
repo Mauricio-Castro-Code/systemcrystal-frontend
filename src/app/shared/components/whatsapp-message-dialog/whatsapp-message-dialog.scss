@@ -1,0 +1,76 @@
+.wa-dialog {
+  padding: 0.5rem;
+  min-width: 320px;
+  max-width: 440px;
+  text-align: center;
+}
+
+.wa-dialog__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(39, 119, 64, 0.1);
+  color: #277740;
+  margin-bottom: 1rem;
+
+  mat-icon {
+    font-size: 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+.wa-dialog__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1d2f58;
+  letter-spacing: -0.02em;
+  padding: 0 !important;
+}
+
+.wa-dialog__content {
+  padding: 0 !important;
+  max-height: none !important;
+  width: 100%;
+}
+
+.wa-dialog__hint {
+  margin: 0 0 1rem;
+  color: #5d6b88;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.wa-dialog__field {
+  width: 100%;
+}
+
+.wa-dialog__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0.5rem 0 0 !important;
+  min-height: unset !important;
+}
+
+.wa-dialog__btn {
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 10px !important;
+}
+
+.wa-dialog__btn--cancel {
+  min-width: 110px;
+  border-color: rgba(29, 47, 88, 0.2) !important;
+  color: #2a3d66 !important;
+}
+
+.wa-dialog__btn--send {
+  background: #277740 !important;
+  color: #fff !important;
+}

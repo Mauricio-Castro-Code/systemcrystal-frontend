@@ -11,8 +11,10 @@ import {
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -20,6 +22,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
+import { WhatsAppMessageDialogComponent } from '../../../../shared/components/whatsapp-message-dialog/whatsapp-message-dialog';
 import {
   OrderBillingStatus,
   OrderOperationalStatus,
@@ -68,6 +71,7 @@ export class OrderNotePageComponent implements OnDestroy {
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly authService = inject(AuthService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly dialog = inject(MatDialog);
 
   readonly isAdmin = this.authService.isAdmin;
   readonly isTogglingCancel = signal(false);
@@ -204,19 +208,45 @@ export class OrderNotePageComponent implements OnDestroy {
     await this.loadPdfPreview();
   }
 
-  sendWhatsApp(): void {
+  async sendWhatsApp(): Promise<void> {
     const record = this.orderRecord();
     if (!record || typeof window === 'undefined') return;
+
+    const name = record.quotation.clientInfo.fullName;
+    const defaultMessage = `Hola ${name}, le compartimos la nota de su pedido ${record.orderId}. Quedo a sus órdenes.`;
+
+    const ref = this.dialog.open(WhatsAppMessageDialogComponent, {
+      width: '460px',
+      data: { message: defaultMessage },
+      autoFocus: false,
+    });
+
+    const editedMessage: string | null = await firstValueFrom(ref.afterClosed());
+
+    if (!editedMessage) {
+      return;
+    }
+
+    // Descarga el PDF para adjuntarlo manualmente en el chat.
+    try {
+      await this.orderRecordsService.downloadOrderPdf(this.orderId);
+    } catch (error) {
+      this.loadErrorMessage.set(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible descargar el PDF de la nota.',
+      );
+    }
 
     const rawPhone = record.quotation.clientInfo.phoneNumber ?? '';
     const digits = rawPhone.replace(/\D/g, '');
     const phone = digits.length === 10 ? `52${digits}` : digits;
-    const name = record.quotation.clientInfo.fullName;
-    const message = encodeURIComponent(
-      `Hola ${name}, le compartimos la nota de su pedido ${record.orderId}. Quedo a sus órdenes.`,
-    );
 
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank', 'noopener,noreferrer');
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(editedMessage)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
   }
 
   async saveWorkflowChanges(): Promise<void> {
