@@ -71,6 +71,15 @@ export const appRoutes: Routes = [
       ),
   },
   {
+    path: 'equipo',
+    title: 'Equipo',
+    canActivate: [adminGuard],
+    loadChildren: () =>
+      import('./features/equipo/equipo.routes').then(
+        (module) => module.EQUIPO_ROUTES,
+      ),
+  },
+  {
     path: 'fletes',
     title: 'Fletes',
     canActivate: [authGuard],
