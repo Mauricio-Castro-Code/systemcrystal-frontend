@@ -572,10 +572,7 @@ export class OrderRecordsService {
       ];
     }
 
-    const operationalFolderKey =
-      operationalStatus === 'ENTREGADO'
-        ? 'por-recoger'
-        : operationalStatus.toLowerCase().replaceAll('_', '-');
+    const operationalFolderKey = operationalStatus.toLowerCase().replaceAll('_', '-');
     const derivedFolderKeys = [operationalFolderKey];
 
     if (billingStatus === 'POR_COBRAR') {
@@ -603,9 +600,7 @@ export class OrderRecordsService {
     }
 
     const derivedFolderLabels = [
-      operationalStatus === 'ENTREGADO'
-        ? 'En Ruta'
-        : this.resolveOperationalStatusLabel(operationalStatus),
+      this.resolveOperationalStatusLabel(operationalStatus),
     ];
 
     if (billingStatus === 'POR_COBRAR') {
