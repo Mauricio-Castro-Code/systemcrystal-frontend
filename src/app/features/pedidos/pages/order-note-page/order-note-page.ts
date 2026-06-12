@@ -31,7 +31,7 @@ const OPERATIONAL_STATUS_OPTIONS: Array<{
 }> = [
   { value: 'PROGRAMADA', label: 'Programada' },
   { value: 'ENTREGADO', label: 'Entregado' },
-  { value: 'POR_RECOGER', label: 'Por recoger' },
+  { value: 'POR_RECOGER', label: 'En Ruta' },
   { value: 'CLIENTE_ENTREGA', label: 'Cliente entrega' },
   { value: 'RECOGIDO', label: 'Recogido' },
 ];
