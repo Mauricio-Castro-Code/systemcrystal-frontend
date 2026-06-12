@@ -33,6 +33,15 @@
           <mat-icon>file_download</mat-icon>
           Descargar PDF
         </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="isSubmitting()"
+          (click)="sendWhatsApp()"
+        >
+          <mat-icon>send</mat-icon>
+          Enviar por WhatsApp
+        </button>
         <button mat-raised-button type="button" [disabled]="isSubmitting()" (click)="confirmOrder()">
           <mat-icon>task_alt</mat-icon>
           Confirmar Pedido

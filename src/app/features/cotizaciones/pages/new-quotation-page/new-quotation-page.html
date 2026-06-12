@@ -340,8 +340,8 @@
                 isEditingOrder
                   ? 'Actualiza los datos del pedido confirmado'
                   : isEditingQuotation
-                    ? 'Actualiza el borrador o confirma el pedido'
-                    : 'Guarda el borrador o confirma el pedido'
+                    ? 'Actualiza la cotización o confirma el pedido'
+                    : 'Guarda la cotización o confirma el pedido'
               }}
             </p>
           </div>
@@ -373,7 +373,7 @@
             </button>
           } @else {
             <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="saveDraft()">
-              Guardar Borrador
+              Guardar Cotización
             </button>
             <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="saveNote()">
               Guardar Nota

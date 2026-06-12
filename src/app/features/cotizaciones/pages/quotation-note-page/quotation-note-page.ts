@@ -117,6 +117,21 @@ export class QuotationNotePageComponent implements OnDestroy {
     await this.loadPdfPreview();
   }
 
+  sendWhatsApp(): void {
+    const record = this.quotationRecord();
+    if (!record || typeof window === 'undefined') return;
+
+    const rawPhone = record.quotation.clientInfo.phoneNumber ?? '';
+    const digits = rawPhone.replace(/\D/g, '');
+    const phone = digits.length === 10 ? `52${digits}` : digits;
+    const name = record.quotation.clientInfo.fullName;
+    const message = encodeURIComponent(
+      `Hola ${name}, le compartimos su cotización ${record.quotationId}. Quedamos a sus órdenes.`,
+    );
+
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank', 'noopener,noreferrer');
+  }
+
   private async loadQuotationRecord(): Promise<void> {
     try {
       await this.quotationRecordsService.loadQuotationById(this.quotationId);
