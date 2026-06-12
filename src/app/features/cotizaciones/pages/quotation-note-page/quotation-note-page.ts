@@ -16,6 +16,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 
 import { QuotationRecordsService } from '../../../../core/services/quotation-records.service';
+import { FolioStrategyService } from '../../../../core/services/folio-strategy.service';
 import { WhatsAppMessageDialogComponent } from '../../../../shared/components/whatsapp-message-dialog/whatsapp-message-dialog';
 
 @Component({
@@ -29,6 +30,7 @@ export class QuotationNotePageComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly quotationRecordsService = inject(QuotationRecordsService);
+  private readonly folioStrategyService = inject(FolioStrategyService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly dialog = inject(MatDialog);
   private pdfObjectUrl: string | null = null;
@@ -77,11 +79,18 @@ export class QuotationNotePageComponent implements OnDestroy {
   }
 
   async confirmOrder(): Promise<void> {
+    const folioStrategy = await this.folioStrategyService.resolve();
+
+    if (folioStrategy === null) {
+      return;
+    }
+
     this.isSubmitting.set(true);
 
     try {
       const createdOrder = await this.quotationRecordsService.confirmDraftAsOrder(
         this.quotationId,
+        folioStrategy,
       );
 
       if (!createdOrder) {
