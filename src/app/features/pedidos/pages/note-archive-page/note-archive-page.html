@@ -130,6 +130,14 @@
                 <button
                   mat-icon-button
                   type="button"
+                  [attr.aria-label]="'Editar pedido ' + record.orderId"
+                  (click)="handleEdit(record)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
                   [attr.aria-label]="'Cambiar folio ' + record.orderId"
                   (click)="handleRename(record)"
                 >
