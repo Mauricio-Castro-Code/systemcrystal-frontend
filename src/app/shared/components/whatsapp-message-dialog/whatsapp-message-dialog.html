@@ -1,0 +1,43 @@
+<div class="wa-dialog">
+  <div class="wa-dialog__icon-wrap">
+    <mat-icon>chat</mat-icon>
+  </div>
+
+  <h2 class="wa-dialog__title" mat-dialog-title>Enviar por WhatsApp</h2>
+
+  <mat-dialog-content class="wa-dialog__content">
+    <p class="wa-dialog__hint">
+      Se descargara el PDF para que lo adjuntes en el chat. Puedes editar el
+      mensaje antes de abrir WhatsApp.
+    </p>
+
+    <mat-form-field class="wa-dialog__field" appearance="outline">
+      <mat-label>Mensaje</mat-label>
+      <textarea matInput [formControl]="messageControl" rows="4"></textarea>
+      @if (messageControl.hasError('required')) {
+        <mat-error>El mensaje no puede estar vacio.</mat-error>
+      }
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="wa-dialog__actions">
+    <button
+      class="wa-dialog__btn wa-dialog__btn--cancel"
+      mat-stroked-button
+      type="button"
+      (click)="cancel()"
+    >
+      Cancelar
+    </button>
+
+    <button
+      class="wa-dialog__btn wa-dialog__btn--send"
+      mat-raised-button
+      type="button"
+      (click)="send()"
+    >
+      <mat-icon>send</mat-icon>
+      Descargar y abrir
+    </button>
+  </mat-dialog-actions>
+</div>
