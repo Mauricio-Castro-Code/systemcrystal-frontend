@@ -302,7 +302,7 @@ export class NewQuotationPageComponent {
       });
 
       this.actionMessage.set(
-        `Borrador guardado. La cotizacion ${createdQuotation.quotationId} ya esta en la base y el cliente quedo sincronizado en Clientes.`,
+        `Cotización guardada. La cotizacion ${createdQuotation.quotationId} ya esta en la base y el cliente quedo sincronizado en Clientes.`,
       );
     } catch (error) {
       this.actionMessage.set(
