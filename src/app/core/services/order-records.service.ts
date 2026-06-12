@@ -549,7 +549,7 @@ export class OrderRecordsService {
     const labels: Record<OrderOperationalStatus, string> = {
       PROGRAMADA: 'Programada',
       ENTREGADO: 'Entregado',
-      POR_RECOGER: 'Por recoger',
+      POR_RECOGER: 'En Ruta',
       CLIENTE_ENTREGA: 'Cliente entrega',
       RECOGIDO: 'Recogido',
     };
@@ -614,7 +614,7 @@ export class OrderRecordsService {
 
     const derivedFolderLabels = [
       operationalStatus === 'ENTREGADO'
-        ? 'Por recoger'
+        ? 'En Ruta'
         : this.resolveOperationalStatusLabel(operationalStatus),
     ];
 

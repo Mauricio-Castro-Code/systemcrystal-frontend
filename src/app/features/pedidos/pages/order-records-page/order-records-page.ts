@@ -27,7 +27,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 
-import { OrderRecord } from '../../models/order-record.model';
+import { OrderOperationalStatus, OrderRecord } from '../../models/order-record.model';
 import {
   NOTE_FOLDER_OPTIONS,
   NoteFolderKey,
@@ -78,6 +78,17 @@ export class OrderRecordsPageComponent implements AfterViewInit {
     'deliveryDate',
     'totalEstimated',
     'actions',
+  ];
+  readonly bulkStatusActions: ReadonlyArray<{
+    status: OrderOperationalStatus;
+    label: string;
+    icon: string;
+  }> = [
+    { status: 'PROGRAMADA', label: 'Programada', icon: 'event' },
+    { status: 'POR_RECOGER', label: 'En Ruta', icon: 'local_shipping' },
+    { status: 'ENTREGADO', label: 'Entregado', icon: 'inventory_2' },
+    { status: 'RECOGIDO', label: 'Recogido', icon: 'done_all' },
+    { status: 'CLIENTE_ENTREGA', label: 'Cliente Entrega', icon: 'handshake' },
   ];
   readonly selectedFolder = signal<NoteFolderKey>('all');
   readonly selectedSort = signal<NoteSortKey>('id-desc');
@@ -232,73 +243,50 @@ export class OrderRecordsPageComponent implements AfterViewInit {
     return this.selectedOrderIds().has(orderId);
   }
 
-  async handleMarkAsCollected(): Promise<void> {
+  async handleBulkStatus(status: OrderOperationalStatus, label: string): Promise<void> {
     const selectedIds = Array.from(this.selectedOrderIds());
 
     if (selectedIds.length === 0) {
       return;
     }
 
-    const personName = prompt(
-      `Marcar ${selectedIds.length} nota${selectedIds.length > 1 ? 's' : ''} como recogidas.\n\n¿Quién las recogió?`,
-      '',
-    );
+    let comment = '';
 
-    if (!personName || !personName.trim()) {
-      return;
+    // Al marcar como Recogido se registra quién recogió (auditoría).
+    if (status === 'RECOGIDO') {
+      const personName = prompt(
+        `Marcar ${selectedIds.length} nota${selectedIds.length > 1 ? 's' : ''} como Recogido.\n\n¿Quién las recogió?`,
+        '',
+      );
+
+      if (!personName || !personName.trim()) {
+        return;
+      }
+
+      comment = `Recogido por: ${personName.trim()}`;
     }
 
-    await this.applyBulkOperationalStatus(
-      selectedIds,
-      'RECOGIDO',
-      'recogidas',
-      `Recogido por: ${personName.trim()}`,
-    );
-  }
-
-  async handleMarkAsDelivered(): Promise<void> {
-    const selectedIds = Array.from(this.selectedOrderIds());
-
-    if (selectedIds.length === 0) {
-      return;
-    }
-
-    await this.applyBulkOperationalStatus(selectedIds, 'ENTREGADO', 'entregadas');
-  }
-
-  async handleMarkAsScheduled(): Promise<void> {
-    const selectedIds = Array.from(this.selectedOrderIds());
-
-    if (selectedIds.length === 0) {
-      return;
-    }
-
-    await this.applyBulkOperationalStatus(selectedIds, 'PROGRAMADA', 'programadas');
-  }
-
-  private async applyBulkOperationalStatus(
-    selectedIds: string[],
-    operationalStatus: OrderRecord['operationalStatus'],
-    actionLabel: string,
-    comment = '',
-  ): Promise<void> {
     this.isCollecting.set(true);
     try {
       await this.orderRecordsService.updateMultipleOrderStatuses(selectedIds, {
-        operationalStatus,
+        operationalStatus: status,
         comment,
       });
+
+      // Recargamos desde el backend para reflejar el estado real, las carpetas
+      // recalculadas y el envío al archivo de las notas marcadas como Recogido.
+      await this.orderRecordsService.loadOrders(true);
 
       this.selectedOrderIds.set(new Set());
       const plural = selectedIds.length > 1;
       this.actionMessage.set(
-        `${selectedIds.length} nota${plural ? 's' : ''} marcada${plural ? 's' : ''} como ${actionLabel}.`,
+        `${selectedIds.length} nota${plural ? 's' : ''} marcada${plural ? 's' : ''} como ${label}.`,
       );
     } catch (error) {
       this.actionMessage.set(
         error instanceof Error
           ? error.message
-          : `No fue posible marcar las notas como ${actionLabel}.`,
+          : `No fue posible marcar las notas como ${label}.`,
       );
     } finally {
       this.isCollecting.set(false);

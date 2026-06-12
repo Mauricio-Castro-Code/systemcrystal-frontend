@@ -39,36 +39,17 @@
         </span>
 
         <div class="order-records-page__selection-actions">
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="isCollecting()"
-            (click)="handleMarkAsScheduled()"
-          >
-            <mat-icon>event</mat-icon>
-            Programadas
-          </button>
-
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="isCollecting()"
-            (click)="handleMarkAsDelivered()"
-          >
-            <mat-icon>local_shipping</mat-icon>
-            Entregadas
-          </button>
-
-          <button
-            mat-raised-button
-            color="accent"
-            type="button"
-            [disabled]="isCollecting()"
-            (click)="handleMarkAsCollected()"
-          >
-            <mat-icon>done_all</mat-icon>
-            Recogidas
-          </button>
+          @for (action of bulkStatusActions; track action.status) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="isCollecting()"
+              (click)="handleBulkStatus(action.status, action.label)"
+            >
+              <mat-icon>{{ action.icon }}</mat-icon>
+              {{ action.label }}
+            </button>
+          }
         </div>
       </div>
     }

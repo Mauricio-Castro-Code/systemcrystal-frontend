@@ -16,7 +16,7 @@ export interface NoteFolderOption {
 export const NOTE_FOLDER_OPTIONS: NoteFolderOption[] = [
   { key: 'all', label: 'Todas' },
   { key: 'programada', label: 'Programadas' },
-  { key: 'por-recoger', label: 'Por recoger' },
+  { key: 'por-recoger', label: 'En Ruta' },
   { key: 'cliente-entrega', label: 'Cliente entrega' },
   { key: 'por-cobrar', label: 'Por cobrar' },
 ];
