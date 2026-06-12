@@ -138,6 +138,10 @@ export class NoteArchivePageComponent implements AfterViewInit {
     await this.router.navigate(['/pedidos/registro', record.orderId]);
   }
 
+  async handleEdit(record: OrderRecord): Promise<void> {
+    await this.router.navigate(['/pedidos', record.orderId, 'editar']);
+  }
+
   async handleRename(record: OrderRecord): Promise<void> {
     const ref = this.dialog.open(RenameOrderDialogComponent, {
       width: '440px',
