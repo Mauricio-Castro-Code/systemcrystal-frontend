@@ -1,0 +1,76 @@
+<div class="team-dialog">
+  <div class="team-dialog__icon-wrap">
+    <mat-icon>{{ isEditing ? 'manage_accounts' : 'person_add' }}</mat-icon>
+  </div>
+
+  <h2 class="team-dialog__title" mat-dialog-title>
+    {{ isEditing ? 'Editar usuario' : 'Nuevo usuario' }}
+  </h2>
+
+  <mat-dialog-content class="team-dialog__content">
+    <form class="team-dialog__form" [formGroup]="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="displayName" placeholder="Ej. Juan Perez" />
+        @if (form.controls.displayName.hasError('required')) {
+          <mat-error>El nombre es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Correo</mat-label>
+        <input matInput formControlName="email" placeholder="correo@empresa.com" />
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>El correo es obligatorio.</mat-error>
+        }
+        @if (form.controls.email.hasError('email')) {
+          <mat-error>Correo invalido.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="role">
+          @for (option of roleOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ isEditing ? 'Nueva contrasena (opcional)' : 'Contrasena' }}</mat-label>
+        <input
+          matInput
+          type="password"
+          formControlName="password"
+          [placeholder]="isEditing ? 'Dejar en blanco para no cambiarla' : 'Minimo 8 caracteres'"
+        />
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>La contrasena es obligatoria.</mat-error>
+        }
+        @if (form.controls.password.hasError('minlength')) {
+          <mat-error>Minimo 8 caracteres.</mat-error>
+        }
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="team-dialog__actions">
+    <button
+      class="team-dialog__btn team-dialog__btn--cancel"
+      mat-stroked-button
+      type="button"
+      (click)="cancel()"
+    >
+      Cancelar
+    </button>
+    <button
+      class="team-dialog__btn team-dialog__btn--save"
+      mat-raised-button
+      type="button"
+      (click)="save()"
+    >
+      {{ isEditing ? 'Guardar cambios' : 'Crear usuario' }}
+    </button>
+  </mat-dialog-actions>
+</div>

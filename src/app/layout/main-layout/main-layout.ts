@@ -48,6 +48,7 @@ export class MainLayoutComponent {
     if (url.startsWith('/clientes')) return 'clientes';
     if (url.startsWith('/inventario')) return 'inventario';
     if (url.startsWith('/contabilidad')) return 'contabilidad';
+    if (url.startsWith('/equipo')) return 'equipo';
     if (url.startsWith('/fletes')) return 'fletes';
     if (url.startsWith('/cotizaciones/nueva')) return 'cotizacion';
     if (url.startsWith('/cotizaciones')) return 'cotizaciones-registro';
@@ -67,6 +68,7 @@ export class MainLayoutComponent {
     { id: 'pedidos-registro', label: 'Registro Notas', icon: 'file-text', route: '/pedidos/registro' },
     { id: 'fletes', label: 'Calculador Fletes', icon: 'map-pin', route: '/fletes' },
     { id: 'contabilidad', label: 'Contabilidad', icon: 'bar-chart-2', route: '/contabilidad', adminOnly: true },
+    { id: 'equipo', label: 'Equipo', icon: 'settings', route: '/equipo', adminOnly: true },
   ];
 
   readonly navigationItems = computed<NavigationItem[]>(() => {
