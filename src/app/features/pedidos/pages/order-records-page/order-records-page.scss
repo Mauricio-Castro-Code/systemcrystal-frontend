@@ -17,6 +17,21 @@
   text-transform: uppercase;
 }
 
+.order-records-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.order-records-page__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .order-records-page__header h1 {
   margin: 1rem 0 0;
   color: var(--of-title);

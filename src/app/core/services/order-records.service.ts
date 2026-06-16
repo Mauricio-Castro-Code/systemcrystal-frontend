@@ -205,6 +205,32 @@ export class OrderRecordsService {
     }
   }
 
+  async importOrderFromExcel(file: File): Promise<OrderRecord> {
+    const headers = this.requireAuthHeaders();
+    this.errorState.set('');
+
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    try {
+      const createdOrder = await firstValueFrom(
+        this.http.post<OrderRecord>(`${API_BASE_URL}/orders/import/`, formData, {
+          headers,
+        }),
+      );
+
+      this.loadedState.set(true);
+      return this.upsertOrderRecord(createdOrder);
+    } catch (error) {
+      const message = this.resolveHttpError(
+        error,
+        'No fue posible importar la nota desde el Excel.',
+      );
+      this.errorState.set(message);
+      throw new Error(message);
+    }
+  }
+
   async updateOrder(orderId: string, quotation: QuotationNote): Promise<OrderRecord | null> {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');

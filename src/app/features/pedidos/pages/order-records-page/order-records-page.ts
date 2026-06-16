@@ -38,6 +38,7 @@ import {
   NoteSortKey,
 } from '../../models/note-sort.model';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-order-records',
@@ -64,8 +65,13 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly authService = inject(AuthService);
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
+  @ViewChild('importInput') importInput?: { nativeElement: HTMLInputElement };
+
+  readonly isAdmin = this.authService.isAdmin;
+  readonly isImporting = signal(false);
 
   readonly folderOptions = NOTE_FOLDER_OPTIONS;
   readonly sortOptions = NOTE_SORT_OPTIONS;
@@ -152,6 +158,36 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     if (this.paginator) {
       this.dataSource.paginator = this.paginator;
+    }
+  }
+
+  triggerImport(): void {
+    this.importInput?.nativeElement.click();
+  }
+
+  async handleImportFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // permite reimportar el mismo archivo
+
+    if (!file) {
+      return;
+    }
+
+    this.isImporting.set(true);
+    try {
+      const imported = await this.orderRecordsService.importOrderFromExcel(file);
+      this.actionMessage.set(
+        `Nota ${imported.orderId} importada correctamente desde Excel.`,
+      );
+    } catch (error) {
+      this.actionMessage.set(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible importar la nota desde el Excel.',
+      );
+    } finally {
+      this.isImporting.set(false);
     }
   }
 

@@ -8,6 +8,28 @@
         numeracion tipo <strong>0001-26</strong>.
       </p>
     </div>
+
+    @if (isAdmin()) {
+      <div class="order-records-page__header-actions">
+        <input
+          #importInput
+          type="file"
+          accept=".xlsx"
+          hidden
+          (change)="handleImportFile($event)"
+        />
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="isImporting()"
+          (click)="triggerImport()"
+        >
+          <mat-icon>upload_file</mat-icon>
+          {{ isImporting() ? 'Importando...' : 'Importar nota' }}
+        </button>
+      </div>
+    }
   </header>
 
   <section class="order-records-page__toolbar">
