@@ -64,7 +64,7 @@
             <mat-slide-toggle
               color="primary"
               [checked]="member.isActive"
-              [disabled]="isCurrentUser(member)"
+              [disabled]="isAccessLocked(member) && member.isActive"
               (change)="toggleActive(member)"
             >
               {{ member.isActive ? 'Activo' : 'Inactivo' }}
@@ -87,7 +87,7 @@
               <button
                 mat-icon-button
                 type="button"
-                [disabled]="isCurrentUser(member)"
+                [disabled]="isAccessLocked(member)"
                 [attr.aria-label]="'Eliminar ' + member.email"
                 (click)="deleteMember(member)"
               >

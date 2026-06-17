@@ -53,6 +53,16 @@ export class EquipoPageComponent {
     return member.id === this.currentUserId;
   }
 
+  // Regla: entre administradores no se puede eliminar ni deshabilitar el acceso.
+  isOtherAdmin(member: TeamMember): boolean {
+    return member.role === 'admin' && !this.isCurrentUser(member);
+  }
+
+  // No se puede tocar el acceso (desactivar/eliminar) de uno mismo ni de otro admin.
+  isAccessLocked(member: TeamMember): boolean {
+    return this.isCurrentUser(member) || this.isOtherAdmin(member);
+  }
+
   async reload(): Promise<void> {
     await this.teamService.loadMembers();
   }
