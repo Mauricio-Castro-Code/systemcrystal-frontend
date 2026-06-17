@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NavigationError, Router, RouterOutlet } from '@angular/router';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -10,8 +12,11 @@ import { NavigationError, Router, RouterOutlet } from '@angular/router';
 })
 export class App {
   private readonly router = inject(Router);
+  private readonly swUpdate = inject(SwUpdate);
 
   constructor() {
+    this.watchForAppUpdates();
+
     // Tras un nuevo deploy, un chunk perezoso (ej. el editor) puede quedar con
     // un hash viejo en cache. Al navegar falla y "no abre nada". Si detectamos
     // ese error de carga de chunk, recargamos a la URL destino para traer los
@@ -40,5 +45,28 @@ export class App {
         window.location.assign(event.url);
       }
     });
+  }
+
+  // El service worker del PWA cachea la app. Cuando hay un deploy nuevo, lo
+  // detectamos y ofrecemos actualizar para que no se quede en una version vieja.
+  private watchForAppUpdates(): void {
+    if (!this.swUpdate.isEnabled || typeof window === 'undefined') {
+      return;
+    }
+
+    this.swUpdate.versionUpdates
+      .pipe(filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY'))
+      .subscribe(() => {
+        const update = window.confirm(
+          'Hay una nueva versión de Crystal disponible. ¿Actualizar ahora?',
+        );
+        if (update) {
+          void this.swUpdate.activateUpdate().then(() => window.location.reload());
+        }
+      });
+
+    // Revisa al iniciar y cada 60 s, así un deploy se nota sin recargar a mano.
+    void this.swUpdate.checkForUpdate();
+    setInterval(() => void this.swUpdate.checkForUpdate(), 60_000);
   }
 }
