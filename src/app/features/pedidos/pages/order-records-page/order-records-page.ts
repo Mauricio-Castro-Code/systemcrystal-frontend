@@ -13,11 +13,10 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { firstValueFrom, startWith } from 'rxjs';
+import { startWith } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -25,7 +24,8 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 import { OrderOperationalStatus, OrderRecord } from '../../models/order-record.model';
 import {
@@ -64,7 +64,8 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly router = inject(Router);
-  private readonly dialog = inject(MatDialog);
+  private readonly confirmService = inject(ConfirmService);
+  private readonly notifications = inject(NotificationService);
   private readonly authService = inject(AuthService);
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
@@ -99,7 +100,6 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   readonly selectedFolder = signal<NoteFolderKey>('all');
   readonly selectedSort = signal<NoteSortKey>('id-desc');
   readonly searchTerm = signal('');
-  readonly actionMessage = signal('');
   readonly isLoading = this.orderRecordsService.isLoading;
   readonly errorMessage = this.orderRecordsService.errorMessage;
   readonly dataSource = new MatTableDataSource<OrderRecord>([]);
@@ -177,11 +177,11 @@ export class OrderRecordsPageComponent implements AfterViewInit {
     this.isImporting.set(true);
     try {
       const imported = await this.orderRecordsService.importOrderFromExcel(file);
-      this.actionMessage.set(
+      this.notifications.success(
         `Nota ${imported.orderId} importada correctamente desde Excel.`,
       );
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         error instanceof Error
           ? error.message
           : 'No fue posible importar la nota desde el Excel.',
@@ -200,7 +200,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   }
 
   async handleDelete(record: OrderRecord): Promise<void> {
-    const confirmed = await this.openDeleteConfirm(
+    const confirmed = await this.confirmService.confirmDelete(
       `Eliminar nota ${record.orderId}`,
       `¿Estás seguro de que deseas eliminar la nota de ${record.clientName}?`,
       'Esta acción no se puede deshacer.',
@@ -212,24 +212,14 @@ export class OrderRecordsPageComponent implements AfterViewInit {
 
     try {
       await this.orderRecordsService.deleteOrder(record.orderId);
-      this.actionMessage.set(`La nota ${record.orderId} fue eliminada correctamente.`);
+      this.notifications.success(`Nota ${record.orderId} eliminada correctamente.`);
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         error instanceof Error
           ? error.message
           : 'No fue posible eliminar la nota seleccionada.',
       );
     }
-  }
-
-  private openDeleteConfirm(title: string, message: string, detail?: string): Promise<boolean> {
-    const ref = this.dialog.open(ConfirmDialogComponent, {
-      width: '420px',
-      data: { title, message, detail },
-      autoFocus: false,
-    });
-
-    return firstValueFrom(ref.afterClosed()).then((result: unknown) => result === true);
   }
 
   selectFolder(folderKey: NoteFolderKey): void {
@@ -315,11 +305,11 @@ export class OrderRecordsPageComponent implements AfterViewInit {
 
       this.selectedOrderIds.set(new Set());
       const plural = selectedIds.length > 1;
-      this.actionMessage.set(
+      this.notifications.success(
         `${selectedIds.length} nota${plural ? 's' : ''} marcada${plural ? 's' : ''} como ${label}.`,
       );
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         error instanceof Error
           ? error.message
           : `No fue posible marcar las notas como ${label}.`,

@@ -1,7 +1,30 @@
 .confirm-dialog {
+  // Variant accent color, defaults to danger red.
+  --accent: #c43030;
+  --accent-soft: rgba(196, 48, 48, 0.1);
+  --accent-softer: rgba(196, 48, 48, 0.06);
+
   padding: 0.5rem;
   max-width: 380px;
   text-align: center;
+
+  &[data-variant='primary'] {
+    --accent: #1d2f58;
+    --accent-soft: rgba(29, 47, 88, 0.1);
+    --accent-softer: rgba(29, 47, 88, 0.06);
+  }
+
+  &[data-variant='success'] {
+    --accent: #277740;
+    --accent-soft: rgba(39, 119, 64, 0.12);
+    --accent-softer: rgba(39, 119, 64, 0.07);
+  }
+
+  &[data-variant='warning'] {
+    --accent: #b7791f;
+    --accent-soft: rgba(183, 121, 31, 0.12);
+    --accent-softer: rgba(183, 121, 31, 0.07);
+  }
 }
 
 .confirm-dialog__icon-wrap {
@@ -11,8 +34,8 @@
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  background: rgba(196, 48, 48, 0.1);
-  color: #c43030;
+  background: var(--accent-soft);
+  color: var(--accent);
   margin-bottom: 1rem;
 
   mat-icon {
@@ -47,9 +70,9 @@
   margin: 0;
   padding: 0.6rem 0.85rem;
   border-radius: 8px;
-  background: rgba(196, 48, 48, 0.06);
-  border-left: 3px solid #c43030;
-  color: #c43030;
+  background: var(--accent-softer);
+  border-left: 3px solid var(--accent);
+  color: var(--accent);
   font-size: 0.82rem;
   font-weight: 600;
   text-align: left;
@@ -77,6 +100,23 @@
 }
 
 .confirm-dialog__btn--confirm {
-  background: #c43030 !important;
+  background: var(--accent) !important;
   color: #fff !important;
+}
+
+// --- Responsive: en móvil los botones se apilan a ancho completo ---
+@media (max-width: 480px) {
+  .confirm-dialog {
+    max-width: 100%;
+    padding: 0.25rem;
+  }
+
+  .confirm-dialog__actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .confirm-dialog__btn {
+    width: 100%;
+  }
 }

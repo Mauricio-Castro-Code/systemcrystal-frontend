@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 
@@ -15,7 +10,8 @@ import { MatTableModule } from '@angular/material/table';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { TeamService } from '../../../../core/services/team.service';
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 import {
   TeamMemberDialogComponent,
   TeamMemberDialogResult,
@@ -39,12 +35,13 @@ export class EquipoPageComponent {
   private readonly teamService = inject(TeamService);
   private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly confirmService = inject(ConfirmService);
+  private readonly notifications = inject(NotificationService);
 
   readonly displayedColumns = ['displayName', 'email', 'role', 'isActive', 'actions'];
   readonly members = this.teamService.members;
   readonly isLoading = this.teamService.isLoading;
   readonly errorMessage = this.teamService.errorMessage;
-  readonly actionMessage = signal('');
 
   private readonly currentUserId = this.authService.userSession()?.id ?? '';
 
@@ -74,9 +71,9 @@ export class EquipoPageComponent {
         password: result.password,
         role: result.role,
       });
-      this.actionMessage.set(`Usuario ${result.email} creado.`);
+      this.notifications.success(`Usuario ${result.email} creado.`);
     } catch (error) {
-      this.actionMessage.set(this.resolveError(error));
+      this.notifications.error(this.resolveError(error));
     }
   }
 
@@ -93,39 +90,30 @@ export class EquipoPageComponent {
         role: result.role,
         ...(result.password ? { password: result.password } : {}),
       });
-      this.actionMessage.set(`Usuario ${member.email} actualizado.`);
+      this.notifications.success(`Usuario ${member.email} actualizado.`);
     } catch (error) {
-      this.actionMessage.set(this.resolveError(error));
+      this.notifications.error(this.resolveError(error));
     }
   }
 
   async toggleActive(member: TeamMember): Promise<void> {
     try {
       await this.teamService.updateMember(member.id, { isActive: !member.isActive });
-      this.actionMessage.set(
+      this.notifications.success(
         member.isActive
           ? `Acceso de ${member.email} deshabilitado.`
           : `Acceso de ${member.email} habilitado.`,
       );
     } catch (error) {
-      this.actionMessage.set(this.resolveError(error));
+      this.notifications.error(this.resolveError(error));
     }
   }
 
   async deleteMember(member: TeamMember): Promise<void> {
-    const ref = this.dialog.open(ConfirmDialogComponent, {
-      width: '420px',
-      data: {
-        title: `Eliminar a ${member.displayName}`,
-        message: `¿Seguro que deseas eliminar la cuenta de ${member.email}?`,
-        detail: 'Esta acción no se puede deshacer.',
-        danger: true,
-      },
-      autoFocus: false,
-    });
-
-    const confirmed = await firstValueFrom(ref.afterClosed()).then(
-      (value: unknown) => value === true,
+    const confirmed = await this.confirmService.confirmDelete(
+      `Eliminar a ${member.displayName}`,
+      `¿Seguro que deseas eliminar la cuenta de ${member.email}?`,
+      'Esta acción no se puede deshacer.',
     );
 
     if (!confirmed) {
@@ -134,9 +122,9 @@ export class EquipoPageComponent {
 
     try {
       await this.teamService.deleteMember(member.id);
-      this.actionMessage.set(`Usuario ${member.email} eliminado.`);
+      this.notifications.success(`Usuario ${member.email} eliminado.`);
     } catch (error) {
-      this.actionMessage.set(this.resolveError(error));
+      this.notifications.error(this.resolveError(error));
     }
   }
 

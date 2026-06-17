@@ -25,13 +25,24 @@
       </div>
 
       <div class="login-form__field">
-        <input
-          id="login-password"
-          type="password"
-          formControlName="password"
-          placeholder="Contraseña"
-          autocomplete="current-password"
-        />
+        <div class="login-form__input-wrap">
+          <input
+            id="login-password"
+            [type]="showLoginPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Contraseña"
+            autocomplete="current-password"
+          />
+          <button
+            class="login-form__toggle"
+            type="button"
+            [attr.aria-label]="showLoginPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="showLoginPassword()"
+            (click)="toggleLoginPassword()"
+          >
+            <mat-icon>{{ showLoginPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </div>
         @if (hasLoginFieldError('password')) {
           <small>La contraseña debe tener al menos 6 caracteres.</small>
         }
@@ -89,13 +100,24 @@
       </div>
 
       <div class="login-form__field">
-        <input
-          id="register-password"
-          type="password"
-          formControlName="password"
-          placeholder="Contraseña (minimo 8 caracteres)"
-          autocomplete="new-password"
-        />
+        <div class="login-form__input-wrap">
+          <input
+            id="register-password"
+            [type]="showRegisterPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Contraseña (minimo 8 caracteres)"
+            autocomplete="new-password"
+          />
+          <button
+            class="login-form__toggle"
+            type="button"
+            [attr.aria-label]="showRegisterPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="showRegisterPassword()"
+            (click)="toggleRegisterPassword()"
+          >
+            <mat-icon>{{ showRegisterPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </div>
         @if (hasRegisterFieldError('password')) {
           <small>La contraseña debe tener al menos 8 caracteres.</small>
         }

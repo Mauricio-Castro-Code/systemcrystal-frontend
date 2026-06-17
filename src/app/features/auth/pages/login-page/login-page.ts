@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { LoginCredentials } from '../../models/login-credentials.model';
@@ -14,7 +15,7 @@ type RegisterFieldName = 'email' | 'password' | 'registrationKey';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MatIconModule],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +28,8 @@ export class LoginPageComponent {
   readonly authMode = signal<AuthMode>('login');
   readonly isSubmitting = signal(false);
   readonly authError = signal('');
+  readonly showLoginPassword = signal(false);
+  readonly showRegisterPassword = signal(false);
 
   readonly loginForm = this.formBuilder.group({
     identifier: ['', [Validators.required, Validators.minLength(3)]],
@@ -43,6 +46,14 @@ export class LoginPageComponent {
   setAuthMode(mode: AuthMode): void {
     this.authMode.set(mode);
     this.authError.set('');
+  }
+
+  toggleLoginPassword(): void {
+    this.showLoginPassword.update((visible) => !visible);
+  }
+
+  toggleRegisterPassword(): void {
+    this.showRegisterPassword.update((visible) => !visible);
   }
 
   async submitLogin(): Promise<void> {

@@ -1,6 +1,6 @@
-<div class="confirm-dialog">
-  <div class="confirm-dialog__icon-wrap" [class.confirm-dialog__icon-wrap--danger]="data.danger !== false">
-    <mat-icon>delete_forever</mat-icon>
+<div class="confirm-dialog" [attr.data-variant]="variant">
+  <div class="confirm-dialog__icon-wrap">
+    <mat-icon>{{ icon }}</mat-icon>
   </div>
 
   <h2 class="confirm-dialog__title" mat-dialog-title>{{ data.title }}</h2>

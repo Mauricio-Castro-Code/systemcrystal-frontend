@@ -94,6 +94,55 @@
   color: rgba(245, 245, 250, 0.28);
 }
 
+// Contenedor para poder colocar el botón del ojito dentro del input.
+.login-form__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+// Deja espacio a la derecha para que el texto no quede debajo del ojito.
+.login-form__input-wrap input {
+  padding-right: 3.25rem;
+}
+
+.login-form__toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(39, 119, 64, 0.7);
+    outline-offset: 1px;
+  }
+
+  mat-icon {
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
 .login-form__field input:focus {
   border-color: rgba(39, 119, 64, 0.6);
   background: rgba(255, 255, 255, 0.1);

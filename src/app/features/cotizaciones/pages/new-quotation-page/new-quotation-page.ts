@@ -48,6 +48,7 @@ import { QuotationRecordsService } from '../../../../core/services/quotation-rec
 import { FolioStrategyService } from '../../../../core/services/folio-strategy.service';
 import { ClientDirectoryService } from '../../../../core/services/client-directory.service';
 import { FreightZonesService } from '../../../../core/services/freight-zones.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 import { FreightZone } from '../../../fletes/models/freight-zone.model';
 
 type EquipmentRowForm = FormGroup<{
@@ -117,6 +118,7 @@ export class NewQuotationPageComponent {
   private readonly folioStrategyService = inject(FolioStrategyService);
   private readonly clientDirectoryService = inject(ClientDirectoryService);
   private readonly freightZonesService = inject(FreightZonesService);
+  private readonly notifications = inject(NotificationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -287,12 +289,12 @@ export class NewQuotationPageComponent {
         );
 
         if (!updatedQuotation) {
-          this.actionMessage.set('No fue posible actualizar la cotizacion solicitada.');
+          this.notifications.error('No fue posible actualizar la cotización solicitada.');
           return;
         }
 
-        this.actionMessage.set(
-          `La cotizacion ${updatedQuotation.quotationId} se actualizo en la base y el cliente quedo sincronizado en Clientes.`,
+        this.notifications.success(
+          `Cotización ${updatedQuotation.quotationId} actualizada y cliente sincronizado.`,
         );
         return;
       }
@@ -301,12 +303,12 @@ export class NewQuotationPageComponent {
         quotation: quotationSnapshot,
       });
 
-      this.actionMessage.set(
-        `Cotización guardada. La cotizacion ${createdQuotation.quotationId} ya esta en la base y el cliente quedo sincronizado en Clientes.`,
+      this.notifications.success(
+        `Cotización ${createdQuotation.quotationId} guardada y cliente sincronizado.`,
       );
     } catch (error) {
-      this.actionMessage.set(
-        this.resolveActionError(error, 'No fue posible guardar la cotizacion.'),
+      this.notifications.error(
+        this.resolveActionError(error, 'No fue posible guardar la cotización.'),
       );
     } finally {
       this.isSaving.set(false);
@@ -340,11 +342,11 @@ export class NewQuotationPageComponent {
         folioStrategy,
       });
 
-      this.actionMessage.set(
-        `Nota confirmada. El pedido ${createdOrder.orderId} se guardo en la base y el cliente ya aparece en Clientes.`,
+      this.notifications.success(
+        `Nota guardada. Pedido ${createdOrder.orderId} confirmado y cliente sincronizado.`,
       );
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         this.resolveActionError(error, 'No fue posible guardar la nota del pedido.'),
       );
     } finally {
@@ -370,15 +372,15 @@ export class NewQuotationPageComponent {
       );
 
       if (!updatedOrder) {
-        this.actionMessage.set('No fue posible actualizar el pedido solicitado.');
+        this.notifications.error('No fue posible actualizar el pedido solicitado.');
         return;
       }
 
-      this.actionMessage.set(
-        `El pedido ${updatedOrder.orderId} se actualizo en la base y el cliente quedo sincronizado en Clientes.`,
+      this.notifications.success(
+        `Pedido ${updatedOrder.orderId} actualizado y cliente sincronizado.`,
       );
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         this.resolveActionError(error, 'No fue posible actualizar el pedido solicitado.'),
       );
     } finally {
@@ -434,7 +436,7 @@ export class NewQuotationPageComponent {
       );
 
       if (!updatedQuotation) {
-        this.actionMessage.set('No fue posible actualizar la cotizacion antes de confirmarla.');
+        this.notifications.error('No fue posible actualizar la cotización antes de confirmarla.');
         return;
       }
 
@@ -444,14 +446,15 @@ export class NewQuotationPageComponent {
       );
 
       if (!createdOrder) {
-        this.actionMessage.set('No fue posible confirmar la cotizacion seleccionada.');
+        this.notifications.error('No fue posible confirmar la cotización seleccionada.');
         return;
       }
 
+      this.notifications.success(`Cotización confirmada como pedido ${createdOrder.orderId}.`);
       await this.router.navigate(['/pedidos', createdOrder.orderId]);
     } catch (error) {
-      this.actionMessage.set(
-        this.resolveActionError(error, 'No fue posible confirmar la cotizacion seleccionada.'),
+      this.notifications.error(
+        this.resolveActionError(error, 'No fue posible confirmar la cotización seleccionada.'),
       );
     } finally {
       this.isSaving.set(false);

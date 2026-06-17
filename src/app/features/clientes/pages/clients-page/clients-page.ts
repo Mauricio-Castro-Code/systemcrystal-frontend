@@ -6,7 +6,6 @@ import {
   ViewChild,
   effect,
   inject,
-  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -24,6 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { Client } from '../../models/client.model';
 import { ClientDirectoryService } from '../../../../core/services/client-directory.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-clients',
@@ -46,13 +46,13 @@ export class ClientsPageComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly clientDirectoryService = inject(ClientDirectoryService);
   private readonly router = inject(Router);
+  private readonly notifications = inject(NotificationService);
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
 
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly displayedColumns = ['clientName', 'phoneNumber', 'address', 'mergedRecords', 'actions'];
-  readonly copyFeedback = signal('');
   readonly isLoading = this.clientDirectoryService.isLoading;
   readonly errorMessage = this.clientDirectoryService.errorMessage;
   readonly totalClients = this.clientDirectoryService.totalClients;
@@ -102,9 +102,9 @@ export class ClientsPageComponent implements AfterViewInit {
         this.copyWithTemporaryTextarea(normalizedPhoneNumber);
       }
 
-      this.copyFeedback.set(`Celular copiado: ${normalizedPhoneNumber}`);
+      this.notifications.success(`Celular copiado: ${normalizedPhoneNumber}`);
     } catch {
-      this.copyFeedback.set('No fue posible copiar el numero seleccionado.');
+      this.notifications.error('No fue posible copiar el número seleccionado.');
     }
   }
 

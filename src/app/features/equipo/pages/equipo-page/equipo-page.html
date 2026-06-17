@@ -15,10 +15,6 @@
     </button>
   </header>
 
-  @if (actionMessage()) {
-    <section class="equipo-page__feedback">{{ actionMessage() }}</section>
-  }
-
   @if (errorMessage()) {
     <section class="equipo-page__feedback equipo-page__feedback--error">
       {{ errorMessage() }}

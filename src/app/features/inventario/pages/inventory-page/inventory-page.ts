@@ -23,6 +23,8 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
 import { InventoryService } from '../../../../core/services/inventory.service';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 import {
   InventoryItem,
   InventoryItemPayload,
@@ -50,6 +52,8 @@ export class InventoryPageComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
+  private readonly confirmService = inject(ConfirmService);
+  private readonly notifications = inject(NotificationService);
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
@@ -130,15 +134,15 @@ export class InventoryPageComponent implements AfterViewInit {
 
       if (editingItemId !== null) {
         const updatedItem = await this.inventoryService.updateItem(editingItemId, payload);
-        this.actionMessage.set(`Producto actualizado: ${updatedItem.name}.`);
+        this.notifications.success(`Producto actualizado: ${updatedItem.name}.`);
       } else {
         const createdItem = await this.inventoryService.createItem(payload);
-        this.actionMessage.set(`Producto registrado: ${createdItem.name}.`);
+        this.notifications.success(`Producto registrado: ${createdItem.name}.`);
       }
 
       this.resetForm();
     } catch (error) {
-      this.actionMessage.set(this.resolveErrorMessage(error));
+      this.notifications.error(this.resolveErrorMessage(error));
     } finally {
       this.isSaving.set(false);
     }
@@ -160,14 +164,15 @@ export class InventoryPageComponent implements AfterViewInit {
   }
 
   async deleteItem(item: InventoryItem): Promise<void> {
-    if (
-      typeof window !== 'undefined' &&
-      !window.confirm(`Confirma que deseas eliminar el producto ${item.name}.`)
-    ) {
+    const confirmed = await this.confirmService.confirmDelete(
+      'Eliminar producto',
+      `¿Confirmas que deseas eliminar el producto ${item.name}?`,
+      'Esta acción no se puede deshacer.',
+    );
+
+    if (!confirmed) {
       return;
     }
-
-    this.actionMessage.set('');
 
     try {
       await this.inventoryService.deleteItem(item.id);
@@ -176,9 +181,9 @@ export class InventoryPageComponent implements AfterViewInit {
         this.resetForm();
       }
 
-      this.actionMessage.set(`Producto eliminado: ${item.name}.`);
+      this.notifications.success(`Producto eliminado: ${item.name}.`);
     } catch (error) {
-      this.actionMessage.set(this.resolveErrorMessage(error));
+      this.notifications.error(this.resolveErrorMessage(error));
     }
   }
 

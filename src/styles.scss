@@ -378,3 +378,30 @@ a {
     gap: 1rem;
   }
 }
+
+/* --- Toast personalizado (NotificationService) ---
+   Quita el contenedor/fondo por defecto de MatSnackBar para que se
+   muestre únicamente nuestro componente <app-toast>. */
+.crystal-toast-panel {
+  --mdc-snackbar-container-color: transparent;
+  --mat-snack-bar-button-color: inherit;
+
+  .mdc-snackbar__surface {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .mat-mdc-snack-bar-label,
+  .mdc-snackbar__label {
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .crystal-toast-panel {
+    width: calc(100vw - 1.5rem);
+    max-width: 100%;
+  }
+}

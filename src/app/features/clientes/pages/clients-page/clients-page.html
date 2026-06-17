@@ -25,12 +25,6 @@
     </button>
   </section>
 
-  @if (copyFeedback()) {
-    <section class="clients-page__feedback">
-      {{ copyFeedback() }}
-    </section>
-  }
-
   @if (errorMessage()) {
     <section class="clients-page__state clients-page__state--error">
       <strong>No fue posible cargar el directorio real.</strong>

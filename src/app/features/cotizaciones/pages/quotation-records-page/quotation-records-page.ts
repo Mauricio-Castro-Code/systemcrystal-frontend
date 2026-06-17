@@ -12,17 +12,17 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { firstValueFrom, startWith } from 'rxjs';
+import { startWith } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 import { QuotationRecordsService } from '../../../../core/services/quotation-records.service';
 import { FolioStrategyService } from '../../../../core/services/folio-strategy.service';
@@ -50,13 +50,13 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
   private readonly quotationRecordsService = inject(QuotationRecordsService);
   private readonly folioStrategyService = inject(FolioStrategyService);
   private readonly router = inject(Router);
-  private readonly dialog = inject(MatDialog);
+  private readonly confirmService = inject(ConfirmService);
+  private readonly notifications = inject(NotificationService);
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
 
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly displayedColumns = ['quotationId', 'clientName', 'date', 'actions'];
-  readonly actionMessage = signal('');
   readonly isLoading = this.quotationRecordsService.isLoading;
   readonly errorMessage = this.quotationRecordsService.errorMessage;
   readonly dataSource = new MatTableDataSource<QuotationRecord>([]);
@@ -99,8 +99,10 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
   }
 
   async handleConfirm(record: QuotationRecord): Promise<void> {
-    const shouldConfirm = window.confirm(
-      `Confirma que deseas convertir la cotizacion ${record.quotationId} en pedido.`,
+    const shouldConfirm = await this.confirmService.confirmAction(
+      `Convertir en pedido`,
+      `¿Confirmas que deseas convertir la cotización ${record.quotationId} de ${record.clientName} en pedido?`,
+      'Convertir',
     );
 
     if (!shouldConfirm) {
@@ -120,24 +122,24 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
       );
 
       if (!createdOrder) {
-        this.actionMessage.set('No fue posible confirmar la cotizacion seleccionada.');
+        this.notifications.error('No fue posible confirmar la cotización seleccionada.');
         return;
       }
 
-      this.actionMessage.set(
-        `La cotizacion ${record.quotationId} se confirmo como pedido ${createdOrder.orderId} y el cliente quedo sincronizado en Clientes.`,
+      this.notifications.success(
+        `Cotización ${record.quotationId} confirmada como pedido ${createdOrder.orderId}.`,
       );
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         error instanceof Error
           ? error.message
-          : 'No fue posible confirmar la cotizacion seleccionada.',
+          : 'No fue posible confirmar la cotización seleccionada.',
       );
     }
   }
 
   async handleDelete(record: QuotationRecord): Promise<void> {
-    const confirmed = await this.openDeleteConfirm(
+    const confirmed = await this.confirmService.confirmDelete(
       `Eliminar cotización ${record.quotationId}`,
       `¿Estás seguro de que deseas eliminar la cotización de ${record.clientName}?`,
       'Esta acción no se puede deshacer.',
@@ -149,25 +151,15 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
 
     try {
       await this.quotationRecordsService.deleteDraft(record.quotationId);
-      this.actionMessage.set(
-        `La cotizacion ${record.quotationId} fue eliminada correctamente.`,
+      this.notifications.success(
+        `Cotización ${record.quotationId} eliminada correctamente.`,
       );
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         error instanceof Error
           ? error.message
-          : 'No fue posible eliminar la cotizacion seleccionada.',
+          : 'No fue posible eliminar la cotización seleccionada.',
       );
     }
-  }
-
-  private openDeleteConfirm(title: string, message: string, detail?: string): Promise<boolean> {
-    const ref = this.dialog.open(ConfirmDialogComponent, {
-      width: '420px',
-      data: { title, message, detail },
-      autoFocus: false,
-    });
-
-    return firstValueFrom(ref.afterClosed()).then((result: unknown) => result === true);
   }
 }

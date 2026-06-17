@@ -24,8 +24,9 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { RenameOrderDialogComponent } from '../../../../shared/components/rename-order-dialog/rename-order-dialog';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 import { OrderRecord } from '../../models/order-record.model';
 import {
@@ -63,6 +64,8 @@ export class NoteArchivePageComponent implements AfterViewInit {
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly confirmService = inject(ConfirmService);
+  private readonly notifications = inject(NotificationService);
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
 
@@ -80,7 +83,6 @@ export class NoteArchivePageComponent implements AfterViewInit {
   readonly selectedFolder = signal<NoteFolderKey>('all');
   readonly selectedSort = signal<NoteSortKey>('id-desc');
   readonly searchTerm = signal('');
-  readonly actionMessage = signal('');
   readonly isLoading = this.orderRecordsService.archivedIsLoading;
   readonly errorMessage = this.orderRecordsService.archivedErrorMessage;
   readonly dataSource = new MatTableDataSource<OrderRecord>([]);
@@ -157,28 +159,19 @@ export class NoteArchivePageComponent implements AfterViewInit {
 
     try {
       await this.orderRecordsService.renameOrder(record.orderId, newOrderId);
-      this.actionMessage.set(`El folio ${record.orderId} fue cambiado a ${newOrderId}.`);
+      this.notifications.success(`Folio ${record.orderId} cambiado a ${newOrderId}.`);
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         error instanceof Error ? error.message : 'No fue posible cambiar el folio.',
       );
     }
   }
 
   async handleDelete(record: OrderRecord): Promise<void> {
-    const ref = this.dialog.open(ConfirmDialogComponent, {
-      width: '420px',
-      data: {
-        title: `Eliminar nota ${record.orderId}`,
-        message: `¿Estás seguro de que deseas eliminar la nota de ${record.clientName}?`,
-        detail: 'Esta acción no se puede deshacer.',
-        danger: true,
-      },
-      autoFocus: false,
-    });
-
-    const confirmed: boolean = await firstValueFrom(ref.afterClosed()).then(
-      (result: unknown) => result === true,
+    const confirmed = await this.confirmService.confirmDelete(
+      `Eliminar nota ${record.orderId}`,
+      `¿Estás seguro de que deseas eliminar la nota de ${record.clientName}?`,
+      'Esta acción no se puede deshacer.',
     );
 
     if (!confirmed) {
@@ -187,9 +180,9 @@ export class NoteArchivePageComponent implements AfterViewInit {
 
     try {
       await this.orderRecordsService.deleteOrder(record.orderId);
-      this.actionMessage.set(`La nota ${record.orderId} fue eliminada del registro.`);
+      this.notifications.success(`Nota ${record.orderId} eliminada del registro.`);
     } catch (error) {
-      this.actionMessage.set(
+      this.notifications.error(
         error instanceof Error ? error.message : 'No fue posible eliminar la nota.',
       );
     }
