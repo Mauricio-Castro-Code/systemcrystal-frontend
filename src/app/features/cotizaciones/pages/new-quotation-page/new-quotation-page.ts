@@ -127,6 +127,8 @@ export class NewQuotationPageComponent {
   readonly editingOrderId = this.route.snapshot.paramMap.get('orderId');
   readonly editingQuotationId = this.route.snapshot.paramMap.get('quotationId');
   readonly selectedClientId = this.route.snapshot.queryParamMap.get('client');
+  // Duplicar: prellena la NUEVA cotización con la info de una nota existente.
+  readonly duplicateFromOrderId = this.route.snapshot.queryParamMap.get('duplicarDe');
   readonly isEditingOrder = this.editingOrderId !== null;
   readonly isEditingQuotation = this.editingQuotationId !== null;
   readonly isEditMode = this.isEditingOrder || this.isEditingQuotation;
@@ -228,6 +230,8 @@ export class NewQuotationPageComponent {
 
     if (this.isEditMode) {
       void this.loadRecordForEditing();
+    } else if (this.duplicateFromOrderId) {
+      void this.loadRecordForDuplication();
     } else if (this.selectedClientId) {
       void this.loadSelectedClientPrefill();
     }
@@ -718,6 +722,72 @@ export class NewQuotationPageComponent {
     };
   }
 
+  // Vuelca una cotización/nota en los formularios (reutilizado por editar y duplicar).
+  private applyQuotationToForms(quotation: QuotationNote): void {
+    this.clientInfoForm.patchValue({
+      fullName: quotation.clientInfo.fullName,
+      phoneNumber: quotation.clientInfo.phoneNumber,
+      birthDate: this.parseDate(quotation.clientInfo.birthDate),
+      address: quotation.clientInfo.address,
+      neighborhood: quotation.clientInfo.neighborhood,
+      reference: quotation.clientInfo.reference,
+      deliveryInstructions: quotation.clientInfo.deliveryInstructions,
+    });
+
+    this.scheduleForm.patchValue({
+      deliveryDate: this.parseDate(quotation.schedule.deliveryDate),
+      eventDate: this.parseDate(quotation.schedule.eventDate),
+      collectionDate: this.parseDate(quotation.schedule.collectionDate),
+    });
+
+    this.logisticsForm.patchValue({
+      freight: quotation.logistics.freight,
+      applyTax: quotation.logistics.applyTax,
+      securityDeposit: quotation.logistics.securityDeposit,
+      discount: quotation.summary.discount,
+      advancePayment: quotation.summary.advancePayment,
+    });
+
+    this.equipmentRows.clear();
+
+    if (quotation.equipmentItems.length === 0) {
+      this.equipmentRows.push(this.createEquipmentRow());
+    } else {
+      quotation.equipmentItems.forEach((item) => {
+        this.equipmentRows.push(this.createEquipmentRow(item));
+      });
+    }
+
+    this.equipmentTable?.renderRows();
+    this.recalculateSummary();
+  }
+
+  private async loadRecordForDuplication(): Promise<void> {
+    if (!this.duplicateFromOrderId) {
+      return;
+    }
+
+    try {
+      const order = await this.orderRecordsService.loadOrderById(this.duplicateFromOrderId);
+
+      if (!order?.quotation) {
+        this.actionMessage.set('No se encontró la nota a duplicar.');
+        return;
+      }
+
+      this.applyQuotationToForms(order.quotation);
+      // Dejamos el formulario "sucio": es una cotización nueva por guardar.
+      this.quotationForm.markAsDirty();
+      this.actionMessage.set(
+        `Se copió la información de la nota ${order.orderId}. Ajusta lo que necesites y guarda la nueva cotización.`,
+      );
+    } catch (error) {
+      this.actionMessage.set(
+        this.resolveActionError(error, 'No se pudo cargar la nota a duplicar.'),
+      );
+    }
+  }
+
   private async loadRecordForEditing(): Promise<void> {
     try {
       const quotation =
@@ -740,42 +810,7 @@ export class NewQuotationPageComponent {
         return;
       }
 
-      this.clientInfoForm.patchValue({
-        fullName: quotation.clientInfo.fullName,
-        phoneNumber: quotation.clientInfo.phoneNumber,
-        birthDate: this.parseDate(quotation.clientInfo.birthDate),
-        address: quotation.clientInfo.address,
-        neighborhood: quotation.clientInfo.neighborhood,
-        reference: quotation.clientInfo.reference,
-        deliveryInstructions: quotation.clientInfo.deliveryInstructions,
-      });
-
-      this.scheduleForm.patchValue({
-        deliveryDate: this.parseDate(quotation.schedule.deliveryDate),
-        eventDate: this.parseDate(quotation.schedule.eventDate),
-        collectionDate: this.parseDate(quotation.schedule.collectionDate),
-      });
-
-      this.logisticsForm.patchValue({
-        freight: quotation.logistics.freight,
-        applyTax: quotation.logistics.applyTax,
-        securityDeposit: quotation.logistics.securityDeposit,
-        discount: quotation.summary.discount,
-        advancePayment: quotation.summary.advancePayment,
-      });
-
-      this.equipmentRows.clear();
-
-      if (quotation.equipmentItems.length === 0) {
-        this.equipmentRows.push(this.createEquipmentRow());
-      } else {
-        quotation.equipmentItems.forEach((item) => {
-          this.equipmentRows.push(this.createEquipmentRow(item));
-        });
-      }
-
-      this.equipmentTable?.renderRows();
-      this.recalculateSummary();
+      this.applyQuotationToForms(quotation);
       this.quotationForm.markAsPristine();
     } catch (error) {
       this.actionMessage.set(

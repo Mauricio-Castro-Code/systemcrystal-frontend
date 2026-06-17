@@ -220,6 +220,13 @@ export class OrderNotePageComponent implements OnDestroy {
     await this.router.navigate(['/pedidos', this.orderId, 'editar']);
   }
 
+  async duplicateInNewQuotation(): Promise<void> {
+    // Abre una cotización nueva prellenada con la info de esta nota.
+    await this.router.navigate(['/cotizaciones', 'nueva'], {
+      queryParams: { duplicarDe: this.orderId },
+    });
+  }
+
   async toggleCancel(): Promise<void> {
     const record = this.orderRecord();
     if (!record) return;
