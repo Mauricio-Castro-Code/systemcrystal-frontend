@@ -1,0 +1,129 @@
+<div class="mi-ruta">
+  <header class="topbar">
+    <h1 class="topbar__title">Mi Ruta</h1>
+    <div class="topbar__avatar" aria-hidden="true">{{ driverInitials() }}</div>
+  </header>
+
+  <main class="content">
+    @if (isLoading() && !route()) {
+      <p class="state">Cargando tu ruta…</p>
+    } @else if (errorMessage()) {
+      <div class="state state--error">
+        <p>{{ errorMessage() }}</p>
+        <button type="button" class="btn btn--ghost" (click)="reload()">Reintentar</button>
+      </div>
+    } @else if (route(); as r) {
+      <!-- Encabezado de la jornada -->
+      <section class="day">
+        <p class="day__label">{{ r.dateLabel }}</p>
+        <h2 class="day__count">
+          {{ pendingStops().length }}
+          {{ pendingStops().length === 1 ? 'Entrega Pendiente' : 'Entregas Pendientes' }}
+        </h2>
+      </section>
+
+      @if (activeTab() === 'ruta') {
+        <!-- Tarjetas resumen -->
+        <section class="stats">
+          <article class="stat">
+            <p class="stat__label">Completado</p>
+            <p class="stat__value">{{ r.completed }}/{{ r.totalStops }}</p>
+          </article>
+          <article class="stat">
+            <p class="stat__label">Pendientes</p>
+            <p class="stat__value">{{ r.pending }}</p>
+          </article>
+        </section>
+
+        @if (r.stops.length === 0) {
+          <p class="state">No tienes entregas asignadas para este día.</p>
+        }
+
+        <!-- Paradas pendientes -->
+        @for (stop of pendingStops(); track stop.orderId) {
+          <article class="stop" [class.stop--next]="isNextStop(stop)">
+            <div class="stop__head">
+              <span class="badge badge--{{ stopBadge(stop).tone }}">{{ stopBadge(stop).label }}</span>
+              <span class="stop__folio">{{ stop.orderId }}</span>
+            </div>
+
+            <h3 class="stop__client">{{ stop.clientName }}</h3>
+            <p class="stop__address">
+              <span class="pin" aria-hidden="true">◉</span> {{ stop.address }}
+            </p>
+
+            @if (stop.items.length > 0) {
+              <div class="items">
+                <p class="items__title">Artículos ({{ stop.itemsCount }})</p>
+                @for (item of stop.items; track $index) {
+                  <div class="items__row">
+                    <span class="items__name">{{ item.equipment }}</span>
+                    <span class="items__qty">x{{ item.quantity }}</span>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (stop.deliveryInstructions) {
+              <p class="stop__note">📋 {{ stop.deliveryInstructions }}</p>
+            }
+
+            <button
+              type="button"
+              class="btn btn--map"
+              [disabled]="!stop.mapsUrl"
+              (click)="openMaps(stop)"
+            >
+              🗺️ Ver en Mapa
+            </button>
+
+            <button
+              type="button"
+              class="btn btn--primary"
+              [disabled]="busyOrderId() === stop.orderId"
+              (click)="advanceStop(stop)"
+            >
+              {{ busyOrderId() === stop.orderId ? 'Guardando…' : actionLabel(stop) }} 🚚
+            </button>
+          </article>
+        }
+      } @else if (activeTab() === 'historial') {
+        @if (completedStops().length === 0) {
+          <p class="state">Aún no has completado entregas hoy.</p>
+        }
+        @for (stop of completedStops(); track stop.orderId) {
+          <article class="stop stop--done">
+            <div class="stop__head">
+              <span class="badge badge--done">{{ stop.operationalStatusLabel }}</span>
+              <span class="stop__folio">{{ stop.orderId }}</span>
+            </div>
+            <h3 class="stop__client">{{ stop.clientName }}</h3>
+            <p class="stop__address"><span class="pin" aria-hidden="true">◉</span> {{ stop.address }}</p>
+          </article>
+        }
+      } @else {
+        <!-- Perfil -->
+        <section class="profile">
+          <div class="profile__avatar">{{ driverInitials() }}</div>
+          <p class="profile__name">{{ session()?.displayName }}</p>
+          <p class="profile__email">{{ session()?.email }}</p>
+          <p class="profile__role">Chofer</p>
+          <button type="button" class="btn btn--ghost" (click)="signOut()">Cerrar sesión</button>
+        </section>
+      }
+    }
+  </main>
+
+  <!-- Barra de pestañas -->
+  <nav class="tabbar">
+    <button type="button" class="tab" [class.tab--active]="activeTab() === 'ruta'" (click)="setTab('ruta')">
+      <span class="tab__icon">📋</span><span class="tab__label">Mi Ruta</span>
+    </button>
+    <button type="button" class="tab" [class.tab--active]="activeTab() === 'historial'" (click)="setTab('historial')">
+      <span class="tab__icon">🕘</span><span class="tab__label">Historial</span>
+    </button>
+    <button type="button" class="tab" [class.tab--active]="activeTab() === 'perfil'" (click)="setTab('perfil')">
+      <span class="tab__icon">👤</span><span class="tab__label">Perfil</span>
+    </button>
+  </nav>
+</div>

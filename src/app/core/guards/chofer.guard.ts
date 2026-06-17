@@ -3,13 +3,13 @@ import { CanActivateFn, Router } from '@angular/router';
 
 import { AuthService } from '../services/auth.service';
 
-export const guestGuard: CanActivateFn = () => {
+export const choferGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (!authService.isAuthenticated()) {
-    return true;
+    return router.createUrlTree(['/login']);
   }
 
-  return router.createUrlTree([authService.isChofer() ? '/mi-ruta' : '/dashboard']);
+  return authService.isChofer() ? true : router.createUrlTree(['/dashboard']);
 };

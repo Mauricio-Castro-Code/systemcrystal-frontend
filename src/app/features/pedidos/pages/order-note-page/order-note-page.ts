@@ -22,6 +22,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
+import { TeamService } from '../../../../core/services/team.service';
 import { WhatsAppMessageDialogComponent } from '../../../../shared/components/whatsapp-message-dialog/whatsapp-message-dialog';
 import {
   OrderBillingStatus,
@@ -33,6 +34,7 @@ const OPERATIONAL_STATUS_OPTIONS: Array<{
   label: string;
 }> = [
   { value: 'PROGRAMADA', label: 'Programada' },
+  { value: 'EN_CAMINO', label: 'En camino' },
   { value: 'ENTREGADO', label: 'Entregado' },
   { value: 'POR_RECOGER', label: 'En Ruta' },
   { value: 'CLIENTE_ENTREGA', label: 'Cliente entrega' },
@@ -70,10 +72,19 @@ export class OrderNotePageComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly authService = inject(AuthService);
+  private readonly teamService = inject(TeamService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly dialog = inject(MatDialog);
 
   readonly isAdmin = this.authService.isAdmin;
+  // Solo los choferes activos pueden recibir asignaciones.
+  readonly assignableDrivers = computed(() =>
+    this.teamService.members().filter((member) => member.role === 'chofer' && member.isActive),
+  );
+  readonly driverControl = new FormControl<number | null>(null);
+  readonly mapsUrlControl = new FormControl('', { nonNullable: true });
+  readonly isSavingAssignment = signal(false);
+  readonly assignmentMessage = signal('');
   readonly isTogglingCancel = signal(false);
   private pdfObjectUrl: string | null = null;
 
@@ -105,6 +116,17 @@ export class OrderNotePageComponent implements OnDestroy {
   });
   readonly workflowCommentControl = new FormControl('', { nonNullable: true });
 
+  // Una nota es asignable solo si está activa: no archivada, no recogida, no cancelada.
+  readonly isActiveNote = computed(() => {
+    const record = this.orderRecord();
+    return (
+      !this.isArchiveRoute() &&
+      !!record &&
+      !record.isCancelled &&
+      record.operationalStatus !== 'RECOGIDO'
+    );
+  });
+
   constructor() {
     effect(() => {
       const record = this.orderRecord();
@@ -120,13 +142,54 @@ export class OrderNotePageComponent implements OnDestroy {
         emitEvent: false,
       });
 
+      if (!this.isSavingAssignment()) {
+        this.driverControl.setValue(record.assignedDriver?.id ?? null, { emitEvent: false });
+        this.mapsUrlControl.setValue(record.mapsUrl ?? '', { emitEvent: false });
+      }
+
       if (!this.isSavingWorkflow()) {
         this.workflowCommentControl.setValue('', { emitEvent: false });
       }
     });
 
+    if (this.authService.isAdmin()) {
+      void this.teamService.loadMembers();
+    }
+
     void this.loadOrderRecord();
     void this.loadPdfPreview();
+  }
+
+  async saveAssignment(): Promise<void> {
+    const record = this.orderRecord();
+
+    if (!record) {
+      return;
+    }
+
+    const driverId = this.driverControl.value ?? null;
+    const mapsUrl = this.mapsUrlControl.value.trim();
+
+    this.isSavingAssignment.set(true);
+    this.assignmentMessage.set('');
+
+    try {
+      await this.orderRecordsService.assignOrder(record.orderId, { driverId, mapsUrl });
+
+      const driverName =
+        this.assignableDrivers().find((driver) => Number(driver.id) === driverId)?.displayName ?? '';
+      this.assignmentMessage.set(
+        driverId
+          ? `Nota asignada a ${driverName}.`
+          : 'Chofer desasignado de la nota.',
+      );
+    } catch (error) {
+      this.assignmentMessage.set(
+        error instanceof Error ? error.message : 'No fue posible guardar la asignación.',
+      );
+    } finally {
+      this.isSavingAssignment.set(false);
+    }
   }
 
   ngOnDestroy(): void {

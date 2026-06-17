@@ -2,10 +2,16 @@ import { QuotationNote } from '../../../core/models/quotation-note.model';
 
 export type OrderOperationalStatus =
   | 'PROGRAMADA'
+  | 'EN_CAMINO'
   | 'ENTREGADO'
   | 'POR_RECOGER'
   | 'CLIENTE_ENTREGA'
   | 'RECOGIDO';
+
+export interface AssignedDriver {
+  id: number;
+  name: string;
+}
 
 export type OrderBillingStatus =
   | 'AL_CORRIENTE'
@@ -38,6 +44,8 @@ export interface OrderRecord {
   folderLabels: string[];
   totalEstimated: number;
   isCancelled: boolean;
+  mapsUrl: string;
+  assignedDriver: AssignedDriver | null;
   quotation: QuotationNote;
   workflowHistory?: OrderWorkflowEventRecord[];
 }

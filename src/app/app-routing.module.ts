@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
+import { choferGuard } from './core/guards/chofer.guard';
 
 export const appRoutes: Routes = [
   {
@@ -86,6 +87,15 @@ export const appRoutes: Routes = [
     loadChildren: () =>
       import('./features/fletes/fletes.routes').then(
         (module) => module.FLETES_ROUTES,
+      ),
+  },
+  {
+    path: 'mi-ruta',
+    title: 'Mi Ruta',
+    canActivate: [choferGuard],
+    loadChildren: () =>
+      import('./features/mi-ruta/mi-ruta.routes').then(
+        (module) => module.MI_RUTA_ROUTES,
       ),
   },
   {

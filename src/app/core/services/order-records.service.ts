@@ -279,6 +279,31 @@ export class OrderRecordsService {
     }
   }
 
+  async assignOrder(
+    orderId: string,
+    input: { driverId?: number | null; mapsUrl?: string },
+  ): Promise<OrderRecord> {
+    const headers = this.requireAuthHeaders();
+    this.errorState.set('');
+
+    try {
+      const updatedOrder = await firstValueFrom(
+        this.http.post<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/assign/`, input, {
+          headers,
+        }),
+      );
+
+      return this.upsertOrderRecord(updatedOrder);
+    } catch (error) {
+      const message = this.resolveHttpError(
+        error,
+        'No fue posible asignar el chofer o la ubicación de la nota.',
+      );
+      this.errorState.set(message);
+      throw new Error(message);
+    }
+  }
+
   async deleteOrder(orderId: string): Promise<void> {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
@@ -526,6 +551,8 @@ export class OrderRecordsService {
       ),
       totalEstimated: Number(record.totalEstimated ?? normalizedQuotation.summary.totalEstimated),
       isCancelled: record.isCancelled === true,
+      mapsUrl: String(record.mapsUrl ?? '').trim(),
+      assignedDriver: record.assignedDriver ?? null,
       quotation: normalizedQuotation,
       workflowHistory: this.normalizeWorkflowHistory(record.workflowHistory),
     };
@@ -537,6 +564,7 @@ export class OrderRecordsService {
     const normalizedValue = String(value ?? '').trim().toUpperCase();
 
     switch (normalizedValue) {
+      case 'EN_CAMINO':
       case 'ENTREGADO':
       case 'POR_RECOGER':
       case 'CLIENTE_ENTREGA':
@@ -564,6 +592,7 @@ export class OrderRecordsService {
   private resolveOperationalStatusLabel(status: OrderOperationalStatus): string {
     const labels: Record<OrderOperationalStatus, string> = {
       PROGRAMADA: 'Programada',
+      EN_CAMINO: 'En camino',
       ENTREGADO: 'Entregado',
       POR_RECOGER: 'En Ruta',
       CLIENTE_ENTREGA: 'Cliente entrega',

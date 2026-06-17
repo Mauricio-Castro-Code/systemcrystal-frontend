@@ -68,7 +68,7 @@ export class LoginPageComponent {
     try {
       const credentials: LoginCredentials = this.loginForm.getRawValue();
       await this.authService.signIn(credentials);
-      await this.router.navigateByUrl('/dashboard');
+      await this.router.navigateByUrl(this.landingRoute());
     } catch (error) {
       this.authError.set(this.resolveErrorMessage(error));
     } finally {
@@ -88,12 +88,16 @@ export class LoginPageComponent {
     try {
       const credentials: RegisterCredentials = this.registerForm.getRawValue();
       await this.authService.register(credentials);
-      await this.router.navigateByUrl('/dashboard');
+      await this.router.navigateByUrl(this.landingRoute());
     } catch (error) {
       this.authError.set(this.resolveErrorMessage(error));
     } finally {
       this.isSubmitting.set(false);
     }
+  }
+
+  private landingRoute(): string {
+    return this.authService.isChofer() ? '/mi-ruta' : '/dashboard';
   }
 
   hasLoginFieldError(fieldName: LoginFieldName): boolean {
