@@ -254,6 +254,17 @@
             <mat-icon>add</mat-icon>
             <span>Agregar articulo</span>
           </button>
+          @if (canUndoDelete()) {
+            <button
+              class="btn-add-row btn-undo-row"
+              mat-stroked-button
+              type="button"
+              (click)="undoLastDelete()"
+            >
+              <mat-icon>undo</mat-icon>
+              <span>Deshacer eliminación</span>
+            </button>
+          }
         </div>
       </div>
     </div>

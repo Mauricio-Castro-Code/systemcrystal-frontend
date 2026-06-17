@@ -49,6 +49,7 @@ import { FolioStrategyService } from '../../../../core/services/folio-strategy.s
 import { ClientDirectoryService } from '../../../../core/services/client-directory.service';
 import { FreightZonesService } from '../../../../core/services/freight-zones.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { FreightZone } from '../../../fletes/models/freight-zone.model';
 
 type EquipmentRowForm = FormGroup<{
@@ -119,8 +120,13 @@ export class NewQuotationPageComponent {
   private readonly clientDirectoryService = inject(ClientDirectoryService);
   private readonly freightZonesService = inject(FreightZonesService);
   private readonly notifications = inject(NotificationService);
+  private readonly confirmService = inject(ConfirmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  // Pila de productos eliminados para poder deshacer (último eliminado, primero en restaurarse).
+  private readonly deletedRows = signal<Array<{ index: number; value: QuotationEquipmentItem }>>([]);
+  readonly canUndoDelete = computed(() => this.deletedRows().length > 0);
 
   @ViewChild(MatTable) equipmentTable?: MatTable<EquipmentRowForm>;
 
@@ -267,14 +273,55 @@ export class NewQuotationPageComponent {
     this.recalculateSummary();
   }
 
-  removeEquipmentRow(index: number): void {
+  async removeEquipmentRow(index: number): Promise<void> {
     if (this.equipmentRows.length === 1) {
+      this.notifications.warning('La nota debe tener al menos un producto.');
+      return;
+    }
+
+    const row = this.equipmentRows.at(index);
+    const value = row.getRawValue() as QuotationEquipmentItem;
+    const productLabel = (value.equipment || '').trim() || 'este producto';
+
+    const confirmed = await this.confirmService.confirmDelete(
+      'Eliminar producto',
+      `¿Quitar "${productLabel}" de la nota?`,
+      'Podrás deshacerlo con el botón Deshacer.',
+    );
+
+    if (!confirmed) {
       return;
     }
 
     this.equipmentRows.removeAt(index);
     this.equipmentTable?.renderRows();
     this.recalculateSummary();
+    this.quotationForm.markAsDirty();
+
+    // Guardamos el producto eliminado (y su posición) para poder restaurarlo.
+    this.deletedRows.update((stack) => [...stack, { index, value }]);
+
+    const toast = this.notifications.info('Producto eliminado.', { actionLabel: 'Deshacer' });
+    toast.onAction().subscribe(() => this.undoLastDelete());
+  }
+
+  undoLastDelete(): void {
+    const stack = this.deletedRows();
+    if (stack.length === 0) {
+      return;
+    }
+
+    const last = stack[stack.length - 1];
+    this.deletedRows.update((current) => current.slice(0, -1));
+
+    const restoredRow = this.createEquipmentRow(last.value);
+    const targetIndex = Math.min(last.index, this.equipmentRows.length);
+    this.equipmentRows.insert(targetIndex, restoredRow);
+
+    this.equipmentTable?.renderRows();
+    this.recalculateSummary();
+    this.quotationForm.markAsDirty();
+    this.notifications.success('Producto restaurado.');
   }
 
   async saveDraft(): Promise<void> {
