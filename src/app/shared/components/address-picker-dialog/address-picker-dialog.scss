@@ -1,0 +1,66 @@
+.addr-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 360px;
+  max-width: 480px;
+
+  &__intro {
+    margin: 0 0 6px;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  &__option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+
+    &:hover {
+      border-color: #c7d2fe;
+    }
+
+    &--active {
+      border-color: #1d2f58;
+      background: #f5f7fb;
+    }
+
+    &--new {
+      border-style: dashed;
+    }
+  }
+
+  &__radio {
+    color: #1d2f58;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__address {
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  &__reference {
+    font-size: 0.85rem;
+    color: #4b5563;
+  }
+
+  &__usage {
+    font-size: 0.78rem;
+    color: #9ca3af;
+  }
+}

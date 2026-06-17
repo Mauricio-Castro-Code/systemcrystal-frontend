@@ -1,0 +1,52 @@
+<h2 mat-dialog-title>Dirección para la cotización</h2>
+
+<mat-dialog-content class="addr-dialog">
+  <p class="addr-dialog__intro">
+    Elige una dirección guardada de <strong>{{ data.clientName }}</strong> o captura una nueva.
+  </p>
+
+  @for (addr of data.addresses; track $index) {
+    <button
+      type="button"
+      class="addr-dialog__option"
+      [class.addr-dialog__option--active]="isSelected({ kind: 'existing', index: $index })"
+      (click)="selectExisting($index)"
+    >
+      <mat-icon class="addr-dialog__radio">
+        {{ isSelected({ kind: 'existing', index: $index }) ? 'radio_button_checked' : 'radio_button_unchecked' }}
+      </mat-icon>
+      <span class="addr-dialog__body">
+        <span class="addr-dialog__address">{{ addr.address }}</span>
+        @if (addr.reference) {
+          <span class="addr-dialog__reference">Ref: {{ addr.reference }}</span>
+        }
+        <span class="addr-dialog__usage">
+          Usada {{ addr.usageCount }} {{ addr.usageCount === 1 ? 'vez' : 'veces' }}
+        </span>
+      </span>
+    </button>
+  }
+
+  <button
+    type="button"
+    class="addr-dialog__option addr-dialog__option--new"
+    [class.addr-dialog__option--active]="isSelected({ kind: 'new' })"
+    (click)="selectNew()"
+  >
+    <mat-icon class="addr-dialog__radio">
+      {{ isSelected({ kind: 'new' }) ? 'radio_button_checked' : 'radio_button_unchecked' }}
+    </mat-icon>
+    <span class="addr-dialog__body">
+      <span class="addr-dialog__address">Dirección nueva (en blanco)</span>
+      <span class="addr-dialog__usage">Capturarás la dirección en la cotización</span>
+    </span>
+  </button>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" type="button" (click)="confirm()">
+    <mat-icon>arrow_forward</mat-icon>
+    Continuar
+  </button>
+</mat-dialog-actions>

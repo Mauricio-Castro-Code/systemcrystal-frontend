@@ -153,6 +153,8 @@ export class ClientDirectoryService {
   private normalizeAddress(address: ClientAddressHistoryItem): ClientAddressHistoryItem {
     return {
       address: String(address.address ?? '').trim(),
+      addressLine: String(address.addressLine ?? '').trim(),
+      neighborhood: String(address.neighborhood ?? '').trim(),
       reference: String(address.reference ?? '').trim(),
       lastUsedAt: String(address.lastUsedAt ?? '').trim(),
       usageCount: Number(address.usageCount ?? 0),

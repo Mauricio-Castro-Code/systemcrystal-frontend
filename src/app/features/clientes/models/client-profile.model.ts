@@ -3,6 +3,8 @@ import { Client } from './client.model';
 
 export interface ClientAddressHistoryItem {
   address: string;
+  addressLine: string;
+  neighborhood: string;
   reference: string;
   lastUsedAt: string;
   usageCount: number;

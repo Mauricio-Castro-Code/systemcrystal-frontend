@@ -133,6 +133,9 @@ export class NewQuotationPageComponent {
   readonly editingOrderId = this.route.snapshot.paramMap.get('orderId');
   readonly editingQuotationId = this.route.snapshot.paramMap.get('quotationId');
   readonly selectedClientId = this.route.snapshot.queryParamMap.get('client');
+  // Dirección elegida en el modal de cliente: índice de la guardada o "nueva" (en blanco).
+  readonly selectedAddressIndex = this.route.snapshot.queryParamMap.get('addrIndex');
+  readonly useNewAddress = this.route.snapshot.queryParamMap.get('dirNueva') === '1';
   // Duplicar: prellena la NUEVA cotización con la info de una nota existente.
   readonly duplicateFromOrderId = this.route.snapshot.queryParamMap.get('duplicarDe');
   readonly isEditingOrder = this.editingOrderId !== null;
@@ -885,13 +888,33 @@ export class NewQuotationPageComponent {
       );
       const clientInfo = clientProfile.prefill.clientInfo;
 
+      // Resolvemos qué dirección usar según lo elegido en el modal de cliente.
+      let address = clientInfo.address;
+      let neighborhood = clientInfo.neighborhood;
+      let reference = clientInfo.reference;
+
+      if (this.useNewAddress) {
+        // Dirección nueva: dejamos los campos en blanco para capturarla.
+        address = '';
+        neighborhood = '';
+        reference = '';
+      } else if (this.selectedAddressIndex !== null) {
+        const chosen = clientProfile.addresses[Number(this.selectedAddressIndex)];
+        if (chosen) {
+          // addressLine/neighborhood vienen separados desde el backend.
+          address = chosen.addressLine || chosen.address;
+          neighborhood = chosen.neighborhood;
+          reference = chosen.reference;
+        }
+      }
+
       this.clientInfoForm.patchValue({
         fullName: clientInfo.fullName,
         phoneNumber: clientInfo.phoneNumber,
         birthDate: this.parseDate(clientInfo.birthDate),
-        address: clientInfo.address,
-        neighborhood: clientInfo.neighborhood,
-        reference: clientInfo.reference,
+        address,
+        neighborhood,
+        reference,
         deliveryInstructions: clientInfo.deliveryInstructions,
       });
 
