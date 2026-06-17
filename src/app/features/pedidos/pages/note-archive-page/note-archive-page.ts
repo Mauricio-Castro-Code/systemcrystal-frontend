@@ -127,7 +127,7 @@ export class NoteArchivePageComponent implements AfterViewInit {
         this.searchTerm.set(value.trim().toLowerCase());
       });
 
-    void this.orderRecordsService.loadArchivedOrders();
+    void this.orderRecordsService.loadArchivedOrders(true);
   }
 
   ngAfterViewInit(): void {

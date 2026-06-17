@@ -4,8 +4,17 @@ export const CONTABILIDAD_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/contabilidad-page/contabilidad-page').then(
-        (m) => m.ContabilidadPageComponent,
+      import('../../layout/main-layout/main-layout').then(
+        (module) => module.MainLayoutComponent,
       ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/contabilidad-page/contabilidad-page').then(
+            (m) => m.ContabilidadPageComponent,
+          ),
+      },
+    ],
   },
 ];

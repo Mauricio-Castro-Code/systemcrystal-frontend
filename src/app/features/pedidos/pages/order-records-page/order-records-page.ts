@@ -160,7 +160,9 @@ export class OrderRecordsPageComponent implements AfterViewInit {
         this.searchTerm.set(value.trim().toLowerCase());
       });
 
-    void this.orderRecordsService.loadOrders();
+    // force=true: al entrar/volver a la pantalla siempre revalidamos contra el
+    // backend (muestra lo cacheado al instante y refresca en segundo plano).
+    void this.orderRecordsService.loadOrders(true);
 
     if (this.authService.isAdmin()) {
       void this.teamService.loadMembers();

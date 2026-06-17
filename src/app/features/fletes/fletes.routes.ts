@@ -4,8 +4,17 @@ export const FLETES_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/fletes-page/fletes-page').then(
-        (m) => m.FletesPgeComponent,
+      import('../../layout/main-layout/main-layout').then(
+        (module) => module.MainLayoutComponent,
       ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/fletes-page/fletes-page').then(
+            (m) => m.FletesPgeComponent,
+          ),
+      },
+    ],
   },
 ];

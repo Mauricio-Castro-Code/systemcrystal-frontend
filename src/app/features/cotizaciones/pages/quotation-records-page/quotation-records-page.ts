@@ -81,7 +81,7 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
         this.paginator?.firstPage();
       });
 
-    void this.quotationRecordsService.loadQuotations();
+    void this.quotationRecordsService.loadQuotations(true);
   }
 
   ngAfterViewInit(): void {
