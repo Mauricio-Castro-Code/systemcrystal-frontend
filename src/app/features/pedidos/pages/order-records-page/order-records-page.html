@@ -61,6 +61,18 @@
         </span>
 
         <div class="order-records-page__selection-actions">
+          @if (isAdmin()) {
+            <button
+              mat-raised-button
+              color="primary"
+              type="button"
+              [disabled]="isCollecting()"
+              (click)="handleBulkAssign()"
+            >
+              <mat-icon>local_shipping</mat-icon>
+              Asignar chofer
+            </button>
+          }
           @for (action of bulkStatusActions; track action.status) {
             <button
               mat-stroked-button

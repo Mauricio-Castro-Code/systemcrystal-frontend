@@ -1,0 +1,57 @@
+.assign-dialog {
+  display: flex;
+  flex-direction: column;
+  min-width: 360px;
+  max-width: 480px;
+
+  &__driver {
+    width: 100%;
+  }
+
+  &__error {
+    margin: -8px 0 8px;
+    color: #b91c1c;
+    font-size: 0.85rem;
+  }
+
+  &__intro {
+    margin: 4px 0 14px;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  &__note {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+
+  &__note-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  &__folio {
+    font-weight: 700;
+    color: #1d2f58;
+    font-size: 0.85rem;
+  }
+
+  &__client {
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  &__address {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+
+  &__link {
+    width: 100%;
+  }
+}

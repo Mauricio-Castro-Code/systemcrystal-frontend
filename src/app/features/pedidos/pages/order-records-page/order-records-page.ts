@@ -13,10 +13,11 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { startWith } from 'rxjs';
+import { firstValueFrom, startWith } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -39,6 +40,11 @@ import {
 } from '../../models/note-sort.model';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { TeamService } from '../../../../core/services/team.service';
+import {
+  AssignDriverDialogComponent,
+  AssignDriverDialogResult,
+} from '../../../../shared/components/assign-driver-dialog/assign-driver-dialog';
 
 @Component({
   selector: 'app-order-records',
@@ -67,6 +73,8 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   private readonly confirmService = inject(ConfirmService);
   private readonly notifications = inject(NotificationService);
   private readonly authService = inject(AuthService);
+  private readonly teamService = inject(TeamService);
+  private readonly dialog = inject(MatDialog);
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild('importInput') importInput?: { nativeElement: HTMLInputElement };
@@ -153,6 +161,10 @@ export class OrderRecordsPageComponent implements AfterViewInit {
       });
 
     void this.orderRecordsService.loadOrders();
+
+    if (this.authService.isAdmin()) {
+      void this.teamService.loadMembers();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -313,6 +325,77 @@ export class OrderRecordsPageComponent implements AfterViewInit {
         error instanceof Error
           ? error.message
           : `No fue posible marcar las notas como ${label}.`,
+      );
+    } finally {
+      this.isCollecting.set(false);
+    }
+  }
+
+  async handleBulkAssign(): Promise<void> {
+    const selectedIds = new Set(this.selectedOrderIds());
+    const selectedRecords = this.orderRecordsService
+      .orderRecords()
+      .filter((record) => selectedIds.has(record.orderId));
+
+    if (selectedRecords.length === 0) {
+      return;
+    }
+
+    const drivers = this.teamService
+      .members()
+      .filter((member) => member.role === 'chofer' && member.isActive)
+      .map((member) => ({ id: Number(member.id), name: member.displayName }));
+
+    if (drivers.length === 0) {
+      this.notifications.error('No hay choferes activos. Crea uno en la sección Equipo.');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(AssignDriverDialogComponent, {
+      width: '520px',
+      autoFocus: false,
+      data: {
+        drivers,
+        notes: selectedRecords.map((record) => ({
+          orderId: record.orderId,
+          clientName: record.clientName,
+          address:
+            [record.quotation.clientInfo.address, record.quotation.clientInfo.neighborhood]
+              .filter((part) => part)
+              .join(', ') || 'Domicilio pendiente',
+          hasMapsUrl: !!record.mapsUrl,
+        })),
+      },
+    });
+
+    const result = (await firstValueFrom(dialogRef.afterClosed())) as AssignDriverDialogResult | null;
+
+    if (!result) {
+      return;
+    }
+
+    this.isCollecting.set(true);
+    try {
+      for (const record of selectedRecords) {
+        const mapsUrl = result.links[record.orderId];
+        await this.orderRecordsService.assignOrder(record.orderId, {
+          driverId: result.driverId,
+          // Solo enviamos mapsUrl si el admin capturó uno nuevo en el diálogo.
+          ...(mapsUrl ? { mapsUrl } : {}),
+        });
+      }
+
+      await this.orderRecordsService.loadOrders(true);
+      this.selectedOrderIds.set(new Set());
+
+      const driverName = drivers.find((driver) => driver.id === result.driverId)?.name ?? 'el chofer';
+      const plural = selectedRecords.length > 1;
+      this.notifications.success(
+        `${selectedRecords.length} nota${plural ? 's' : ''} asignada${plural ? 's' : ''} a ${driverName}.`,
+      );
+    } catch (error) {
+      this.notifications.error(
+        error instanceof Error ? error.message : 'No fue posible asignar las notas.',
       );
     } finally {
       this.isCollecting.set(false);

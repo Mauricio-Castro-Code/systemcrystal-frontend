@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>Asignar chofer a {{ data.notes.length }} nota{{ data.notes.length > 1 ? 's' : '' }}</h2>
+
+<mat-dialog-content class="assign-dialog">
+  <mat-form-field appearance="outline" class="assign-dialog__driver">
+    <mat-label>Chofer</mat-label>
+    <mat-select [formControl]="driverControl">
+      @for (driver of data.drivers; track driver.id) {
+        <mat-option [value]="driver.id">{{ driver.name }}</mat-option>
+      }
+    </mat-select>
+    @if (data.drivers.length === 0) {
+      <mat-hint>No hay choferes activos. Crea uno en Equipo.</mat-hint>
+    }
+  </mat-form-field>
+
+  @if (driverTouched() && !driverControl.value) {
+    <p class="assign-dialog__error">Selecciona un chofer.</p>
+  }
+
+  @if (notesMissingLink.length > 0) {
+    <p class="assign-dialog__intro">
+      Estas notas no tienen ubicación. Pega el link de Google Maps de cada una, o déjala vacía para
+      <strong>omitir</strong>.
+    </p>
+
+    @for (note of notesMissingLink; track note.orderId) {
+      <div class="assign-dialog__note">
+        <div class="assign-dialog__note-head">
+          <span class="assign-dialog__folio">{{ note.orderId }}</span>
+          <span class="assign-dialog__client">{{ note.clientName }}</span>
+        </div>
+        <p class="assign-dialog__address">{{ note.address }}</p>
+        <mat-form-field appearance="outline" class="assign-dialog__link">
+          <mat-label>Link de Google Maps (opcional)</mat-label>
+          <input matInput type="url" [formControl]="linkControl(note.orderId)" placeholder="https://maps.google.com/?q=..." />
+        </mat-form-field>
+      </div>
+    }
+  } @else {
+    <p class="assign-dialog__intro">Todas las notas seleccionadas ya tienen ubicación.</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" type="button" (click)="confirm()">
+    <mat-icon>local_shipping</mat-icon>
+    Asignar
+  </button>
+</mat-dialog-actions>
