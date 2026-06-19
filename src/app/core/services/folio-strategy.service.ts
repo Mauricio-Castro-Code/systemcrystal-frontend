@@ -4,9 +4,9 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   FolioChoiceDialogComponent,
-  FolioStrategy,
+  FolioChoiceResult,
 } from '../../shared/components/folio-choice-dialog/folio-choice-dialog';
-import { OrderRecordsService } from './order-records.service';
+import { FolioSelection, OrderRecordsService } from './order-records.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,36 +16,42 @@ export class FolioStrategyService {
   private readonly orderRecordsService = inject(OrderRecordsService);
 
   /**
-   * Resuelve la estrategia de folio para una nueva nota.
+   * Resuelve el folio para una nueva nota.
    * - Si no hay huecos en la numeracion, devuelve 'fill' sin preguntar.
-   * - Si hay un hueco, abre un dialogo para que el usuario elija.
+   * - Si hay huecos, abre un dialogo para que el usuario elija en cual colocarla.
    * - Devuelve `null` si el usuario cancela (no se debe guardar).
    */
-  async resolve(): Promise<FolioStrategy | null> {
+  async resolve(): Promise<FolioSelection | null> {
     let options;
 
     try {
       options = await this.orderRecordsService.getFolioOptions();
     } catch {
       // Si no se pueden consultar las opciones, seguimos con el comportamiento
-      // por defecto (rellenar hueco) para no bloquear el guardado.
-      return 'fill';
+      // por defecto (rellenar el primer hueco) para no bloquear el guardado.
+      return { strategy: 'fill', value: null };
     }
 
     if (!options.hasGap) {
-      return 'fill';
+      return { strategy: 'fill', value: null };
     }
 
     const ref = this.dialog.open(FolioChoiceDialogComponent, {
-      width: '440px',
+      width: '460px',
       data: {
-        fillFolio: options.fillFolio,
+        gaps: options.gaps,
         sequentialFolio: options.sequentialFolio,
       },
       autoFocus: false,
     });
 
     const choice = await firstValueFrom(ref.afterClosed());
-    return (choice as FolioStrategy | null | undefined) ?? null;
+
+    if (!choice) {
+      return null;
+    }
+
+    const result = choice as FolioChoiceResult;
+    return { strategy: result.strategy, value: result.value };
   }
 }

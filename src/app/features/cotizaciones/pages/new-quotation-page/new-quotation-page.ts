@@ -382,9 +382,9 @@ export class NewQuotationPageComponent {
       return;
     }
 
-    const folioStrategy = await this.folioStrategyService.resolve();
+    const folioSelection = await this.folioStrategyService.resolve();
 
-    if (folioStrategy === null) {
+    if (folioSelection === null) {
       return;
     }
 
@@ -393,7 +393,7 @@ export class NewQuotationPageComponent {
     try {
       const createdOrder = await this.orderRecordsService.createConfirmedOrder({
         quotation: this.buildQuotationSnapshot(),
-        folioStrategy,
+        folioSelection,
       });
 
       this.notifications.success(
@@ -475,9 +475,9 @@ export class NewQuotationPageComponent {
       return;
     }
 
-    const folioStrategy = await this.folioStrategyService.resolve();
+    const folioSelection = await this.folioStrategyService.resolve();
 
-    if (folioStrategy === null) {
+    if (folioSelection === null) {
       return;
     }
 
@@ -496,7 +496,7 @@ export class NewQuotationPageComponent {
 
       const createdOrder = await this.quotationRecordsService.confirmDraftAsOrder(
         updatedQuotation.quotationId,
-        folioStrategy,
+        folioSelection,
       );
 
       if (!createdOrder) {

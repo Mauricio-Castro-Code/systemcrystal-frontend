@@ -14,6 +14,11 @@ import {
 
 export type FolioStrategy = 'fill' | 'sequential';
 
+export interface FolioGapOption {
+  value: number;
+  folio: string;
+}
+
 export interface FolioOptions {
   yearSuffix: string;
   fillValue: number;
@@ -21,11 +26,22 @@ export interface FolioOptions {
   fillFolio: string;
   sequentialFolio: string;
   hasGap: boolean;
+  gaps: FolioGapOption[];
+}
+
+/**
+ * Folio elegido para una nueva nota.
+ * - `strategy: 'sequential'` continúa después del último folio.
+ * - `strategy: 'fill'` con `value` rellena ese hueco concreto.
+ */
+export interface FolioSelection {
+  strategy: FolioStrategy;
+  value: number | null;
 }
 
 interface CreateOrderRecordInput {
   quotation: QuotationNote;
-  folioStrategy?: FolioStrategy;
+  folioSelection?: FolioSelection;
 }
 
 interface UpdateOrderStatusesInput {
@@ -185,10 +201,15 @@ export class OrderRecordsService {
     this.errorState.set('');
 
     try {
+      const selection = input.folioSelection ?? { strategy: 'fill', value: null };
       const createdOrder = await firstValueFrom(
         this.http.post<OrderRecord>(
           `${API_BASE_URL}/orders/`,
-          { ...input.quotation, folioStrategy: input.folioStrategy ?? 'fill' },
+          {
+            ...input.quotation,
+            folioStrategy: selection.strategy,
+            folioValue: selection.value,
+          },
           { headers },
         ),
       );

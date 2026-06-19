@@ -109,16 +109,16 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
       return;
     }
 
-    const folioStrategy = await this.folioStrategyService.resolve();
+    const folioSelection = await this.folioStrategyService.resolve();
 
-    if (folioStrategy === null) {
+    if (folioSelection === null) {
       return;
     }
 
     try {
       const createdOrder = await this.quotationRecordsService.confirmDraftAsOrder(
         record.quotationId,
-        folioStrategy,
+        folioSelection,
       );
 
       if (!createdOrder) {

@@ -79,9 +79,9 @@ export class QuotationNotePageComponent implements OnDestroy {
   }
 
   async confirmOrder(): Promise<void> {
-    const folioStrategy = await this.folioStrategyService.resolve();
+    const folioSelection = await this.folioStrategyService.resolve();
 
-    if (folioStrategy === null) {
+    if (folioSelection === null) {
       return;
     }
 
@@ -90,7 +90,7 @@ export class QuotationNotePageComponent implements OnDestroy {
     try {
       const createdOrder = await this.quotationRecordsService.confirmDraftAsOrder(
         this.quotationId,
-        folioStrategy,
+        folioSelection,
       );
 
       if (!createdOrder) {

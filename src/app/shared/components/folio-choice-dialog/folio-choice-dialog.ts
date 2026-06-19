@@ -5,9 +5,19 @@ import { MatIconModule } from '@angular/material/icon';
 
 export type FolioStrategy = 'fill' | 'sequential';
 
+export interface FolioGapOption {
+  value: number;
+  folio: string;
+}
+
 export interface FolioChoiceDialogData {
-  fillFolio: string;
+  gaps: FolioGapOption[];
   sequentialFolio: string;
+}
+
+export interface FolioChoiceResult {
+  strategy: FolioStrategy;
+  value: number | null;
 }
 
 @Component({
@@ -21,8 +31,12 @@ export class FolioChoiceDialogComponent {
   readonly dialogRef = inject(MatDialogRef<FolioChoiceDialogComponent>);
   readonly data: FolioChoiceDialogData = inject(MAT_DIALOG_DATA);
 
-  choose(strategy: FolioStrategy): void {
-    this.dialogRef.close(strategy);
+  chooseGap(gap: FolioGapOption): void {
+    this.dialogRef.close({ strategy: 'fill', value: gap.value } as FolioChoiceResult);
+  }
+
+  chooseSequential(): void {
+    this.dialogRef.close({ strategy: 'sequential', value: null } as FolioChoiceResult);
   }
 
   cancel(): void {

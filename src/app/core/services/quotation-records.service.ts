@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
 import { QuotationNote } from '../models/quotation-note.model';
 import { AuthService } from './auth.service';
-import { FolioStrategy, OrderRecordsService } from './order-records.service';
+import { FolioSelection, OrderRecordsService } from './order-records.service';
 import { QuotationRecord } from '../../features/cotizaciones/models/quotation-record.model';
 import { OrderRecord } from '../../features/pedidos/models/order-record.model';
 
@@ -177,7 +177,7 @@ export class QuotationRecordsService {
 
   async confirmDraftAsOrder(
     quotationId: string,
-    folioStrategy: FolioStrategy = 'fill',
+    folioSelection: FolioSelection = { strategy: 'fill', value: null },
   ): Promise<OrderRecord | null> {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
@@ -186,7 +186,7 @@ export class QuotationRecordsService {
       const createdOrder = await firstValueFrom(
         this.http.post<OrderRecord>(
           `${API_BASE_URL}/quotations/${quotationId}/confirm/`,
-          { folioStrategy },
+          { folioStrategy: folioSelection.strategy, folioValue: folioSelection.value },
           {
             headers,
           },
