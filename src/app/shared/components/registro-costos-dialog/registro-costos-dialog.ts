@@ -14,7 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 import { OrderRecord } from '../../../../features/pedidos/models/order-record.model';
-import { OrderRecordsService } from '../../../services/order-records.service';
+import { OrderRecordsService } from '../../../core/services/order-records.service';
 
 @Component({
   selector: 'app-registro-costos-dialog',
