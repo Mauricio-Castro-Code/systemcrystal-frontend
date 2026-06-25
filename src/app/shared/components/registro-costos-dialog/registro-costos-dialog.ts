@@ -13,7 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
-import { OrderRecord } from '../../../../features/pedidos/models/order-record.model';
+import { OrderRecord } from '../../../features/pedidos/models/order-record.model';
 import { OrderRecordsService } from '../../../core/services/order-records.service';
 
 @Component({
