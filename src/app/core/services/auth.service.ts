@@ -21,6 +21,9 @@ export class AuthService {
   readonly isAdmin = computed(() => this.session()?.isAdmin === true);
   readonly role = computed(() => this.session()?.role ?? null);
   readonly isChofer = computed(() => this.session()?.role === 'chofer');
+  readonly canAssignDriver = computed(
+    () => this.session()?.isAdmin === true || this.session()?.role === 'ventas',
+  );
 
   async signIn(credentials: LoginCredentials): Promise<UserSession> {
     return this.requestSession('/auth/login/', credentials);

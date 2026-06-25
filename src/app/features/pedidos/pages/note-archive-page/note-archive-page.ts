@@ -23,10 +23,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { RenameOrderDialogComponent } from '../../../../shared/components/rename-order-dialog/rename-order-dialog';
+import { RegistroCostosDialogComponent } from '../../../../shared/components/registro-costos-dialog/registro-costos-dialog';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 import { OrderRecord } from '../../models/order-record.model';
 import {
@@ -54,6 +57,7 @@ import { OrderRecordsService } from '../../../../core/services/order-records.ser
     MatPaginatorModule,
     MatSelectModule,
     MatTableModule,
+    MatTooltipModule,
   ],
   templateUrl: './note-archive-page.html',
   styleUrl: './note-archive-page.scss',
@@ -66,6 +70,9 @@ export class NoteArchivePageComponent implements AfterViewInit {
   private readonly dialog = inject(MatDialog);
   private readonly confirmService = inject(ConfirmService);
   private readonly notifications = inject(NotificationService);
+  private readonly authService = inject(AuthService);
+
+  readonly canAssignDriver = this.authService.canAssignDriver;
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
 
@@ -78,6 +85,7 @@ export class NoteArchivePageComponent implements AfterViewInit {
     'folders',
     'deliveryDate',
     'totalEstimated',
+    'registro',
     'actions',
   ];
   readonly selectedFolder = signal<NoteFolderKey>('all');
@@ -186,6 +194,15 @@ export class NoteArchivePageComponent implements AfterViewInit {
         error instanceof Error ? error.message : 'No fue posible eliminar la nota.',
       );
     }
+  }
+
+  handleRegistro(record: OrderRecord): void {
+    this.dialog.open(RegistroCostosDialogComponent, {
+      width: '580px',
+      maxWidth: '95vw',
+      data: record,
+      autoFocus: false,
+    });
   }
 
   selectFolder(folderKey: NoteFolderKey): void {

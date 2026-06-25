@@ -76,6 +76,11 @@ export class MainLayoutComponent {
     return this.allNavItems.filter((item) => !item.adminOnly || admin);
   });
 
+  readonly activePageTitle = computed(() => {
+    const id = this.activeItemId();
+    return this.allNavItems.find((item) => item.id === id)?.label ?? 'Crystal Alquiler';
+  });
+
   toggleSidebar(): void {
     this.isSidebarOpen.update((currentValue) => !currentValue);
   }

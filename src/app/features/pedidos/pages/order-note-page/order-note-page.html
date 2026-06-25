@@ -168,7 +168,7 @@
         </div>
       </article>
 
-      @if (isAdmin() && isActiveNote()) {
+      @if (canAssignDriver() && isActiveNote()) {
         <article class="order-note-page__workflow-card">
           <div class="order-note-page__workflow-heading">
             <div>

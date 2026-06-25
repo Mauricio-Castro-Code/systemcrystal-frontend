@@ -80,6 +80,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   @ViewChild('importInput') importInput?: { nativeElement: HTMLInputElement };
 
   readonly isAdmin = this.authService.isAdmin;
+  readonly canAssignDriver = this.authService.canAssignDriver;
   readonly isImporting = signal(false);
 
   readonly folderOptions = NOTE_FOLDER_OPTIONS;
@@ -164,7 +165,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
     // backend (muestra lo cacheado al instante y refresca en segundo plano).
     void this.orderRecordsService.loadOrders(true);
 
-    if (this.authService.isAdmin()) {
+    if (this.authService.canAssignDriver()) {
       void this.teamService.loadMembers();
     }
   }

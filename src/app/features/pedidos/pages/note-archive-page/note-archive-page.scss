@@ -213,6 +213,10 @@
   background: rgba(var(--of-accent-rgb), 0.05);
 }
 
+.registro-btn--done {
+  color: #277740 !important;
+}
+
 :host ::ng-deep .mat-mdc-icon-button {
   color: var(--of-accent-strong);
 }
@@ -223,7 +227,7 @@
 
 @media (max-width: 959px) {
   .order-records-page {
-    padding-top: 5.4rem;
+    padding-top: 1.5rem;
   }
 
   .order-records-page__folders {

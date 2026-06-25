@@ -35,9 +35,19 @@
     <!-- Summary cards -->
     <div class="ac-summary">
       <div class="ac-card ac-card--primary">
-        <span class="ac-card__eyebrow">Total {{ data.selectedYear }}</span>
+        <span class="ac-card__eyebrow">Ingresos {{ data.selectedYear }}</span>
         <strong class="ac-card__value">{{ formatCurrency(data.summary.yearRevenue) }}</strong>
         <span class="ac-card__detail">{{ data.summary.totalOrders }} notas confirmadas</span>
+      </div>
+      <div class="ac-card ac-card--costs">
+        <span class="ac-card__eyebrow">Costos externos {{ data.selectedYear }}</span>
+        <strong class="ac-card__value">{{ formatCurrency(data.summary.yearExtraCosts) }}</strong>
+        <span class="ac-card__detail">Sub-arriendos, meseros y otros</span>
+      </div>
+      <div class="ac-card ac-card--utility" [class.ac-card--up]="data.summary.yearUtility > 0" [class.ac-card--down]="data.summary.yearUtility < 0">
+        <span class="ac-card__eyebrow">Utilidad {{ data.selectedYear }}</span>
+        <strong class="ac-card__value">{{ formatCurrency(data.summary.yearUtility) }}</strong>
+        <span class="ac-card__detail">Ingresos − costos externos</span>
       </div>
       <div class="ac-card">
         <span class="ac-card__eyebrow">Mes actual</span>

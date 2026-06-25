@@ -61,7 +61,7 @@
         </span>
 
         <div class="order-records-page__selection-actions">
-          @if (isAdmin()) {
+          @if (canAssignDriver()) {
             <button
               mat-raised-button
               color="primary"

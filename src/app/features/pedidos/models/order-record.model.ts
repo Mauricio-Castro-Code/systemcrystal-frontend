@@ -1,5 +1,11 @@
 import { QuotationNote } from '../../../core/models/quotation-note.model';
 
+export interface ExtraCost {
+  id: number;
+  concepto: string;
+  monto: number;
+}
+
 export type OrderOperationalStatus =
   | 'PROGRAMADA'
   | 'EN_CAMINO'
@@ -45,6 +51,9 @@ export interface OrderRecord {
   totalEstimated: number;
   isCancelled: boolean;
   mapsUrl: string;
+  officeClosed: boolean;
+  extraCosts: ExtraCost[];
+  totalExtraCosts: number;
   assignedDriver: AssignedDriver | null;
   quotation: QuotationNote;
   workflowHistory?: OrderWorkflowEventRecord[];

@@ -2,6 +2,8 @@ export interface MonthlySalesPoint {
   label: string;
   month: number;
   value: number;
+  costs: number;
+  utility: number;
 }
 
 export interface TopProduct {
@@ -23,6 +25,8 @@ export interface AccountingSummary {
   yoyPct: number | null;
   prevYear: number;
   totalOrders: number;
+  yearExtraCosts: number;
+  yearUtility: number;
 }
 
 export interface AccountingOverview {

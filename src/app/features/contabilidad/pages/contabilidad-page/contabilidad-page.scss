@@ -163,6 +163,18 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+.ac-card--costs {
+  border-left: 3px solid var(--of-danger, #c0392b);
+}
+
+.ac-card--costs .ac-card__value {
+  color: var(--of-danger, #c0392b);
+}
+
+.ac-card--utility {
+  border-left: 3px solid #277740;
+}
+
 .ac-card--up {
   border-color: var(--of-accent, #277740);
   background: rgba(39, 119, 64, 0.05);
@@ -393,7 +405,7 @@
 
 @media (max-width: 959px) {
   .ac-page {
-    padding-top: 5.4rem;
+    padding-top: 1.5rem;
   }
 }
 

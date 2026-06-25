@@ -77,6 +77,7 @@ export class OrderNotePageComponent implements OnDestroy {
   private readonly dialog = inject(MatDialog);
 
   readonly isAdmin = this.authService.isAdmin;
+  readonly canAssignDriver = this.authService.canAssignDriver;
   // Solo los choferes activos pueden recibir asignaciones.
   readonly assignableDrivers = computed(() =>
     this.teamService.members().filter((member) => member.role === 'chofer' && member.isActive),
@@ -152,7 +153,7 @@ export class OrderNotePageComponent implements OnDestroy {
       }
     });
 
-    if (this.authService.isAdmin()) {
+    if (this.authService.canAssignDriver()) {
       void this.teamService.loadMembers();
     }
 

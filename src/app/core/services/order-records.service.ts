@@ -325,6 +325,58 @@ export class OrderRecordsService {
     }
   }
 
+  async addExtraCost(
+    orderId: string,
+    cost: { concepto: string; monto: number },
+  ): Promise<OrderRecord> {
+    const headers = this.requireAuthHeaders();
+
+    try {
+      const updatedOrder = await firstValueFrom(
+        this.http.post<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/costs/`, cost, { headers }),
+      );
+      return this.upsertOrderRecord(updatedOrder);
+    } catch (error) {
+      const message = this.resolveHttpError(error, 'No fue posible agregar el costo.');
+      throw new Error(message);
+    }
+  }
+
+  async deleteExtraCost(orderId: string, costId: number): Promise<OrderRecord> {
+    const headers = this.requireAuthHeaders();
+
+    try {
+      const updatedOrder = await firstValueFrom(
+        this.http.delete<OrderRecord>(
+          `${API_BASE_URL}/orders/${orderId}/costs/${costId}/`,
+          { headers },
+        ),
+      );
+      return this.upsertOrderRecord(updatedOrder);
+    } catch (error) {
+      const message = this.resolveHttpError(error, 'No fue posible eliminar el costo.');
+      throw new Error(message);
+    }
+  }
+
+  async toggleCloseRegistro(orderId: string): Promise<OrderRecord> {
+    const headers = this.requireAuthHeaders();
+
+    try {
+      const updatedOrder = await firstValueFrom(
+        this.http.post<OrderRecord>(
+          `${API_BASE_URL}/orders/${orderId}/close-registro/`,
+          {},
+          { headers },
+        ),
+      );
+      return this.upsertOrderRecord(updatedOrder);
+    } catch (error) {
+      const message = this.resolveHttpError(error, 'No fue posible actualizar el registro.');
+      throw new Error(message);
+    }
+  }
+
   async deleteOrder(orderId: string): Promise<void> {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
@@ -573,6 +625,9 @@ export class OrderRecordsService {
       totalEstimated: Number(record.totalEstimated ?? normalizedQuotation.summary.totalEstimated),
       isCancelled: record.isCancelled === true,
       mapsUrl: String(record.mapsUrl ?? '').trim(),
+      officeClosed: record.officeClosed === true,
+      extraCosts: Array.isArray(record.extraCosts) ? record.extraCosts : [],
+      totalExtraCosts: Number(record.totalExtraCosts ?? 0),
       assignedDriver: record.assignedDriver ?? null,
       quotation: normalizedQuotation,
       workflowHistory: this.normalizeWorkflowHistory(record.workflowHistory),
