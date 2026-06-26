@@ -129,14 +129,16 @@
     Cerrar
   </button>
 
-  <button
-    type="button"
-    class="rcd__close-btn"
-    [class.rcd__close-btn--done]="record().officeClosed"
-    [disabled]="isTogglingClose()"
-    (click)="toggleClose()"
-  >
-    <mat-icon>{{ record().officeClosed ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-    {{ isTogglingClose() ? 'Guardando...' : (record().officeClosed ? 'Registro completo' : 'Marcar registro completo') }}
-  </button>
+  @if (isAdmin()) {
+    <button
+      type="button"
+      class="rcd__close-btn"
+      [class.rcd__close-btn--done]="record().officeClosed"
+      [disabled]="isTogglingClose()"
+      (click)="toggleClose()"
+    >
+      <mat-icon>{{ record().officeClosed ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+      {{ isTogglingClose() ? 'Guardando...' : (record().officeClosed ? 'Registro completo' : 'Marcar registro completo') }}
+    </button>
+  }
 </mat-dialog-actions>

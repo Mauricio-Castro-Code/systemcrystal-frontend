@@ -15,6 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 
 import { OrderRecord } from '../../../features/pedidos/models/order-record.model';
 import { OrderRecordsService } from '../../../core/services/order-records.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-registro-costos-dialog',
@@ -37,6 +38,7 @@ export class RegistroCostosDialogComponent {
   readonly dialogRef = inject(MatDialogRef<RegistroCostosDialogComponent>);
   readonly data: OrderRecord = inject(MAT_DIALOG_DATA);
   private readonly orderRecordsService = inject(OrderRecordsService);
+  readonly isAdmin = inject(AuthService).isAdmin;
 
   readonly record = signal<OrderRecord>(this.data);
 
