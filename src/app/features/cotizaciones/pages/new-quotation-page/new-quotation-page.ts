@@ -399,6 +399,7 @@ export class NewQuotationPageComponent {
       this.notifications.success(
         `Nota guardada. Pedido ${createdOrder.orderId} confirmado y cliente sincronizado.`,
       );
+      await this.router.navigate(['/pedidos', createdOrder.orderId]);
     } catch (error) {
       this.notifications.error(
         this.resolveActionError(error, 'No fue posible guardar la nota del pedido.'),
