@@ -350,6 +350,7 @@ export class NewQuotationPageComponent {
         this.notifications.success(
           `Cotización ${updatedQuotation.quotationId} actualizada y cliente sincronizado.`,
         );
+        await this.router.navigate(['/cotizaciones', updatedQuotation.quotationId]);
         return;
       }
 
@@ -360,6 +361,7 @@ export class NewQuotationPageComponent {
       this.notifications.success(
         `Cotización ${createdQuotation.quotationId} guardada y cliente sincronizado.`,
       );
+      await this.router.navigate(['/cotizaciones', createdQuotation.quotationId]);
     } catch (error) {
       this.notifications.error(
         this.resolveActionError(error, 'No fue posible guardar la cotización.'),
