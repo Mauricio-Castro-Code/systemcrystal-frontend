@@ -896,6 +896,8 @@ export class NewQuotationPageComponent {
       let neighborhood = clientInfo.neighborhood;
       let reference = clientInfo.reference;
 
+      let chosenFreight: number | null = null;
+
       if (this.useNewAddress) {
         // Dirección nueva: dejamos los campos en blanco para capturarla.
         address = '';
@@ -908,6 +910,7 @@ export class NewQuotationPageComponent {
           address = chosen.addressLine || chosen.address;
           neighborhood = chosen.neighborhood;
           reference = chosen.reference;
+          chosenFreight = chosen.freight;
         }
       }
 
@@ -920,6 +923,10 @@ export class NewQuotationPageComponent {
         reference,
         deliveryInstructions: clientInfo.deliveryInstructions,
       });
+
+      if (chosenFreight !== null && chosenFreight > 0) {
+        this.logisticsForm.controls.freight.setValue(chosenFreight);
+      }
 
       this.actionMessage.set(
         `Se cargaron los datos de ${clientProfile.clientName} para iniciar la nueva cotizacion.`,

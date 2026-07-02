@@ -8,6 +8,7 @@ export interface ClientAddressHistoryItem {
   reference: string;
   lastUsedAt: string;
   usageCount: number;
+  freight: number | null;
 }
 
 export interface ClientOrderHistoryItem {

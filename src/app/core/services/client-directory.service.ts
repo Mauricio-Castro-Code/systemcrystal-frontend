@@ -158,6 +158,7 @@ export class ClientDirectoryService {
       reference: String(address.reference ?? '').trim(),
       lastUsedAt: String(address.lastUsedAt ?? '').trim(),
       usageCount: Number(address.usageCount ?? 0),
+      freight: address.freight != null ? Number(address.freight) : null,
     };
   }
 
