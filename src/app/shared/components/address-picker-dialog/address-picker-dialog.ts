@@ -10,8 +10,17 @@ export interface AddressPickerDialogData {
   addresses: ClientAddressHistoryItem[];
 }
 
-// 'new' = capturar una dirección nueva en blanco; número = índice de la guardada.
-export type AddressPickerResult = { kind: 'new' } | { kind: 'existing'; index: number };
+export type AddressPickerResult =
+  | { kind: 'new' }
+  | { kind: 'existing'; addressLine: string; neighborhood: string; reference: string; freight: number | null };
+
+interface LocalAddress {
+  addressLine: string;
+  neighborhood: string;
+  reference: string;
+  freight: number | null;
+  usageCount: number;
+}
 
 @Component({
   selector: 'app-address-picker-dialog',
@@ -24,29 +33,82 @@ export class AddressPickerDialogComponent {
   readonly dialogRef = inject(MatDialogRef<AddressPickerDialogComponent>);
   readonly data: AddressPickerDialogData = inject(MAT_DIALOG_DATA);
 
-  // Por defecto seleccionamos la dirección más reciente (la primera), o "nueva" si no hay.
-  readonly selected = signal<AddressPickerResult>(
-    this.data.addresses.length > 0 ? { kind: 'existing', index: 0 } : { kind: 'new' },
+  readonly localAddresses = signal<LocalAddress[]>(
+    this.data.addresses.map((a) => ({
+      addressLine: a.addressLine || a.address,
+      neighborhood: a.neighborhood,
+      reference: a.reference,
+      freight: a.freight,
+      usageCount: a.usageCount,
+    })),
   );
 
-  isSelected(result: AddressPickerResult): boolean {
-    const current = this.selected();
-    if (current.kind !== result.kind) {
-      return false;
-    }
-    return current.kind === 'new' || current.index === (result as { index: number }).index;
+  readonly selectedIndex = signal<number | null>(this.data.addresses.length > 0 ? 0 : null);
+
+  readonly editingIndex = signal<number | null>(null);
+  readonly editLine = signal('');
+  readonly editCol = signal('');
+  readonly editRef = signal('');
+
+  isSelected(index: number): boolean {
+    return this.selectedIndex() === index;
+  }
+
+  isEditing(index: number): boolean {
+    return this.editingIndex() === index;
   }
 
   selectExisting(index: number): void {
-    this.selected.set({ kind: 'existing', index });
+    if (this.editingIndex() !== null) return;
+    this.selectedIndex.set(index);
   }
 
   selectNew(): void {
-    this.selected.set({ kind: 'new' });
+    if (this.editingIndex() !== null) return;
+    this.selectedIndex.set(null);
+  }
+
+  startEdit(index: number, event: Event): void {
+    event.stopPropagation();
+    const addr = this.localAddresses()[index];
+    this.editLine.set(addr.addressLine);
+    this.editCol.set(addr.neighborhood);
+    this.editRef.set(addr.reference);
+    this.editingIndex.set(index);
+    this.selectedIndex.set(index);
+  }
+
+  saveEdit(): void {
+    const idx = this.editingIndex();
+    if (idx === null) return;
+    this.localAddresses.update((list) =>
+      list.map((item, i) =>
+        i === idx
+          ? { ...item, addressLine: this.editLine().trim(), neighborhood: this.editCol().trim(), reference: this.editRef().trim() }
+          : item,
+      ),
+    );
+    this.editingIndex.set(null);
+  }
+
+  cancelEdit(): void {
+    this.editingIndex.set(null);
   }
 
   confirm(): void {
-    this.dialogRef.close(this.selected());
+    const idx = this.selectedIndex();
+    if (idx === null) {
+      this.dialogRef.close({ kind: 'new' } satisfies AddressPickerResult);
+      return;
+    }
+    const addr = this.localAddresses()[idx];
+    this.dialogRef.close({
+      kind: 'existing',
+      addressLine: addr.addressLine,
+      neighborhood: addr.neighborhood,
+      reference: addr.reference,
+      freight: addr.freight,
+    } satisfies AddressPickerResult);
   }
 
   cancel(): void {

@@ -24,13 +24,24 @@
     cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
 
-    &:hover {
+    &:hover:not(&--editing) {
       border-color: #c7d2fe;
+    }
+
+    &:hover:not(&--editing) .addr-dialog__edit-btn {
+      opacity: 1;
     }
 
     &--active {
       border-color: #1d2f58;
       background: #f5f7fb;
+    }
+
+    &--editing {
+      cursor: default;
+      border-color: #1d2f58;
+      background: #f5f7fb;
+      align-items: flex-start;
     }
 
     &--new {
@@ -41,17 +52,25 @@
   &__radio {
     color: #1d2f58;
     flex-shrink: 0;
+    margin-top: 2px;
   }
 
   &__body {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    flex: 1;
+    min-width: 0;
   }
 
   &__address {
     font-weight: 600;
     color: #1f2937;
+  }
+
+  &__neighborhood {
+    font-size: 0.85rem;
+    color: #374151;
   }
 
   &__reference {
@@ -62,5 +81,109 @@
   &__usage {
     font-size: 0.78rem;
     color: #9ca3af;
+  }
+
+  &__edit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+
+    &:hover {
+      background: #e5e7eb;
+      color: #1d2f58;
+    }
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  &__edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__edit-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 4px;
+  }
+
+  &__edit-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #1f2937;
+    outline: none;
+    background: #fff;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: #1d2f58;
+    }
+  }
+
+  &__edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  &__edit-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #1d2f58;
+    color: #fff;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
+    &:hover {
+      background: #2a4080;
+    }
+  }
+
+  &__edit-cancel {
+    padding: 5px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.83rem;
+    cursor: pointer;
+
+    &:hover {
+      background: #f3f4f6;
+    }
   }
 }

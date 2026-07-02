@@ -68,14 +68,22 @@ export class ClientDetailPageComponent {
         return; // canceló
       }
 
-      if (result.kind === 'existing') {
-        queryParams['addrIndex'] = String(result.index);
-      } else {
+      if (result.kind === 'new') {
         queryParams['dirNueva'] = '1';
       }
     }
 
-    await this.router.navigate(['/cotizaciones/nueva'], { queryParams });
+    const state =
+      result && result.kind === 'existing'
+        ? {
+            prefillAddressLine: result.addressLine,
+            prefillNeighborhood: result.neighborhood,
+            prefillReference: result.reference,
+            prefillFreight: result.freight,
+          }
+        : undefined;
+
+    await this.router.navigate(['/cotizaciones/nueva'], { queryParams, state });
   }
 
   async openOrder(orderId: string): Promise<void> {

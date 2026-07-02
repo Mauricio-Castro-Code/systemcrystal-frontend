@@ -2,39 +2,90 @@
 
 <mat-dialog-content class="addr-dialog">
   <p class="addr-dialog__intro">
-    Elige una dirección guardada de <strong>{{ data.clientName }}</strong> o captura una nueva.
+    Elige una dirección de <strong>{{ data.clientName }}</strong> o captura una nueva.
   </p>
 
-  @for (addr of data.addresses; track $index) {
-    <button
-      type="button"
+  @for (addr of localAddresses(); track $index) {
+    <div
       class="addr-dialog__option"
-      [class.addr-dialog__option--active]="isSelected({ kind: 'existing', index: $index })"
+      [class.addr-dialog__option--active]="isSelected($index)"
+      [class.addr-dialog__option--editing]="isEditing($index)"
       (click)="selectExisting($index)"
     >
       <mat-icon class="addr-dialog__radio">
-        {{ isSelected({ kind: 'existing', index: $index }) ? 'radio_button_checked' : 'radio_button_unchecked' }}
+        {{ isSelected($index) ? 'radio_button_checked' : 'radio_button_unchecked' }}
       </mat-icon>
-      <span class="addr-dialog__body">
-        <span class="addr-dialog__address">{{ addr.address }}</span>
-        @if (addr.reference) {
-          <span class="addr-dialog__reference">Ref: {{ addr.reference }}</span>
-        }
-        <span class="addr-dialog__usage">
-          Usada {{ addr.usageCount }} {{ addr.usageCount === 1 ? 'vez' : 'veces' }}
+
+      @if (isEditing($index)) {
+        <!-- Modo edición inline -->
+        <div class="addr-dialog__edit-form" (click)="$event.stopPropagation()">
+          <label class="addr-dialog__edit-label">Calle / Número</label>
+          <input
+            class="addr-dialog__edit-input"
+            type="text"
+            [value]="editLine()"
+            (input)="editLine.set($any($event.target).value)"
+            placeholder="Ej. Av. Juárez 123"
+          />
+          <label class="addr-dialog__edit-label">Colonia</label>
+          <input
+            class="addr-dialog__edit-input"
+            type="text"
+            [value]="editCol()"
+            (input)="editCol.set($any($event.target).value)"
+            placeholder="Ej. Col. Centro"
+          />
+          <label class="addr-dialog__edit-label">Referencia</label>
+          <input
+            class="addr-dialog__edit-input"
+            type="text"
+            [value]="editRef()"
+            (input)="editRef.set($any($event.target).value)"
+            placeholder="Ej. Casa azul, portón negro"
+          />
+          <div class="addr-dialog__edit-actions">
+            <button type="button" class="addr-dialog__edit-save" (click)="saveEdit()">
+              <mat-icon>check</mat-icon> Guardar
+            </button>
+            <button type="button" class="addr-dialog__edit-cancel" (click)="cancelEdit()">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      } @else {
+        <!-- Vista normal -->
+        <span class="addr-dialog__body">
+          <span class="addr-dialog__address">{{ addr.addressLine }}</span>
+          @if (addr.neighborhood) {
+            <span class="addr-dialog__neighborhood">{{ addr.neighborhood }}</span>
+          }
+          @if (addr.reference) {
+            <span class="addr-dialog__reference">Ref: {{ addr.reference }}</span>
+          }
+          <span class="addr-dialog__usage">
+            Usada {{ addr.usageCount }} {{ addr.usageCount === 1 ? 'vez' : 'veces' }}
+          </span>
         </span>
-      </span>
-    </button>
+        <button
+          type="button"
+          class="addr-dialog__edit-btn"
+          (click)="startEdit($index, $event)"
+          title="Editar dirección"
+        >
+          <mat-icon>edit</mat-icon>
+        </button>
+      }
+    </div>
   }
 
   <button
     type="button"
     class="addr-dialog__option addr-dialog__option--new"
-    [class.addr-dialog__option--active]="isSelected({ kind: 'new' })"
+    [class.addr-dialog__option--active]="selectedIndex() === null"
     (click)="selectNew()"
   >
     <mat-icon class="addr-dialog__radio">
-      {{ isSelected({ kind: 'new' }) ? 'radio_button_checked' : 'radio_button_unchecked' }}
+      {{ selectedIndex() === null ? 'radio_button_checked' : 'radio_button_unchecked' }}
     </mat-icon>
     <span class="addr-dialog__body">
       <span class="addr-dialog__address">Dirección nueva (en blanco)</span>

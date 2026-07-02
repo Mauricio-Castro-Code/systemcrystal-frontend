@@ -133,9 +133,19 @@ export class NewQuotationPageComponent {
   readonly editingOrderId = this.route.snapshot.paramMap.get('orderId');
   readonly editingQuotationId = this.route.snapshot.paramMap.get('quotationId');
   readonly selectedClientId = this.route.snapshot.queryParamMap.get('client');
-  // Dirección elegida en el modal de cliente: índice de la guardada o "nueva" (en blanco).
-  readonly selectedAddressIndex = this.route.snapshot.queryParamMap.get('addrIndex');
   readonly useNewAddress = this.route.snapshot.queryParamMap.get('dirNueva') === '1';
+
+  private readonly prefillAddr = (() => {
+    if (typeof history === 'undefined') return null;
+    const s = history.state as Record<string, unknown>;
+    if (typeof s?.['prefillAddressLine'] !== 'string') return null;
+    return {
+      addressLine: String(s['prefillAddressLine']),
+      neighborhood: String(s['prefillNeighborhood'] ?? ''),
+      reference: String(s['prefillReference'] ?? ''),
+      freight: typeof s['prefillFreight'] === 'number' ? (s['prefillFreight'] as number) : null,
+    };
+  })();
   // Duplicar: prellena la NUEVA cotización con la info de una nota existente.
   readonly duplicateFromOrderId = this.route.snapshot.queryParamMap.get('duplicarDe');
   readonly isEditingOrder = this.editingOrderId !== null;
@@ -898,20 +908,16 @@ export class NewQuotationPageComponent {
 
       let chosenFreight: number | null = null;
 
-      if (this.useNewAddress) {
+      if (this.prefillAddr) {
+        address = this.prefillAddr.addressLine;
+        neighborhood = this.prefillAddr.neighborhood;
+        reference = this.prefillAddr.reference;
+        chosenFreight = this.prefillAddr.freight;
+      } else if (this.useNewAddress) {
         // Dirección nueva: dejamos los campos en blanco para capturarla.
         address = '';
         neighborhood = '';
         reference = '';
-      } else if (this.selectedAddressIndex !== null) {
-        const chosen = clientProfile.addresses[Number(this.selectedAddressIndex)];
-        if (chosen) {
-          // addressLine/neighborhood vienen separados desde el backend.
-          address = chosen.addressLine || chosen.address;
-          neighborhood = chosen.neighborhood;
-          reference = chosen.reference;
-          chosenFreight = chosen.freight;
-        }
       }
 
       this.clientInfoForm.patchValue({
