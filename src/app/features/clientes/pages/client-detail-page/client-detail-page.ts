@@ -70,20 +70,22 @@ export class ClientDetailPageComponent {
 
       if (result.kind === 'new') {
         queryParams['dirNueva'] = '1';
-      }
-    }
-
-    const state =
-      result && result.kind === 'existing'
-        ? {
+        await this.router.navigate(['/cotizaciones/nueva'], { queryParams });
+      } else {
+        await this.router.navigate(['/cotizaciones/nueva'], {
+          queryParams,
+          state: {
             prefillAddressLine: result.addressLine,
             prefillNeighborhood: result.neighborhood,
             prefillReference: result.reference,
             prefillFreight: result.freight,
-          }
-        : undefined;
+          },
+        });
+      }
+      return;
+    }
 
-    await this.router.navigate(['/cotizaciones/nueva'], { queryParams, state });
+    await this.router.navigate(['/cotizaciones/nueva'], { queryParams });
   }
 
   async openOrder(orderId: string): Promise<void> {
