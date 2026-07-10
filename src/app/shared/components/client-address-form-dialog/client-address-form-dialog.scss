@@ -1,0 +1,14 @@
+.cafd {
+  min-width: 340px;
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 4px;
+  }
+
+  &__field {
+    width: 100%;
+  }
+}

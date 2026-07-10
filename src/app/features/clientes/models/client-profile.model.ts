@@ -9,6 +9,8 @@ export interface ClientAddressHistoryItem {
   lastUsedAt: string;
   usageCount: number;
   freight: number | null;
+  id: number | null;
+  source: 'saved' | 'quotation';
 }
 
 export interface ClientOrderHistoryItem {

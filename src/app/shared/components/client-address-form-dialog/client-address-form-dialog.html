@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>{{ data.mode === 'create' ? 'Nueva dirección' : 'Editar dirección' }}</h2>
+
+<mat-dialog-content class="cafd">
+  <form [formGroup]="form" class="cafd__form">
+    <mat-form-field appearance="outline" class="cafd__field">
+      <mat-label>Calle y número</mat-label>
+      <input matInput formControlName="addressLine" placeholder="Ej. Av. Juárez 123" />
+      @if (form.controls.addressLine.touched && form.controls.addressLine.hasError('required')) {
+        <mat-error>La calle es obligatoria.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="cafd__field">
+      <mat-label>Colonia</mat-label>
+      <input matInput formControlName="neighborhood" placeholder="Ej. Col. Centro" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="cafd__field">
+      <mat-label>Referencia</mat-label>
+      <input matInput formControlName="reference" placeholder="Ej. Casa azul, portón negro" />
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" type="button" (click)="confirm()">
+    <mat-icon>{{ data.mode === 'create' ? 'add_location' : 'save' }}</mat-icon>
+    {{ data.mode === 'create' ? 'Agregar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

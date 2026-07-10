@@ -1,0 +1,20 @@
+.cfd {
+  min-width: 340px;
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 4px;
+  }
+
+  &__field {
+    width: 100%;
+  }
+
+  &__error {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--of-danger, #c0392b);
+  }
+}

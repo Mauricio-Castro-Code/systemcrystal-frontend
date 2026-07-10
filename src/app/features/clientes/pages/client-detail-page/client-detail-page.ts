@@ -8,11 +8,22 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ClientDirectoryService } from '../../../../core/services/client-directory.service';
-import { ClientProfile } from '../../models/client-profile.model';
+import { AuthService } from '../../../../core/services/auth.service';
+import { ClientProfile, ClientAddressHistoryItem } from '../../models/client-profile.model';
 import {
   AddressPickerDialogComponent,
   AddressPickerResult,
 } from '../../../../shared/components/address-picker-dialog/address-picker-dialog';
+import {
+  ClientFormDialogComponent,
+  ClientFormResult,
+} from '../../../../shared/components/client-form-dialog/client-form-dialog';
+import {
+  ClientAddressFormDialogComponent,
+  ClientAddressFormResult,
+} from '../../../../shared/components/client-address-form-dialog/client-address-form-dialog';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-client-detail-page',
@@ -25,14 +36,19 @@ export class ClientDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly clientDirectoryService = inject(ClientDirectoryService);
+  private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly confirmService = inject(ConfirmService);
+  private readonly notifications = inject(NotificationService);
 
   readonly clientId = this.route.snapshot.paramMap.get('clientId') ?? '';
   readonly clientProfile = signal<ClientProfile | null>(null);
   readonly isLoading = signal(true);
+  readonly isMutating = signal(false);
   readonly errorMessage = signal('');
   readonly addressCount = computed(() => this.clientProfile()?.addresses.length ?? 0);
   readonly orderCount = computed(() => this.clientProfile()?.orderHistory.length ?? 0);
+  readonly isAdmin = this.authService.isAdmin;
 
   constructor() {
     void this.loadClientProfile();
@@ -42,16 +58,115 @@ export class ClientDetailPageComponent {
     await this.router.navigateByUrl('/clientes');
   }
 
+  async editClientInfo(): Promise<void> {
+    const profile = this.clientProfile();
+    if (!profile) return;
+
+    const ref = this.dialog.open(ClientFormDialogComponent, {
+      width: '420px',
+      autoFocus: false,
+      data: {
+        mode: 'edit',
+        clientName: profile.clientName,
+        phoneNumber: profile.phoneNumber,
+        email: profile.email,
+      },
+    });
+
+    const result = (await firstValueFrom(ref.afterClosed())) as ClientFormResult | null;
+    if (!result) return;
+
+    this.isMutating.set(true);
+    try {
+      const updated = await this.clientDirectoryService.updateClient(this.clientId, result);
+      this.clientProfile.set(updated);
+      this.notifications.success('Datos del cliente actualizados.');
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : 'No fue posible actualizar el cliente.');
+    } finally {
+      this.isMutating.set(false);
+    }
+  }
+
+  async addAddress(): Promise<void> {
+    const ref = this.dialog.open(ClientAddressFormDialogComponent, {
+      width: '420px',
+      autoFocus: false,
+      data: { mode: 'create' },
+    });
+
+    const result = (await firstValueFrom(ref.afterClosed())) as ClientAddressFormResult | null;
+    if (!result) return;
+
+    this.isMutating.set(true);
+    try {
+      const updated = await this.clientDirectoryService.addAddress(this.clientId, result);
+      this.clientProfile.set(updated);
+      this.notifications.success('Dirección agregada.');
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : 'No fue posible agregar la dirección.');
+    } finally {
+      this.isMutating.set(false);
+    }
+  }
+
+  async editAddress(address: ClientAddressHistoryItem): Promise<void> {
+    if (address.id == null) return;
+
+    const ref = this.dialog.open(ClientAddressFormDialogComponent, {
+      width: '420px',
+      autoFocus: false,
+      data: {
+        mode: 'edit',
+        addressLine: address.addressLine,
+        neighborhood: address.neighborhood,
+        reference: address.reference,
+      },
+    });
+
+    const result = (await firstValueFrom(ref.afterClosed())) as ClientAddressFormResult | null;
+    if (!result) return;
+
+    this.isMutating.set(true);
+    try {
+      const updated = await this.clientDirectoryService.updateAddress(this.clientId, address.id, result);
+      this.clientProfile.set(updated);
+      this.notifications.success('Dirección actualizada.');
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : 'No fue posible actualizar la dirección.');
+    } finally {
+      this.isMutating.set(false);
+    }
+  }
+
+  async deleteAddress(address: ClientAddressHistoryItem): Promise<void> {
+    if (address.id == null) return;
+
+    const confirmed = await this.confirmService.confirmDelete(
+      'Eliminar dirección',
+      `¿Eliminar "${address.addressLine}"?`,
+      'Esta acción no puede deshacerse.',
+    );
+    if (!confirmed) return;
+
+    this.isMutating.set(true);
+    try {
+      const updated = await this.clientDirectoryService.deleteAddress(this.clientId, address.id);
+      this.clientProfile.set(updated);
+      this.notifications.success('Dirección eliminada.');
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : 'No fue posible eliminar la dirección.');
+    } finally {
+      this.isMutating.set(false);
+    }
+  }
+
   async createQuotation(): Promise<void> {
     const clientProfile = this.clientProfile();
-
-    if (!clientProfile) {
-      return;
-    }
+    if (!clientProfile) return;
 
     const queryParams: Record<string, string> = { client: clientProfile.id };
 
-    // Si el cliente tiene direcciones guardadas, preguntamos cuál usar (o una nueva).
     if (clientProfile.addresses.length > 0) {
       const ref = this.dialog.open(AddressPickerDialogComponent, {
         width: '520px',
@@ -63,10 +178,7 @@ export class ClientDetailPageComponent {
       });
 
       const result = (await firstValueFrom(ref.afterClosed())) as AddressPickerResult | null;
-
-      if (!result) {
-        return; // canceló
-      }
+      if (!result) return;
 
       if (result.kind === 'new') {
         queryParams['dirNueva'] = '1';

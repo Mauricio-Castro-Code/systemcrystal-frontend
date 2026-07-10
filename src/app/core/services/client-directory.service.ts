@@ -150,6 +150,70 @@ export class ClientDirectoryService {
       : 'No fue posible cargar el directorio real de clientes.';
   }
 
+  async createClient(data: { clientName: string; phoneNumber: string; email: string }): Promise<Client> {
+    const headers = this.requireAuthHeaders();
+    try {
+      const client = await firstValueFrom(
+        this.http.post<Client>(`${API_BASE_URL}/clients/`, {
+          clientName: data.clientName,
+          phoneNumber: data.phoneNumber,
+          email: data.email,
+        }, { headers }),
+      );
+      return this.normalizeClient(client);
+    } catch (error) {
+      throw new Error(this.resolveErrorMessage(error));
+    }
+  }
+
+  async updateClient(clientId: string, data: { clientName?: string; phoneNumber?: string; email?: string }): Promise<ClientProfile> {
+    const headers = this.requireAuthHeaders();
+    try {
+      const profile = await firstValueFrom(
+        this.http.patch<ClientProfile>(`${API_BASE_URL}/clients/${clientId}/`, data, { headers }),
+      );
+      return this.normalizeClientProfile(profile);
+    } catch (error) {
+      throw new Error(this.resolveErrorMessage(error));
+    }
+  }
+
+  async addAddress(clientId: string, data: { addressLine: string; neighborhood: string; reference: string }): Promise<ClientProfile> {
+    const headers = this.requireAuthHeaders();
+    try {
+      const profile = await firstValueFrom(
+        this.http.post<ClientProfile>(`${API_BASE_URL}/clients/${clientId}/addresses/`, data, { headers }),
+      );
+      return this.normalizeClientProfile(profile);
+    } catch (error) {
+      throw new Error(this.resolveErrorMessage(error));
+    }
+  }
+
+  async updateAddress(clientId: string, addrId: number, data: { addressLine: string; neighborhood: string; reference: string }): Promise<ClientProfile> {
+    const headers = this.requireAuthHeaders();
+    try {
+      const profile = await firstValueFrom(
+        this.http.patch<ClientProfile>(`${API_BASE_URL}/clients/${clientId}/addresses/${addrId}/`, data, { headers }),
+      );
+      return this.normalizeClientProfile(profile);
+    } catch (error) {
+      throw new Error(this.resolveErrorMessage(error));
+    }
+  }
+
+  async deleteAddress(clientId: string, addrId: number): Promise<ClientProfile> {
+    const headers = this.requireAuthHeaders();
+    try {
+      const profile = await firstValueFrom(
+        this.http.delete<ClientProfile>(`${API_BASE_URL}/clients/${clientId}/addresses/${addrId}/`, { headers }),
+      );
+      return this.normalizeClientProfile(profile);
+    } catch (error) {
+      throw new Error(this.resolveErrorMessage(error));
+    }
+  }
+
   private normalizeAddress(address: ClientAddressHistoryItem): ClientAddressHistoryItem {
     return {
       address: String(address.address ?? '').trim(),
@@ -159,6 +223,8 @@ export class ClientDirectoryService {
       lastUsedAt: String(address.lastUsedAt ?? '').trim(),
       usageCount: Number(address.usageCount ?? 0),
       freight: address.freight != null ? Number(address.freight) : null,
+      id: address.id != null ? Number(address.id) : null,
+      source: address.source === 'saved' ? 'saved' : 'quotation',
     };
   }
 

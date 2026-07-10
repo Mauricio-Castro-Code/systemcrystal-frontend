@@ -21,9 +21,17 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+import { firstValueFrom } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+
 import { Client } from '../../models/client.model';
 import { ClientDirectoryService } from '../../../../core/services/client-directory.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import {
+  ClientFormDialogComponent,
+  ClientFormResult,
+} from '../../../../shared/components/client-form-dialog/client-form-dialog';
 
 @Component({
   selector: 'app-clients',
@@ -45,8 +53,12 @@ import { NotificationService } from '../../../../shared/services/notification.se
 export class ClientsPageComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly clientDirectoryService = inject(ClientDirectoryService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
+
+  readonly isAdmin = this.authService.isAdmin;
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
@@ -110,6 +122,25 @@ export class ClientsPageComponent implements AfterViewInit {
 
   async reloadClients(): Promise<void> {
     await this.clientDirectoryService.loadClients();
+  }
+
+  async createClient(): Promise<void> {
+    const ref = this.dialog.open(ClientFormDialogComponent, {
+      width: '420px',
+      autoFocus: false,
+      data: { mode: 'create' },
+    });
+
+    const result = (await firstValueFrom(ref.afterClosed())) as ClientFormResult | null;
+    if (!result) return;
+
+    try {
+      await this.clientDirectoryService.createClient(result);
+      this.notifications.success('Cliente creado correctamente.');
+      await this.reloadClients();
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : 'No fue posible crear el cliente.');
+    }
   }
 
   async viewClientDetails(client: Client): Promise<void> {

@@ -18,6 +18,12 @@
         <button mat-stroked-button type="button" (click)="goBack()">
           Volver a Clientes
         </button>
+        @if (isAdmin()) {
+          <button mat-stroked-button type="button" (click)="editClientInfo()" [disabled]="isMutating()">
+            <mat-icon>edit</mat-icon>
+            Editar datos
+          </button>
+        }
         <button mat-raised-button type="button" (click)="createQuotation()">
           <mat-icon>note_add</mat-icon>
           Cargar en Nueva Cotizacion
@@ -68,17 +74,43 @@
             <p class="client-detail-page__panel-eyebrow">Direcciones</p>
             <h2>{{ addressCount() }} direccion{{ addressCount() === 1 ? '' : 'es' }} detectada{{ addressCount() === 1 ? '' : 's' }}</h2>
           </div>
+          @if (isAdmin()) {
+            <button mat-stroked-button type="button" (click)="addAddress()" [disabled]="isMutating()">
+              <mat-icon>add_location_alt</mat-icon>
+              Agregar
+            </button>
+          }
         </div>
 
         <div class="client-detail-page__address-list">
-          @for (address of profile.addresses; track address.address) {
-            <article class="client-detail-address">
-              <strong>{{ address.address }}</strong>
-              <p>{{ address.reference || 'Sin referencia registrada.' }}</p>
-              <div class="client-detail-address__meta">
-                <span>{{ address.usageCount }} uso{{ address.usageCount === 1 ? '' : 's' }}</span>
-                <span>{{ address.lastUsedAt | date: 'dd MMM y, h:mm a' }}</span>
+          @for (address of profile.addresses; track (address.id ?? address.address)) {
+            <article class="client-detail-address" [class.client-detail-address--saved]="address.source === 'saved'">
+              <div class="client-detail-address__content">
+                <strong>{{ address.addressLine }}</strong>
+                @if (address.neighborhood) {
+                  <span class="client-detail-address__neighborhood">{{ address.neighborhood }}</span>
+                }
+                <p>{{ address.reference || 'Sin referencia registrada.' }}</p>
+                <div class="client-detail-address__meta">
+                  @if (address.source === 'saved') {
+                    <span class="client-detail-address__badge">Guardada</span>
+                  }
+                  <span>{{ address.usageCount }} uso{{ address.usageCount === 1 ? '' : 's' }}</span>
+                  @if (address.lastUsedAt) {
+                    <span>{{ address.lastUsedAt | date: 'dd MMM y' }}</span>
+                  }
+                </div>
               </div>
+              @if (isAdmin() && address.id != null) {
+                <div class="client-detail-address__actions">
+                  <button mat-icon-button type="button" title="Editar dirección" (click)="editAddress(address)" [disabled]="isMutating()">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" title="Eliminar dirección" (click)="deleteAddress(address)" [disabled]="isMutating()">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              }
             </article>
           } @empty {
             <article class="client-detail-page__empty">

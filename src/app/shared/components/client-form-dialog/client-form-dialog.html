@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>{{ data.mode === 'create' ? 'Nuevo cliente' : 'Editar datos del cliente' }}</h2>
+
+<mat-dialog-content class="cfd">
+  <form [formGroup]="form" class="cfd__form">
+    <mat-form-field appearance="outline" class="cfd__field">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="clientName" placeholder="Nombre completo o empresa" />
+      @if (form.controls.clientName.touched && form.controls.clientName.hasError('required')) {
+        <mat-error>El nombre es obligatorio.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="cfd__field">
+      <mat-label>Celular</mat-label>
+      <input matInput formControlName="phoneNumber" placeholder="10 dígitos" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="cfd__field">
+      <mat-label>Correo electrónico</mat-label>
+      <input matInput formControlName="email" placeholder="cliente@correo.com" />
+      @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+        <mat-error>Formato de correo inválido.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (errorMessage()) {
+      <p class="cfd__error">{{ errorMessage() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" type="button" (click)="confirm()">
+    <mat-icon>{{ data.mode === 'create' ? 'person_add' : 'save' }}</mat-icon>
+    {{ data.mode === 'create' ? 'Crear cliente' : 'Guardar cambios' }}
+  </button>
+</mat-dialog-actions>
