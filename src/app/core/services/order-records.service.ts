@@ -98,9 +98,7 @@ export class OrderRecordsService {
         }),
       );
 
-      this.recordsState.set(
-        this.sortRecords(orders.map((order) => this.normalizeRecord(order))),
-      );
+      this.recordsState.set(this.sortRecords(orders.map((order) => this.normalizeRecord(order))));
       this.loadedState.set(true);
     } catch (error) {
       this.errorState.set(
@@ -177,10 +175,7 @@ export class OrderRecordsService {
 
       return this.upsertOrderRecord(order);
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible cargar la nota solicitada.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible cargar la nota solicitada.');
       this.errorState.set(message);
       throw new Error(message);
     }
@@ -217,10 +212,7 @@ export class OrderRecordsService {
       this.loadedState.set(true);
       return this.upsertOrderRecord(createdOrder);
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible guardar la nota del pedido.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible guardar la nota del pedido.');
       this.errorState.set(message);
       throw new Error(message);
     }
@@ -266,10 +258,7 @@ export class OrderRecordsService {
       this.loadedState.set(true);
       return this.upsertOrderRecord(updatedOrder);
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible actualizar la nota solicitada.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible actualizar la nota solicitada.');
       this.errorState.set(message);
       throw new Error(message);
     }
@@ -347,10 +336,9 @@ export class OrderRecordsService {
 
     try {
       const updatedOrder = await firstValueFrom(
-        this.http.delete<OrderRecord>(
-          `${API_BASE_URL}/orders/${orderId}/costs/${costId}/`,
-          { headers },
-        ),
+        this.http.delete<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/costs/${costId}/`, {
+          headers,
+        }),
       );
       return this.upsertOrderRecord(updatedOrder);
     } catch (error) {
@@ -388,17 +376,12 @@ export class OrderRecordsService {
         }),
       );
 
-      this.recordsState.update((records) =>
-        records.filter((record) => record.orderId !== orderId),
-      );
+      this.recordsState.update((records) => records.filter((record) => record.orderId !== orderId));
       this.archivedRecordsState.update((records) =>
         records.filter((record) => record.orderId !== orderId),
       );
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible eliminar la nota seleccionada.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible eliminar la nota seleccionada.');
       this.errorState.set(message);
       throw new Error(message);
     }
@@ -410,7 +393,11 @@ export class OrderRecordsService {
 
     try {
       const updatedOrder = await firstValueFrom(
-        this.http.patch<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/rename/`, { newOrderId }, { headers }),
+        this.http.patch<OrderRecord>(
+          `${API_BASE_URL}/orders/${orderId}/rename/`,
+          { newOrderId },
+          { headers },
+        ),
       );
 
       // Remove old ID entry before inserting the renamed record
@@ -428,13 +415,40 @@ export class OrderRecordsService {
   async setCancelled(orderId: string, cancel: boolean): Promise<void> {
     const headers = this.requireAuthHeaders();
     const req$ = cancel
-      ? this.http.post<{ isCancelled: boolean }>(`${API_BASE_URL}/orders/${orderId}/cancel/`, {}, { headers })
-      : this.http.delete<{ isCancelled: boolean }>(`${API_BASE_URL}/orders/${orderId}/cancel/`, { headers });
+      ? this.http.post<{ isCancelled: boolean }>(
+          `${API_BASE_URL}/orders/${orderId}/cancel/`,
+          {},
+          { headers },
+        )
+      : this.http.delete<{ isCancelled: boolean }>(`${API_BASE_URL}/orders/${orderId}/cancel/`, {
+          headers,
+        });
 
     await firstValueFrom(req$);
 
     const patch = (records: OrderRecord[]) =>
       records.map((r) => (r.orderId === orderId ? { ...r, isCancelled: cancel } : r));
+    this.recordsState.update(patch);
+    this.archivedRecordsState.update(patch);
+  }
+
+  async setPrinted(orderId: string, printed: boolean): Promise<void> {
+    const headers = this.requireAuthHeaders();
+    const req$ = printed
+      ? this.http.post<{ printedAt: string | null }>(
+          `${API_BASE_URL}/orders/${orderId}/print-status/`,
+          {},
+          { headers },
+        )
+      : this.http.delete<{ printedAt: string | null }>(
+          `${API_BASE_URL}/orders/${orderId}/print-status/`,
+          { headers },
+        );
+
+    const result = await firstValueFrom(req$);
+
+    const patch = (records: OrderRecord[]) =>
+      records.map((r) => (r.orderId === orderId ? { ...r, printedAt: result.printedAt } : r));
     this.recordsState.update(patch);
     this.archivedRecordsState.update(patch);
   }
@@ -448,10 +462,14 @@ export class OrderRecordsService {
 
     try {
       await firstValueFrom(
-        this.http.post<void>(`${API_BASE_URL}/orders/bulk-update-status/`, {
-          orderIds,
-          ...input,
-        }, { headers }),
+        this.http.post<void>(
+          `${API_BASE_URL}/orders/bulk-update-status/`,
+          {
+            orderIds,
+            ...input,
+          },
+          { headers },
+        ),
       );
 
       const patch = (records: OrderRecord[]) =>
@@ -461,7 +479,9 @@ export class OrderRecordsService {
                 ...r,
                 operationalStatus: input.operationalStatus ?? r.operationalStatus,
                 operationalStatusLabel: input.operationalStatus
-                  ? this.resolveOperationalStatusLabel(input.operationalStatus as OrderOperationalStatus)
+                  ? this.resolveOperationalStatusLabel(
+                      input.operationalStatus as OrderOperationalStatus,
+                    )
                   : r.operationalStatusLabel,
                 billingStatus: input.billingStatus ?? r.billingStatus,
                 billingStatusLabel: input.billingStatus
@@ -499,10 +519,7 @@ export class OrderRecordsService {
       // Content-Disposition, que entre dominios no se expone al navegador).
       this.triggerBrowserDownload(response.body, `${orderId}.xlsx`, 'archivo Excel');
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible descargar la nota en Excel.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible descargar la nota en Excel.');
       this.errorState.set(message);
       throw new Error(message);
     }
@@ -526,10 +543,7 @@ export class OrderRecordsService {
 
       return response.body;
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible generar el PDF de la nota.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible generar el PDF de la nota.');
       this.errorState.set(message);
       throw new Error(message);
     }
@@ -552,10 +566,7 @@ export class OrderRecordsService {
       // Content-Disposition, que entre dominios no se expone al navegador).
       this.triggerBrowserDownload(response.body, `${orderId}.pdf`, 'PDF');
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible descargar el PDF de la nota.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible descargar el PDF de la nota.');
       this.errorState.set(message);
       throw new Error(message);
     }
@@ -577,9 +588,7 @@ export class OrderRecordsService {
         this.sortRecords([normalizedRecord, ...records]),
       );
     } else {
-      this.recordsState.update((records) =>
-        this.sortRecords([normalizedRecord, ...records]),
-      );
+      this.recordsState.update((records) => this.sortRecords([normalizedRecord, ...records]));
     }
 
     return normalizedRecord;
@@ -604,8 +613,7 @@ export class OrderRecordsService {
 
     return {
       orderId: String(record.orderId ?? '').trim(),
-      clientName:
-        String(record.clientName ?? '').trim() || normalizedQuotation.clientInfo.fullName,
+      clientName: String(record.clientName ?? '').trim() || normalizedQuotation.clientInfo.fullName,
       date: String(record.date ?? '').trim() || new Date().toISOString(),
       status: 'Confirmado',
       operationalStatus,
@@ -623,6 +631,7 @@ export class OrderRecordsService {
         billingStatus,
       ),
       totalEstimated: Number(record.totalEstimated ?? normalizedQuotation.summary.totalEstimated),
+      printedAt: record.printedAt ? String(record.printedAt) : null,
       isCancelled: record.isCancelled === true,
       mapsUrl: String(record.mapsUrl ?? '').trim(),
       officeClosed: record.officeClosed === true,
@@ -637,7 +646,9 @@ export class OrderRecordsService {
   private normalizeOperationalStatus(
     value: OrderOperationalStatus | string | null | undefined,
   ): OrderOperationalStatus {
-    const normalizedValue = String(value ?? '').trim().toUpperCase();
+    const normalizedValue = String(value ?? '')
+      .trim()
+      .toUpperCase();
 
     switch (normalizedValue) {
       case 'EN_CAMINO':
@@ -654,7 +665,9 @@ export class OrderRecordsService {
   private normalizeBillingStatus(
     value: OrderBillingStatus | string | null | undefined,
   ): OrderBillingStatus {
-    const normalizedValue = String(value ?? '').trim().toUpperCase();
+    const normalizedValue = String(value ?? '')
+      .trim()
+      .toUpperCase();
 
     switch (normalizedValue) {
       case 'POR_COBRAR':
@@ -697,7 +710,11 @@ export class OrderRecordsService {
       return [
         ...new Set(
           folderKeys
-            .map((folderKey) => String(folderKey ?? '').trim().toLowerCase())
+            .map((folderKey) =>
+              String(folderKey ?? '')
+                .trim()
+                .toLowerCase(),
+            )
             .filter(Boolean),
         ),
       ];
@@ -723,16 +740,12 @@ export class OrderRecordsService {
     if (Array.isArray(folderLabels) && folderLabels.length > 0) {
       return [
         ...new Set(
-          folderLabels
-            .map((folderLabel) => String(folderLabel ?? '').trim())
-            .filter(Boolean),
+          folderLabels.map((folderLabel) => String(folderLabel ?? '').trim()).filter(Boolean),
         ),
       ];
     }
 
-    const derivedFolderLabels = [
-      this.resolveOperationalStatusLabel(operationalStatus),
-    ];
+    const derivedFolderLabels = [this.resolveOperationalStatusLabel(operationalStatus)];
 
     if (billingStatus === 'POR_COBRAR') {
       derivedFolderLabels.push('Por cobrar');
@@ -787,9 +800,7 @@ export class OrderRecordsService {
       return runningTotal + item.total;
     }, 0);
     const subtotal =
-      equipmentItems.length > 0
-        ? subtotalFromItems
-        : Number(quotation?.summary?.subtotal ?? 0);
+      equipmentItems.length > 0 ? subtotalFromItems : Number(quotation?.summary?.subtotal ?? 0);
     const freight = Number(quotation?.logistics?.freight ?? quotation?.summary?.freight ?? 0);
     const taxAmount = applyTax
       ? Number(quotation?.summary?.taxAmount ?? (subtotal + freight) * 0.16)
@@ -803,8 +814,7 @@ export class OrderRecordsService {
       equipmentItems.length > 0
         ? subtotal + freight + taxAmount + securityDeposit
         : Number(
-            quotation?.summary?.totalEstimated
-              ?? subtotal + freight + taxAmount + securityDeposit,
+            quotation?.summary?.totalEstimated ?? subtotal + freight + taxAmount + securityDeposit,
           );
     const balanceDue = Number(
       quotation?.summary?.balanceDue ?? totalEstimated - discount - advancePayment,
@@ -812,16 +822,13 @@ export class OrderRecordsService {
 
     return {
       clientInfo: {
-        fullName:
-          String(quotation?.clientInfo?.fullName ?? '').trim() || fallbackClientName,
+        fullName: String(quotation?.clientInfo?.fullName ?? '').trim() || fallbackClientName,
         phoneNumber: String(quotation?.clientInfo?.phoneNumber ?? '').trim(),
         birthDate: quotation?.clientInfo?.birthDate ?? null,
         address: String(quotation?.clientInfo?.address ?? '').trim(),
         neighborhood: String(quotation?.clientInfo?.neighborhood ?? '').trim(),
         reference: String(quotation?.clientInfo?.reference ?? '').trim(),
-        deliveryInstructions: String(
-          quotation?.clientInfo?.deliveryInstructions ?? '',
-        ).trim(),
+        deliveryInstructions: String(quotation?.clientInfo?.deliveryInstructions ?? '').trim(),
       },
       schedule: {
         deliveryDate: quotation?.schedule?.deliveryDate ?? null,
@@ -861,9 +868,7 @@ export class OrderRecordsService {
   }
 
   private resolveThrownMessage(error: unknown): string {
-    return error instanceof Error
-      ? error.message
-      : 'No fue posible administrar las notas.';
+    return error instanceof Error ? error.message : 'No fue posible administrar las notas.';
   }
 
   private resolveHttpError(error: unknown, fallbackMessage: string): string {
@@ -914,11 +919,7 @@ export class OrderRecordsService {
     return null;
   }
 
-  private triggerBrowserDownload(
-    file: Blob | null,
-    fileName: string,
-    fileLabel = 'archivo',
-  ): void {
+  private triggerBrowserDownload(file: Blob | null, fileName: string, fileLabel = 'archivo'): void {
     if (!file) {
       throw new Error(`El backend no devolvio ningun ${fileLabel}.`);
     }

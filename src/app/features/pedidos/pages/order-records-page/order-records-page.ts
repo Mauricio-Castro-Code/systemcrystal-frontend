@@ -24,6 +24,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
@@ -34,10 +35,7 @@ import {
   NoteFolderKey,
   NoteFolderOption,
 } from '../../models/note-folder.model';
-import {
-  NOTE_SORT_OPTIONS,
-  NoteSortKey,
-} from '../../models/note-sort.model';
+import { NOTE_SORT_OPTIONS, NoteSortKey } from '../../models/note-sort.model';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TeamService } from '../../../../core/services/team.service';
@@ -61,6 +59,7 @@ import {
     MatPaginatorModule,
     MatSelectModule,
     MatTableModule,
+    MatTooltipModule,
   ],
   templateUrl: './order-records-page.html',
   styleUrl: './order-records-page.scss',
@@ -114,6 +113,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   readonly dataSource = new MatTableDataSource<OrderRecord>([]);
   readonly selectedOrderIds = signal<Set<string>>(new Set());
   readonly isCollecting = signal(false);
+  readonly togglingPrintedIds = signal<Set<string>>(new Set());
   readonly filteredRecords = computed(() => {
     const records = this.orderRecordsService.orderRecords();
     const searchTerm = this.searchTerm();
@@ -124,12 +124,9 @@ export class OrderRecordsPageComponent implements AfterViewInit {
         !searchTerm ||
         record.orderId.toLowerCase().includes(searchTerm) ||
         record.clientName.toLowerCase().includes(searchTerm) ||
-        record.folderLabels.some((folderLabel) =>
-          folderLabel.toLowerCase().includes(searchTerm),
-        );
+        record.folderLabels.some((folderLabel) => folderLabel.toLowerCase().includes(searchTerm));
 
-      const matchesFolder =
-        selectedFolder === 'all' || record.folderKeys.includes(selectedFolder);
+      const matchesFolder = selectedFolder === 'all' || record.folderKeys.includes(selectedFolder);
 
       return matchesSearch && matchesFolder;
     });
@@ -192,14 +189,10 @@ export class OrderRecordsPageComponent implements AfterViewInit {
     this.isImporting.set(true);
     try {
       const imported = await this.orderRecordsService.importOrderFromExcel(file);
-      this.notifications.success(
-        `Nota ${imported.orderId} importada correctamente desde Excel.`,
-      );
+      this.notifications.success(`Nota ${imported.orderId} importada correctamente desde Excel.`);
     } catch (error) {
       this.notifications.error(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible importar la nota desde el Excel.',
+        error instanceof Error ? error.message : 'No fue posible importar la nota desde el Excel.',
       );
     } finally {
       this.isImporting.set(false);
@@ -230,10 +223,33 @@ export class OrderRecordsPageComponent implements AfterViewInit {
       this.notifications.success(`Nota ${record.orderId} eliminada correctamente.`);
     } catch (error) {
       this.notifications.error(
+        error instanceof Error ? error.message : 'No fue posible eliminar la nota seleccionada.',
+      );
+    }
+  }
+
+  isTogglingPrinted(orderId: string): boolean {
+    return this.togglingPrintedIds().has(orderId);
+  }
+
+  async handleTogglePrinted(record: OrderRecord): Promise<void> {
+    const nextPrinted = !record.printedAt;
+
+    this.togglingPrintedIds.update((ids) => new Set(ids).add(record.orderId));
+    try {
+      await this.orderRecordsService.setPrinted(record.orderId, nextPrinted);
+    } catch (error) {
+      this.notifications.error(
         error instanceof Error
           ? error.message
-          : 'No fue posible eliminar la nota seleccionada.',
+          : 'No fue posible actualizar el estado de impresión.',
       );
+    } finally {
+      this.togglingPrintedIds.update((ids) => {
+        const next = new Set(ids);
+        next.delete(record.orderId);
+        return next;
+      });
     }
   }
 
@@ -325,9 +341,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
       );
     } catch (error) {
       this.notifications.error(
-        error instanceof Error
-          ? error.message
-          : `No fue posible marcar las notas como ${label}.`,
+        error instanceof Error ? error.message : `No fue posible marcar las notas como ${label}.`,
       );
     } finally {
       this.isCollecting.set(false);
@@ -371,7 +385,9 @@ export class OrderRecordsPageComponent implements AfterViewInit {
       },
     });
 
-    const result = (await firstValueFrom(dialogRef.afterClosed())) as AssignDriverDialogResult | null;
+    const result = (await firstValueFrom(
+      dialogRef.afterClosed(),
+    )) as AssignDriverDialogResult | null;
 
     if (!result) {
       return;
@@ -391,7 +407,8 @@ export class OrderRecordsPageComponent implements AfterViewInit {
       await this.orderRecordsService.loadOrders(true);
       this.selectedOrderIds.set(new Set());
 
-      const driverName = drivers.find((driver) => driver.id === result.driverId)?.name ?? 'el chofer';
+      const driverName =
+        drivers.find((driver) => driver.id === result.driverId)?.name ?? 'el chofer';
       const plural = selectedRecords.length > 1;
       this.notifications.success(
         `${selectedRecords.length} nota${plural ? 's' : ''} asignada${plural ? 's' : ''} a ${driverName}.`,
@@ -421,9 +438,13 @@ export class OrderRecordsPageComponent implements AfterViewInit {
         case 'id-asc':
           return this.resolveOrderSequence(firstRecord) - this.resolveOrderSequence(secondRecord);
         case 'delivery-asc':
-          return this.resolveDeliveryTimestamp(firstRecord) - this.resolveDeliveryTimestamp(secondRecord);
+          return (
+            this.resolveDeliveryTimestamp(firstRecord) - this.resolveDeliveryTimestamp(secondRecord)
+          );
         case 'delivery-desc':
-          return this.resolveDeliveryTimestamp(secondRecord) - this.resolveDeliveryTimestamp(firstRecord);
+          return (
+            this.resolveDeliveryTimestamp(secondRecord) - this.resolveDeliveryTimestamp(firstRecord)
+          );
         case 'id-desc':
         default:
           return this.resolveOrderSequence(secondRecord) - this.resolveOrderSequence(firstRecord);
@@ -433,7 +454,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
 
   private resolveOrderSequence(record: OrderRecord): number {
     const parts = record.orderId.split('-');
-    const num  = Number.parseInt(parts[0]?.replace(/\D/g, '') || '0', 10);
+    const num = Number.parseInt(parts[0]?.replace(/\D/g, '') || '0', 10);
     const year = Number.parseInt(parts[1]?.replace(/\D/g, '') || '0', 10);
     // year * 100_000 + num → 26*100000+1977=2601977 > 25*100000+2054=2502054
     return (Number.isFinite(year) ? year : 0) * 100_000 + (Number.isFinite(num) ? num : 0);

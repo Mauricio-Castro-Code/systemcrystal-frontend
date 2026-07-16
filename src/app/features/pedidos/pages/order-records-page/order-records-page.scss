@@ -145,9 +145,7 @@
   border: var(--of-glass-border);
   border-radius: 16px;
   background: var(--of-glass);
-  box-shadow:
-    var(--of-glass-shadow),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
 .order-records-page__table-header {
@@ -192,6 +190,14 @@
 .order-records-table__actions {
   display: inline-flex;
   gap: 0.25rem;
+}
+
+.order-records-table__print-toggle {
+  color: var(--of-danger);
+}
+
+.order-records-table__print-toggle--printed {
+  color: var(--of-accent-strong);
 }
 
 .order-records-table__folders {

@@ -19,10 +19,7 @@ export interface AssignedDriver {
   name: string;
 }
 
-export type OrderBillingStatus =
-  | 'AL_CORRIENTE'
-  | 'POR_COBRAR'
-  | 'COBRADO';
+export type OrderBillingStatus = 'AL_CORRIENTE' | 'POR_COBRAR' | 'COBRADO';
 
 export interface OrderWorkflowEventRecord {
   id: number;
@@ -49,6 +46,7 @@ export interface OrderRecord {
   folderKeys: string[];
   folderLabels: string[];
   totalEstimated: number;
+  printedAt: string | null;
   isCancelled: boolean;
   mapsUrl: string;
   officeClosed: boolean;
