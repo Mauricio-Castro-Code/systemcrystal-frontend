@@ -17,6 +17,14 @@ export interface TopColor {
   count: number;
 }
 
+export interface TopClient {
+  clientId: number | null;
+  code: string | null;
+  name: string;
+  orderCount: number;
+  totalSales: number;
+}
+
 export interface AccountingSummary {
   yearRevenue: number;
   ytdRevenue: number;
@@ -37,4 +45,5 @@ export interface AccountingOverview {
   monthlySales: MonthlySalesPoint[];
   topProducts: TopProduct[];
   topColors: TopColor[];
+  topClients: TopClient[];
 }

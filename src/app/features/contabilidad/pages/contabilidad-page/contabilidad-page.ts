@@ -8,12 +8,14 @@ import {
 } from '@angular/core';
 
 type ProductsSort = 'qty' | 'revenue';
+type ClientsSort = 'orders' | 'sales';
 import { Router } from '@angular/router';
 
 import { AccountingService } from '../../../../core/services/accounting.service';
 import {
   AccountingOverview,
   MonthlySalesPoint,
+  TopClient,
   TopColor,
   TopProduct,
 } from '../../models/accounting-overview.model';
@@ -33,6 +35,7 @@ export class ContabilidadPageComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly productsSort = signal<ProductsSort>('qty');
+  readonly clientsSort = signal<ClientsSort>('orders');
 
   async ngOnInit(): Promise<void> {
     await this.loadOverview();
@@ -44,6 +47,13 @@ export class ContabilidadPageComponent implements OnInit {
 
   async goBack(): Promise<void> {
     await this.router.navigateByUrl('/dashboard');
+  }
+
+  async goToClient(client: TopClient): Promise<void> {
+    if (!client.code) {
+      return;
+    }
+    await this.router.navigate(['/clientes', client.code]);
   }
 
   getMaxValue(points: MonthlySalesPoint[]): number {
@@ -72,6 +82,26 @@ export class ContabilidadPageComponent implements OnInit {
 
   getMaxCount(colors: TopColor[]): number {
     return Math.max(...colors.map((c) => c.count), 1);
+  }
+
+  setSortClients(sort: ClientsSort): void {
+    this.clientsSort.set(sort);
+  }
+
+  getSortedClients(clients: TopClient[]): TopClient[] {
+    const sort = this.clientsSort();
+    const sorted = [...clients].sort((a, b) =>
+      sort === 'sales' ? b.totalSales - a.totalSales : b.orderCount - a.orderCount,
+    );
+    return sorted.slice(0, 10);
+  }
+
+  getMaxOrderCount(clients: TopClient[]): number {
+    return Math.max(...clients.map((c) => c.orderCount), 1);
+  }
+
+  getMaxSales(clients: TopClient[]): number {
+    return Math.max(...clients.map((c) => c.totalSales), 1);
   }
 
   private static readonly MONTH_LABELS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];

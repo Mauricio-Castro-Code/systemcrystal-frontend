@@ -372,6 +372,15 @@
   white-space: nowrap;
 }
 
+.ac-h-chart__name--link {
+  cursor: pointer;
+  color: var(--of-accent-strong);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .ac-h-chart__track {
   height: 18px;
   border-radius: 4px;

@@ -151,6 +151,63 @@
       </div>
     </div>
 
+    <!-- Top clients -->
+    @if (data.topClients.length) {
+      <div class="ac-panel">
+        <div class="ac-panel__header">
+          <div>
+            <h2 class="ac-panel__title">Top 10 clientes</h2>
+            <p class="ac-panel__hint">{{ data.selectedYear }}</p>
+          </div>
+          <div class="ac-sort-toggle">
+            <button
+              class="ac-sort-btn"
+              [class.ac-sort-btn--active]="clientsSort() === 'orders'"
+              type="button"
+              (click)="setSortClients('orders')"
+            >Veces</button>
+            <button
+              class="ac-sort-btn"
+              [class.ac-sort-btn--active]="clientsSort() === 'sales'"
+              type="button"
+              (click)="setSortClients('sales')"
+            >Ventas</button>
+          </div>
+        </div>
+
+        @let sortedClients = getSortedClients(data.topClients);
+        @let maxOrders = getMaxOrderCount(sortedClients);
+        @let maxSales = getMaxSales(sortedClients);
+
+        <div class="ac-h-chart">
+          @for (client of sortedClients; track client.code ?? client.name) {
+            <div class="ac-h-chart__row">
+              <span
+                class="ac-h-chart__name"
+                [class.ac-h-chart__name--link]="!!client.code"
+                [title]="client.name"
+                (click)="goToClient(client)"
+              >{{ client.name }}</span>
+              <div class="ac-h-chart__track">
+                <div
+                  class="ac-h-chart__fill"
+                  [style.width.%]="clientsSort() === 'sales'
+                    ? (client.totalSales / maxSales) * 100
+                    : (client.orderCount / maxOrders) * 100"
+                ></div>
+              </div>
+              <span class="ac-h-chart__qty">
+                {{ clientsSort() === 'sales' ? formatCurrency(client.totalSales) : client.orderCount + ' notas' }}
+              </span>
+              <span class="ac-h-chart__rev">
+                {{ clientsSort() === 'sales' ? client.orderCount + ' notas' : formatCurrency(client.totalSales) }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     <!-- Top colors -->
     @if (data.topColors.length) {
       <div class="ac-panel">
