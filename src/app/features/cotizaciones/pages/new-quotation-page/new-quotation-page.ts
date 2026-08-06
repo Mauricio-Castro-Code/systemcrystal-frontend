@@ -34,7 +34,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
+import { DateAdapter, MatNativeDateModule } from '@angular/material/core';
 import { MatTable, MatTableModule } from '@angular/material/table';
 
 import {
@@ -42,6 +42,7 @@ import {
   QuotationNote,
 } from '../../../../core/models/quotation-note.model';
 import { InventoryItem } from '../../../inventario/models/inventory-item.model';
+import { CrystalDateAdapter } from '../../../../core/crystal-date-adapter';
 import { InventoryService } from '../../../../core/services/inventory.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
 import { QuotationRecordsService } from '../../../../core/services/quotation-records.service';
@@ -109,6 +110,7 @@ const scheduleValidator: ValidatorFn = (
   templateUrl: './new-quotation-page.html',
   styleUrl: './new-quotation-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [{ provide: DateAdapter, useClass: CrystalDateAdapter }],
 })
 export class NewQuotationPageComponent {
   private readonly formBuilder = inject(FormBuilder);

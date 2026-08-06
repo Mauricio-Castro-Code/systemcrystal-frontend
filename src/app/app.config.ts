@@ -6,11 +6,13 @@ import {
 } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { TitleStrategy } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { AppRoutingModule } from './app-routing.module';
 import { CrystalTitleStrategy } from './core/title-strategy';
+import { CrystalDateAdapter } from './core/crystal-date-adapter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,6 +21,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     importProvidersFrom(AppRoutingModule),
     { provide: TitleStrategy, useClass: CrystalTitleStrategy },
+    { provide: MAT_DATE_LOCALE, useValue: 'es-MX' },
+    { provide: DateAdapter, useClass: CrystalDateAdapter },
     provideServiceWorker('ngsw-worker.js', {
       // Solo activo en producción; en dev no queremos caché del SW.
       enabled: !isDevMode(),

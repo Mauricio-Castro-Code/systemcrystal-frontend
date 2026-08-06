@@ -4,11 +4,12 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
+import { DateAdapter, MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { AuthService } from '../../../../core/services/auth.service';
+import { CrystalDateAdapter } from '../../../../core/crystal-date-adapter';
 import { DashboardService } from '../../../../core/services/dashboard.service';
 import { StatCardsComponent } from '../../components/stat-cards/stat-cards';
 import { OrderAgendaBoardComponent } from '../../components/order-agenda-board/order-agenda-board';
@@ -30,7 +31,7 @@ import { OrderAgendaBoardComponent } from '../../components/order-agenda-board/o
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-MX' }],
+  providers: [{ provide: DateAdapter, useClass: CrystalDateAdapter }],
 })
 export class DashboardPageComponent {
   private readonly authService = inject(AuthService);
