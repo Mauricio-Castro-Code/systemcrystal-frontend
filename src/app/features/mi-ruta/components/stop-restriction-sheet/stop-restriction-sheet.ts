@@ -10,10 +10,11 @@ import {
 import { FormsModule } from '@angular/forms';
 
 import { DriverRouteStop } from '../../models/driver-route.model';
+import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon';
 
 @Component({
   selector: 'app-stop-restriction-sheet',
-  imports: [FormsModule],
+  imports: [FormsModule, AppIconComponent],
   templateUrl: './stop-restriction-sheet.html',
   styleUrl: './stop-restriction-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

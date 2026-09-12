@@ -5,10 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { DriverRouteService } from '../../../../core/services/driver-route.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
 import { OrderRecord } from '../../../pedidos/models/order-record.model';
+import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon';
 
 @Component({
   selector: 'app-add-order-sheet',
-  imports: [FormsModule],
+  imports: [FormsModule, AppIconComponent],
   templateUrl: './add-order-sheet.html',
   styleUrl: './add-order-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -5,12 +5,13 @@ import { DriverRouteService } from '../../../../core/services/driver-route.servi
 import { DriverRouteStop } from '../../models/driver-route.model';
 import { AddOrderSheetComponent } from '../../components/add-order-sheet/add-order-sheet';
 import { StopRestrictionSheetComponent } from '../../components/stop-restriction-sheet/stop-restriction-sheet';
+import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon';
 
 type MiRutaTab = 'ruta' | 'historial' | 'perfil';
 
 @Component({
   selector: 'app-mi-ruta-page',
-  imports: [StopRestrictionSheetComponent, AddOrderSheetComponent],
+  imports: [StopRestrictionSheetComponent, AddOrderSheetComponent, AppIconComponent],
   templateUrl: './mi-ruta-page.html',
   styleUrl: './mi-ruta-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

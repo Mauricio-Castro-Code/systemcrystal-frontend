@@ -3,43 +3,54 @@
 <section class="sheet" role="dialog" aria-label="Restricción de la parada">
   <header class="sheet__head">
     <div>
-      <p class="sheet__eyebrow">Restricción — {{ stop().orderId }}</p>
-      <h3 class="sheet__title">{{ stop().clientName }}</h3>
+      <p class="sheet__eyebrow">Restricción · {{ stop().orderId }}</p>
+      <h2 class="sheet__title">{{ stop().clientName }}</h2>
     </div>
-    <button type="button" class="sheet__close" (click)="onClose()" aria-label="Cerrar">✕</button>
+    <button type="button" class="sheet__close" (click)="onClose()" aria-label="Cerrar">
+      <app-icon name="x" />
+    </button>
   </header>
 
   @if (hasExistingRestriction()) {
     <div class="current">
       @if (windowLabel(); as label) {
-        <span class="chip chip--window">🕓 {{ label }}</span>
+        <span class="chip chip--window"><app-icon name="clock" /> {{ label }}</span>
       }
       @if (stop().priority === 'ALTA') {
-        <span class="chip chip--priority">⭐ Prioridad alta</span>
+        <span class="chip chip--priority"><app-icon name="star" /> Prioridad alta</span>
       }
     </div>
   }
 
   <label class="field">
-    <span class="field__label">Cuéntale al sistema qué necesitas</span>
+    <span class="field__label">¿Qué necesitas para esta parada?</span>
     <textarea
       class="field__input"
       rows="3"
-      placeholder="Ej. Entregar entre 11:00 y 14:00, o: recoger después de las 16:00, o: este va primero"
+      placeholder="Ej. Entregar entre 11:00 y 14:00 · Recoger después de las 16:00 · Este va primero"
       [ngModel]="noteText()"
       (ngModelChange)="noteText.set($event)"
       [disabled]="saving()"
     ></textarea>
-    <span class="field__hint">La IA interpreta el horario o prioridad; nunca calcula tiempos de viaje.</span>
+    <span class="field__hint">
+      Se interpreta el horario y la prioridad de tu nota. Los tiempos de viaje siempre los calcula el mapa.
+    </span>
   </label>
 
-  <button type="button" class="btn btn--primary" [disabled]="saving() || !noteText().trim()" (click)="onSave()">
-    {{ saving() ? 'Guardando…' : 'Guardar restricción' }}
-  </button>
-
-  @if (hasExistingRestriction()) {
-    <button type="button" class="btn btn--ghost" [disabled]="saving()" (click)="onRemove()">
-      Quitar restricción
+  <div class="sheet__actions">
+    <button
+      type="button"
+      class="of-btn of-btn--primary"
+      [disabled]="saving() || !noteText().trim()"
+      (click)="onSave()"
+    >
+      {{ saving() ? 'Guardando…' : 'Guardar restricción' }}
     </button>
-  }
+
+    @if (hasExistingRestriction()) {
+      <button type="button" class="of-btn of-btn--danger" [disabled]="saving()" (click)="onRemove()">
+        Quitar restricción
+      </button>
+    }
+  </div>
 </section>

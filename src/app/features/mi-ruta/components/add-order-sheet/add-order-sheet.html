@@ -2,11 +2,16 @@
 
 <section class="sheet" role="dialog" aria-label="Agregar pedido a la ruta">
   <header class="sheet__head">
-    <h3 class="sheet__title">Agregar pedido</h3>
-    <button type="button" class="sheet__close" (click)="onClose()" aria-label="Cerrar">✕</button>
+    <div>
+      <p class="sheet__eyebrow">Mi ruta</p>
+      <h2 class="sheet__title">Agregar pedido</h2>
+    </div>
+    <button type="button" class="sheet__close" (click)="onClose()" aria-label="Cerrar">
+      <app-icon name="x" />
+    </button>
   </header>
 
-  <p class="sheet__hint">Busca por folio exacto el pedido que te pidieron recoger o entregar hoy.</p>
+  <p class="sheet__hint">Busca por folio exacto el pedido que te pidieron atender hoy.</p>
 
   <div class="search">
     <input
@@ -18,26 +23,39 @@
       (keydown.enter)="search()"
       [disabled]="searching() || adding()"
     />
-    <button type="button" class="btn btn--ghost btn--inline" [disabled]="searching() || !folio().trim()" (click)="search()">
+    <button
+      type="button"
+      class="of-btn of-btn--ghost search__submit"
+      [disabled]="searching() || !folio().trim()"
+      (click)="search()"
+    >
+      <app-icon name="search" />
       {{ searching() ? 'Buscando…' : 'Buscar' }}
     </button>
   </div>
 
   @if (errorMessage()) {
-    <p class="error">{{ errorMessage() }}</p>
+    <p class="alert">{{ errorMessage() }}</p>
   }
 
   @if (foundOrder(); as order) {
     <article class="preview">
       <p class="preview__folio">{{ order.orderId }}</p>
-      <h4 class="preview__client">{{ order.clientName }}</h4>
-      <p class="preview__address">{{ order.quotation.clientInfo.address }}, {{ order.quotation.clientInfo.neighborhood }}</p>
+      <h3 class="preview__client">{{ order.clientName }}</h3>
+      <p class="preview__address">
+        <app-icon name="map-pin" />
+        <span>{{ order.quotation.clientInfo.address }}, {{ order.quotation.clientInfo.neighborhood }}</span>
+      </p>
       @if (order.assignedDriver) {
-        <p class="preview__warning">⚠️ Actualmente asignado a {{ order.assignedDriver.name }}. Se te reasignará a ti.</p>
+        <p class="preview__warning">
+          <app-icon name="alert-triangle" />
+          <span>Asignado a {{ order.assignedDriver.name }}. Se reasignará a ti.</span>
+        </p>
       }
     </article>
 
-    <button type="button" class="btn btn--primary" [disabled]="adding()" (click)="confirmAdd()">
+    <button type="button" class="of-btn of-btn--accent sheet__confirm" [disabled]="adding()" (click)="confirmAdd()">
+      <app-icon name="plus" />
       {{ adding() ? 'Agregando…' : 'Agregar a mi ruta' }}
     </button>
   }
