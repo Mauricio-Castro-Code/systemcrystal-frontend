@@ -139,12 +139,23 @@ export class DriverRouteService {
   }
 
   private resolveErrorMessage(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      const detail = (error.error && (error.error.detail || error.error.message)) as
-        | string
-        | undefined;
-      return detail || 'No se pudo cargar tu ruta. Intenta de nuevo.';
+    const fallback = 'No se pudo cargar tu ruta. Intenta de nuevo.';
+
+    if (!(error instanceof HttpErrorResponse)) {
+      return fallback;
     }
-    return 'No se pudo cargar tu ruta. Intenta de nuevo.';
+
+    const body = error.error;
+
+    if (typeof body === 'string') {
+      return body;
+    }
+
+    // DRF responde {"detail": "..."} o, cuando falla la validación, ["..."].
+    if (Array.isArray(body)) {
+      return typeof body[0] === 'string' ? body[0] : fallback;
+    }
+
+    return (body?.detail || body?.message || fallback) as string;
   }
 }
