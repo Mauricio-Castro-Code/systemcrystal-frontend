@@ -83,8 +83,13 @@ export class DriverRouteService {
 
     try {
       const headers = this.requireAuthHeaders();
+      const origin = await this.tryGetCurrentPosition();
       const route = await firstValueFrom(
-        this.http.post<DriverRoute>(`${API_BASE_URL}/orders/my-route/optimize/`, {}, { headers }),
+        this.http.post<DriverRoute>(
+          `${API_BASE_URL}/orders/my-route/optimize/`,
+          origin ? { originLat: origin.lat, originLng: origin.lng } : {},
+          { headers },
+        ),
       );
       this.routeState.set(route);
     } catch (error) {
@@ -92,6 +97,24 @@ export class DriverRouteService {
     } finally {
       this.optimizingState.set(false);
     }
+  }
+
+  // Ubicación del chofer al momento de optimizar, para partir de ahí en vez de
+  // la bodega. Sin bloquear: si el navegador no la da (permiso negado, no
+  // soportado, tarda demasiado), el backend cae de vuelta a la dirección fija.
+  private tryGetCurrentPosition(): Promise<{ lat: number; lng: number } | null> {
+    if (!('geolocation' in navigator)) {
+      return Promise.resolve(null);
+    }
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) =>
+          resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
+      );
+    });
   }
 
   async setStopConstraint(orderId: string, payload: StopConstraintInput): Promise<DriverRouteStop> {
