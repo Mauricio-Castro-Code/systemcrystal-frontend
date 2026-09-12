@@ -288,6 +288,32 @@
     width: 100%;
     min-height: 2.75rem;
   }
+
+  &__link-fix {
+    display: flex;
+    align-items: center;
+    gap: var(--of-sp-2);
+    width: 100%;
+    margin-bottom: var(--of-sp-3);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--of-text-muted);
+    font-size: var(--of-fs-xs);
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    app-icon {
+      flex-shrink: 0;
+      width: 0.9rem;
+      height: 0.9rem;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
 }
 
 /* ── Badges de estado ── */
