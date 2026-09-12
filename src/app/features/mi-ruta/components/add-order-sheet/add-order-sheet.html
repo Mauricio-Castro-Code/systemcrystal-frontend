@@ -1,0 +1,44 @@
+<div class="backdrop" (click)="onClose()"></div>
+
+<section class="sheet" role="dialog" aria-label="Agregar pedido a la ruta">
+  <header class="sheet__head">
+    <h3 class="sheet__title">Agregar pedido</h3>
+    <button type="button" class="sheet__close" (click)="onClose()" aria-label="Cerrar">✕</button>
+  </header>
+
+  <p class="sheet__hint">Busca por folio exacto el pedido que te pidieron recoger o entregar hoy.</p>
+
+  <div class="search">
+    <input
+      class="search__input"
+      type="text"
+      placeholder="Ej. 0087-26"
+      [ngModel]="folio()"
+      (ngModelChange)="folio.set($event)"
+      (keydown.enter)="search()"
+      [disabled]="searching() || adding()"
+    />
+    <button type="button" class="btn btn--ghost btn--inline" [disabled]="searching() || !folio().trim()" (click)="search()">
+      {{ searching() ? 'Buscando…' : 'Buscar' }}
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  @if (foundOrder(); as order) {
+    <article class="preview">
+      <p class="preview__folio">{{ order.orderId }}</p>
+      <h4 class="preview__client">{{ order.clientName }}</h4>
+      <p class="preview__address">{{ order.quotation.clientInfo.address }}, {{ order.quotation.clientInfo.neighborhood }}</p>
+      @if (order.assignedDriver) {
+        <p class="preview__warning">⚠️ Actualmente asignado a {{ order.assignedDriver.name }}. Se te reasignará a ti.</p>
+      }
+    </article>
+
+    <button type="button" class="btn btn--primary" [disabled]="adding()" (click)="confirmAdd()">
+      {{ adding() ? 'Agregando…' : 'Agregar a mi ruta' }}
+    </button>
+  }
+</section>

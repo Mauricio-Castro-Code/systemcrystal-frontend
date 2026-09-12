@@ -87,6 +87,88 @@
   }
 }
 
+/* ---------- Resumen de ruta optimizada ---------- */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: var(--azul);
+  border-radius: 14px;
+  padding: 14px 10px;
+  margin-bottom: 16px;
+
+  &__item {
+    text-align: center;
+  }
+
+  &__label {
+    margin: 0 0 4px;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 600;
+  }
+
+  &__value {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+  }
+}
+
+/* ---------- Acciones de ruta ---------- */
+.actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* ---------- Chips de ruta (secuencia, ventana, ETA, prioridad) ---------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  &--sequence {
+    background: var(--azul);
+    color: #fff;
+  }
+
+  &--eta {
+    background: #dcfce7;
+    color: var(--verde);
+  }
+
+  &--window {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+
+  &--priority {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &--alert {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
 /* ---------- Stats ---------- */
 .stats {
   display: grid;

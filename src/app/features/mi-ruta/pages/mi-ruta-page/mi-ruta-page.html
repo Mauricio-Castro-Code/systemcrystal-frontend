@@ -23,6 +23,27 @@
       </section>
 
       @if (activeTab() === 'ruta') {
+        @if (r.summary; as summary) {
+          <section class="summary">
+            <div class="summary__item">
+              <p class="summary__label">Salida recomendada</p>
+              <p class="summary__value">{{ summary.recommendedDeparture ?? '—' }}</p>
+            </div>
+            <div class="summary__item">
+              <p class="summary__label">1ª entrega</p>
+              <p class="summary__value">{{ summary.firstStopEta ?? '—' }}</p>
+            </div>
+            <div class="summary__item">
+              <p class="summary__label">Duración</p>
+              <p class="summary__value">{{ summary.totalDurationMinutes }} min</p>
+            </div>
+            <div class="summary__item">
+              <p class="summary__label">Distancia</p>
+              <p class="summary__value">{{ summary.totalDistanceKm }} km</p>
+            </div>
+          </section>
+        }
+
         <!-- Tarjetas resumen -->
         <section class="stats">
           <article class="stat">
@@ -35,6 +56,19 @@
           </article>
         </section>
 
+        @if (optimizeErrorMessage()) {
+          <p class="state state--error">{{ optimizeErrorMessage() }}</p>
+        }
+
+        <div class="actions-row">
+          <button type="button" class="btn btn--primary" [disabled]="isOptimizing() || pendingStops().length === 0" (click)="optimizeRoute()">
+            {{ isOptimizing() ? 'Optimizando…' : '🧭 Optimizar ruta' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="openAddOrderSheet()">
+            ➕ Agregar pedido
+          </button>
+        </div>
+
         @if (r.stops.length === 0) {
           <p class="state">No tienes entregas asignadas para este día.</p>
         }
@@ -46,6 +80,28 @@
               <span class="badge badge--{{ stopBadge(stop).tone }}">{{ stopBadge(stop).label }}</span>
               <span class="stop__folio">{{ stop.orderId }}</span>
             </div>
+
+            @if (stop.sequence || stop.timeWindowStart || stop.timeWindowEnd || stop.priority === 'ALTA') {
+              <div class="chips">
+                @if (stop.sequence) {
+                  <span class="chip chip--sequence">#{{ stop.sequence }}</span>
+                }
+                @if (stop.eta) {
+                  <span class="chip chip--eta">🕒 ETA {{ stop.eta }}</span>
+                }
+                @if (stop.timeWindowStart || stop.timeWindowEnd) {
+                  <span class="chip chip--window">
+                    🕓 {{ stop.timeWindowStart ?? '…' }}–{{ stop.timeWindowEnd ?? '…' }}
+                  </span>
+                }
+                @if (stop.priority === 'ALTA') {
+                  <span class="chip chip--priority">⭐ Prioridad</span>
+                }
+                @if (stop.routeAlert) {
+                  <span class="chip chip--alert">⚠️ {{ stop.routeAlert }}</span>
+                }
+              </div>
+            }
 
             <h3 class="stop__client">{{ stop.clientName }}</h3>
             <p class="stop__address">
@@ -75,6 +131,10 @@
               (click)="openMaps(stop)"
             >
               🗺️ Ver en Mapa
+            </button>
+
+            <button type="button" class="btn btn--map" (click)="openRestrictionSheet(stop)">
+              {{ stop.restrictionNote ? '✏️ Editar restricción' : '➕ Agregar restricción' }}
             </button>
 
             <button
@@ -126,4 +186,18 @@
       <span class="tab__icon">👤</span><span class="tab__label">Perfil</span>
     </button>
   </nav>
+
+  @if (editingStop(); as stop) {
+    <app-stop-restriction-sheet
+      [stop]="stop"
+      [saving]="savingConstraint()"
+      (save)="saveRestriction($event)"
+      (remove)="removeRestriction()"
+      (closed)="closeRestrictionSheet()"
+    />
+  }
+
+  @if (showAddOrderSheet()) {
+    <app-add-order-sheet (closed)="closeAddOrderSheet()" (added)="closeAddOrderSheet()" />
+  }
 </div>

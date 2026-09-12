@@ -1,0 +1,45 @@
+<div class="backdrop" (click)="onClose()"></div>
+
+<section class="sheet" role="dialog" aria-label="Restricción de la parada">
+  <header class="sheet__head">
+    <div>
+      <p class="sheet__eyebrow">Restricción — {{ stop().orderId }}</p>
+      <h3 class="sheet__title">{{ stop().clientName }}</h3>
+    </div>
+    <button type="button" class="sheet__close" (click)="onClose()" aria-label="Cerrar">✕</button>
+  </header>
+
+  @if (hasExistingRestriction()) {
+    <div class="current">
+      @if (windowLabel(); as label) {
+        <span class="chip chip--window">🕓 {{ label }}</span>
+      }
+      @if (stop().priority === 'ALTA') {
+        <span class="chip chip--priority">⭐ Prioridad alta</span>
+      }
+    </div>
+  }
+
+  <label class="field">
+    <span class="field__label">Cuéntale al sistema qué necesitas</span>
+    <textarea
+      class="field__input"
+      rows="3"
+      placeholder="Ej. Entregar entre 11:00 y 14:00, o: recoger después de las 16:00, o: este va primero"
+      [ngModel]="noteText()"
+      (ngModelChange)="noteText.set($event)"
+      [disabled]="saving()"
+    ></textarea>
+    <span class="field__hint">La IA interpreta el horario o prioridad; nunca calcula tiempos de viaje.</span>
+  </label>
+
+  <button type="button" class="btn btn--primary" [disabled]="saving() || !noteText().trim()" (click)="onSave()">
+    {{ saving() ? 'Guardando…' : 'Guardar restricción' }}
+  </button>
+
+  @if (hasExistingRestriction()) {
+    <button type="button" class="btn btn--ghost" [disabled]="saving()" (click)="onRemove()">
+      Quitar restricción
+    </button>
+  }
+</section>

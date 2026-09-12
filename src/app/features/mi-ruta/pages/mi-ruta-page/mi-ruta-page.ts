@@ -3,12 +3,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } 
 import { AuthService } from '../../../../core/services/auth.service';
 import { DriverRouteService } from '../../../../core/services/driver-route.service';
 import { DriverRouteStop } from '../../models/driver-route.model';
+import { AddOrderSheetComponent } from '../../components/add-order-sheet/add-order-sheet';
+import { StopRestrictionSheetComponent } from '../../components/stop-restriction-sheet/stop-restriction-sheet';
 
 type MiRutaTab = 'ruta' | 'historial' | 'perfil';
 
 @Component({
   selector: 'app-mi-ruta-page',
-  imports: [],
+  imports: [StopRestrictionSheetComponent, AddOrderSheetComponent],
   templateUrl: './mi-ruta-page.html',
   styleUrl: './mi-ruta-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,10 +22,15 @@ export class MiRutaPageComponent implements OnInit {
   protected readonly route = this.routeService.route;
   protected readonly isLoading = this.routeService.isLoading;
   protected readonly errorMessage = this.routeService.errorMessage;
+  protected readonly isOptimizing = this.routeService.isOptimizing;
+  protected readonly optimizeErrorMessage = this.routeService.optimizeErrorMessage;
   protected readonly session = this.authService.userSession;
 
   protected readonly activeTab = signal<MiRutaTab>('ruta');
   protected readonly busyOrderId = signal<string | null>(null);
+  protected readonly editingStop = signal<DriverRouteStop | null>(null);
+  protected readonly savingConstraint = signal(false);
+  protected readonly showAddOrderSheet = signal(false);
 
   // Una parada se considera pendiente mientras no se haya entregado.
   private readonly pendingStatuses = new Set(['PROGRAMADA', 'EN_CAMINO']);
@@ -99,6 +106,54 @@ export class MiRutaPageComponent implements OnInit {
 
   protected reload(): void {
     void this.routeService.loadRoute(this.route()?.date);
+  }
+
+  protected async optimizeRoute(): Promise<void> {
+    await this.routeService.optimizeRoute();
+  }
+
+  protected openRestrictionSheet(stop: DriverRouteStop): void {
+    this.editingStop.set(stop);
+  }
+
+  protected closeRestrictionSheet(): void {
+    this.editingStop.set(null);
+  }
+
+  protected async saveRestriction(note: string): Promise<void> {
+    const stop = this.editingStop();
+    if (!stop) {
+      return;
+    }
+    this.savingConstraint.set(true);
+    try {
+      await this.routeService.setStopConstraint(stop.orderId, { note });
+      this.closeRestrictionSheet();
+    } finally {
+      this.savingConstraint.set(false);
+    }
+  }
+
+  protected async removeRestriction(): Promise<void> {
+    const stop = this.editingStop();
+    if (!stop) {
+      return;
+    }
+    this.savingConstraint.set(true);
+    try {
+      await this.routeService.clearStopConstraint(stop.orderId);
+      this.closeRestrictionSheet();
+    } finally {
+      this.savingConstraint.set(false);
+    }
+  }
+
+  protected openAddOrderSheet(): void {
+    this.showAddOrderSheet.set(true);
+  }
+
+  protected closeAddOrderSheet(): void {
+    this.showAddOrderSheet.set(false);
   }
 
   protected async signOut(): Promise<void> {
