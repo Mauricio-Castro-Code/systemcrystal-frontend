@@ -51,7 +51,15 @@
     font-size: 0.85rem;
   }
 
+  &__resolved {
+    margin: 6px 0 0;
+    color: #277740;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
   &__link {
     width: 100%;
+    margin-top: 10px;
   }
 }

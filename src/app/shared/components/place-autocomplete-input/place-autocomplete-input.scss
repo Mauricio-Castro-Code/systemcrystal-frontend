@@ -1,0 +1,19 @@
+:host {
+  display: block;
+}
+
+.place-autocomplete {
+  display: block;
+  width: 100%;
+
+  ::ng-deep gmp-place-autocomplete {
+    display: block;
+    width: 100%;
+    --gmpx-color-surface: #fff;
+    --gmpx-color-on-surface: var(--of-text, #2a3d66);
+    --gmpx-color-on-surface-variant: var(--of-text-muted, #5d6b88);
+    --gmpx-color-primary: var(--of-primary, #1d2f58);
+    --gmpx-font-family-base: var(--of-font-body, 'Inter', sans-serif);
+    --gmpx-font-size-base: var(--of-fs-base, 0.875rem);
+  }
+}
