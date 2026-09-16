@@ -56,6 +56,29 @@ export class PlaceAutocompleteInputComponent implements AfterViewInit, OnDestroy
     this.element.placeholder = this.placeholder();
     this.element.addEventListener('gmp-select', this.onSelect);
     this.containerRef.nativeElement.appendChild(this.element);
+    this.forceDropdownAboveDialog();
+  }
+
+  // El menú de sugerencias vive dentro del shadow DOM del propio componente,
+  // posicionado en relación a sí mismo -- dentro de un diálogo de Material
+  // (que recorta/transforma su contenido) puede quedar cortado o tapado.
+  // Si el shadow root queda abierto (comportamiento actual del componente),
+  // le inyectamos una regla para que se dibuje por encima de todo. Si en el
+  // futuro Google lo cierra, esto simplemente no aplica (no rompe nada).
+  private forceDropdownAboveDialog(): void {
+    const shadowRoot: ShadowRoot | null = this.element?.shadowRoot ?? null;
+    if (!shadowRoot) {
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .predictions-anchor, .dropdown {
+        position: fixed !important;
+        z-index: 9999 !important;
+      }
+    `;
+    shadowRoot.appendChild(style);
   }
 
   ngOnDestroy(): void {
