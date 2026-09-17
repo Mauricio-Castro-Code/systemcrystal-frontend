@@ -178,6 +178,16 @@
   color: #277740;
 }
 
+.category-badge[data-category='MANTELERIA'] {
+  background: rgba(159, 61, 138, 0.12);
+  color: #9f3d8a;
+}
+
+.category-badge[data-category='CARPAS'] {
+  background: rgba(198, 132, 12, 0.14);
+  color: #a8690a;
+}
+
 .category-badge[data-category='OTROS'] {
   background: rgba(120, 120, 120, 0.14);
   color: #5a5a5a;

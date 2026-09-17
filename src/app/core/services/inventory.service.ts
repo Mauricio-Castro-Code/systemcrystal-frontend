@@ -5,9 +5,15 @@ import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
 import { AuthService } from './auth.service';
 import {
+  INVENTORY_CATEGORIES,
+  InventoryCategory,
   InventoryItem,
   InventoryItemPayload,
 } from '../../features/inventario/models/inventory-item.model';
+
+const VALID_INVENTORY_CATEGORIES = new Set<string>(
+  INVENTORY_CATEGORIES.map((category) => category.value),
+);
 
 @Injectable({
   providedIn: 'root',
@@ -186,7 +192,9 @@ export class InventoryService {
       name: String(item.name ?? '').trim() || 'Producto sin nombre',
       quantity: Number(item.quantity ?? 0),
       unitPrice: Number(item.unitPrice ?? 0),
-      category: item.category === 'VAJILLA' || item.category === 'MOBILIARIO' ? item.category : 'OTROS',
+      category: VALID_INVENTORY_CATEGORIES.has(item.category)
+        ? (item.category as InventoryCategory)
+        : 'OTROS',
     };
   }
 
