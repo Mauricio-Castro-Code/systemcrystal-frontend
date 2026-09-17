@@ -156,12 +156,14 @@
       </div>
 
       <div class="qcard__body">
-        <div
-          class="inventory-banner"
-          [class.inventory-banner--error]="!!inventoryErrorMessage()"
-        >
-          {{ inventorySummaryMessage() }}
-        </div>
+        @if (showInventoryBanner()) {
+          <div
+            class="inventory-banner"
+            [class.inventory-banner--error]="!!inventoryErrorMessage()"
+          >
+            {{ inventorySummaryMessage() }}
+          </div>
+        }
 
         <div class="equipment-table-wrap">
           <table
@@ -386,14 +388,8 @@
             <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="saveDraft()">
               Guardar Cotización
             </button>
-            <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="saveNote()">
+            <button class="action-btn action-btn--primary" mat-raised-button type="button" [disabled]="isSaving()" (click)="saveNote()">
               Guardar Nota
-            </button>
-            <button class="action-btn action-btn--primary" mat-raised-button type="button" [disabled]="isSaving()" (click)="savePdf()">
-              Guardar PDF
-            </button>
-            <button class="action-btn action-btn--primary" mat-raised-button type="button" [disabled]="isSaving()" (click)="printQuote()">
-              Imprimir
             </button>
           }
 

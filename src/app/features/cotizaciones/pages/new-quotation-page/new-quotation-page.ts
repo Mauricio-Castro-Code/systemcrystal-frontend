@@ -190,6 +190,10 @@ export class NewQuotationPageComponent {
 
     return `${totalItems} producto${totalItems === 1 ? '' : 's'} disponibles para autocompletar y traer precio base.`;
   });
+  readonly showInventoryBanner = computed(() => {
+    const totalItems = this.inventoryItems().length;
+    return !!this.inventoryErrorMessage() || (this.inventoryLoading() && totalItems === 0) || totalItems === 0;
+  });
   readonly summary = signal({
     subtotal: 0,
     freight: 0,
@@ -381,14 +385,6 @@ export class NewQuotationPageComponent {
     } finally {
       this.isSaving.set(false);
     }
-  }
-
-  savePdf(): void {
-    this.persistSimpleAction('PDF generado');
-  }
-
-  printQuote(): void {
-    this.persistSimpleAction('Impresion preparada');
   }
 
   async saveNote(): Promise<void> {
@@ -970,14 +966,6 @@ export class NewQuotationPageComponent {
     }
 
     return new Date(year, month - 1, day);
-  }
-
-  private persistSimpleAction(actionLabel: string): void {
-    if (!this.validateBeforePersist()) {
-      return;
-    }
-
-    this.actionMessage.set(`${actionLabel} disponible para integracion con backend o PDF.`);
   }
 
   private validateBeforePersist(): boolean {

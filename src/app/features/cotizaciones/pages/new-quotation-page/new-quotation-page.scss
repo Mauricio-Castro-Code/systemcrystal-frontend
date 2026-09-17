@@ -208,6 +208,48 @@
 
 .equipment-table {
   width: 100%;
+  table-layout: fixed;
+}
+
+:host ::ng-deep .equipment-table .mat-column-quantity {
+  width: 90px;
+}
+
+:host ::ng-deep .equipment-table .mat-column-unitPrice,
+:host ::ng-deep .equipment-table .mat-column-total {
+  width: 120px;
+}
+
+:host ::ng-deep .equipment-table .mat-column-actions {
+  width: 48px;
+}
+
+:host ::ng-deep .equipment-table .mat-mdc-cell,
+:host ::ng-deep .equipment-table .mat-mdc-header-cell {
+  padding: 0 0.4rem;
+}
+
+:host ::ng-deep .equipment-table .mat-mdc-cell:first-child,
+:host ::ng-deep .equipment-table .mat-mdc-header-cell:first-child {
+  padding-left: 0.85rem;
+}
+
+:host ::ng-deep .equipment-table .mat-mdc-cell:last-child,
+:host ::ng-deep .equipment-table .mat-mdc-header-cell:last-child {
+  padding-right: 0.5rem;
+}
+
+:host ::ng-deep .equipment-table .mat-mdc-row {
+  border-bottom: 1px solid var(--of-border);
+}
+
+:host ::ng-deep .equipment-table .mat-mdc-cell {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+:host ::ng-deep .equipment-table .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 /* Movil: oculta la columna Total (de solo lectura; el subtotal sale en el pie)
