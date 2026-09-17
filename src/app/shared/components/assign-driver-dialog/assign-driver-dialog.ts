@@ -7,11 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
-import {
-  PlaceAutocompleteInputComponent,
-  PlaceSelection,
-} from '../place-autocomplete-input/place-autocomplete-input';
-
 export interface AssignDriverDialogNote {
   orderId: string;
   clientName: string;
@@ -45,7 +40,6 @@ export interface AssignDriverDialogResult {
     MatIconModule,
     MatInputModule,
     MatSelectModule,
-    PlaceAutocompleteInputComponent,
   ],
   templateUrl: './assign-driver-dialog.html',
   styleUrl: './assign-driver-dialog.scss',
@@ -69,20 +63,8 @@ export class AssignDriverDialogComponent {
     ]),
   );
 
-  // Dirección confirmada por Google al elegir una sugerencia, para mostrarla como
-  // retroalimentación ("✓ resolvió a...") en vez de solo dejar la URL en el input.
-  readonly resolvedAddresses = signal<Record<string, string>>({});
-
   linkControl(orderId: string): FormControl<string> {
     return this.linkControls.get(orderId)!;
-  }
-
-  onPlaceSelected(orderId: string, selection: PlaceSelection): void {
-    this.linkControl(orderId).setValue(selection.mapsUrl);
-    this.resolvedAddresses.update((current) => ({
-      ...current,
-      [orderId]: selection.formattedAddress,
-    }));
   }
 
   cancel(): void {

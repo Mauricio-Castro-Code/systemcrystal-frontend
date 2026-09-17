@@ -30,18 +30,8 @@
           <span class="assign-dialog__client">{{ note.clientName }}</span>
         </div>
         <p class="assign-dialog__address">{{ note.address }}</p>
-
-        <app-place-autocomplete-input
-          placeholder="Busca la dirección en Maps…"
-          [initialValue]="note.address === 'Domicilio pendiente' ? '' : note.address"
-          (placeSelected)="onPlaceSelected(note.orderId, $event)"
-        />
-        @if (resolvedAddresses()[note.orderId]; as resolved) {
-          <p class="assign-dialog__resolved">✓ {{ resolved }}</p>
-        }
-
         <mat-form-field appearance="outline" class="assign-dialog__link">
-          <mat-label>O pega el link directo (opcional)</mat-label>
+          <mat-label>Link de Google Maps (opcional)</mat-label>
           <input matInput type="url" [formControl]="linkControl(note.orderId)" placeholder="https://maps.google.com/?q=..." />
         </mat-form-field>
       </div>

@@ -1,17 +1,8 @@
-// El menú de sugerencias del buscador de direcciones queda dentro de este
-// diálogo; si el contenedor de Material lo recorta (overflow) o le aplica un
-// transform, el menú puede quedar invisible o cortado aunque exista.
-::ng-deep .cdk-overlay-pane .mat-mdc-dialog-container,
-::ng-deep .cdk-overlay-pane .mat-mdc-dialog-surface {
-  overflow: visible !important;
-}
-
 .assign-dialog {
   display: flex;
   flex-direction: column;
   min-width: 360px;
   max-width: 480px;
-  overflow: visible;
 
   &__driver {
     width: 100%;
@@ -60,15 +51,7 @@
     font-size: 0.85rem;
   }
 
-  &__resolved {
-    margin: 6px 0 0;
-    color: #277740;
-    font-size: 0.82rem;
-    font-weight: 600;
-  }
-
   &__link {
     width: 100%;
-    margin-top: 10px;
   }
 }
