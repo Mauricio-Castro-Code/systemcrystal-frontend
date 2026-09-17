@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { DriverRouteService } from '../../../../core/services/driver-route.service';
@@ -7,7 +6,6 @@ import { DriverRouteStop } from '../../models/driver-route.model';
 import { AddOrderSheetComponent } from '../../components/add-order-sheet/add-order-sheet';
 import { StopRestrictionSheetComponent } from '../../components/stop-restriction-sheet/stop-restriction-sheet';
 import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon';
-import { NotificationService } from '../../../../shared/services/notification.service';
 
 type MiRutaTab = 'ruta' | 'historial' | 'perfil';
 
@@ -21,7 +19,6 @@ type MiRutaTab = 'ruta' | 'historial' | 'perfil';
 export class MiRutaPageComponent implements OnInit {
   private readonly routeService = inject(DriverRouteService);
   private readonly authService = inject(AuthService);
-  private readonly notificationService = inject(NotificationService);
 
   protected readonly route = this.routeService.route;
   protected readonly isLoading = this.routeService.isLoading;
@@ -149,30 +146,6 @@ export class MiRutaPageComponent implements OnInit {
       this.closeRestrictionSheet();
     } finally {
       this.savingConstraint.set(false);
-    }
-  }
-
-  protected async pasteMapsLink(stop: DriverRouteStop): Promise<void> {
-    const url = window.prompt(
-      'Pega el link de ubicación que te mandó el cliente (WhatsApp, Google Maps):',
-      '',
-    );
-    if (!url || !url.trim()) {
-      return;
-    }
-
-    this.busyOrderId.set(stop.orderId);
-    try {
-      await this.routeService.setStopMapsLink(stop.orderId, url.trim());
-      this.notificationService.success('Ubicación guardada. Vuelve a optimizar la ruta.');
-    } catch (error) {
-      const detail =
-        error instanceof HttpErrorResponse && error.error?.url
-          ? String(error.error.url[0] ?? '')
-          : '';
-      this.notificationService.error(detail || 'No se pudo guardar el link. Revisa que sea válido.');
-    } finally {
-      this.busyOrderId.set(null);
     }
   }
 

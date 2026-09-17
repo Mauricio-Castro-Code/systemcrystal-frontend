@@ -138,19 +138,6 @@ export class DriverRouteService {
     await this.loadRoute(this.routeState()?.date);
   }
 
-  async setStopMapsLink(orderId: string, url: string): Promise<DriverRouteStop> {
-    const headers = this.requireAuthHeaders();
-    const stop = await firstValueFrom(
-      this.http.post<DriverRouteStop>(
-        `${API_BASE_URL}/orders/${orderId}/maps-link/`,
-        { url },
-        { headers },
-      ),
-    );
-    await this.loadRoute(this.routeState()?.date);
-    return stop;
-  }
-
   async addOrderByFolio(folio: string): Promise<DriverRouteStop> {
     const headers = this.requireAuthHeaders();
     const stop = await firstValueFrom(

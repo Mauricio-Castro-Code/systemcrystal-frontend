@@ -177,16 +177,6 @@
 
             <button
               type="button"
-              class="stop__link-fix"
-              [disabled]="busyOrderId() === stop.orderId"
-              (click)="pasteMapsLink(stop)"
-            >
-              <app-icon name="map-pin" />
-              ¿El mapa no la ubica? Pega aquí el link que mandó el cliente
-            </button>
-
-            <button
-              type="button"
               class="of-btn of-btn--accent stop__advance"
               [disabled]="busyOrderId() === stop.orderId"
               (click)="advanceStop(stop)"
