@@ -222,8 +222,22 @@ export class InventoryPageComponent implements AfterViewInit {
     return item.id;
   }
 
-  categoryLabel(category: InventoryCategory): string {
-    return this.categories.find((option) => option.value === category)?.label ?? category;
+  async changeCategory(item: InventoryItem, category: InventoryCategory): Promise<void> {
+    if (category === item.category) {
+      return;
+    }
+
+    try {
+      await this.inventoryService.updateItem(item.id, {
+        name: item.name,
+        category,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      });
+      this.notifications.success(`Categoria actualizada: ${item.name}.`);
+    } catch (error) {
+      this.notifications.error(this.resolveErrorMessage(error));
+    }
   }
 
   private buildPayload(): InventoryItemPayload {

@@ -151,9 +151,21 @@
             <ng-container matColumnDef="category">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Categoria</th>
               <td mat-cell *matCellDef="let item">
-                <span class="category-badge" [attr.data-category]="item.category">
-                  {{ categoryLabel(item.category) }}
-                </span>
+                <mat-form-field
+                  appearance="outline"
+                  class="category-select"
+                  subscriptSizing="dynamic"
+                  [attr.data-category]="item.category"
+                >
+                  <mat-select
+                    [value]="item.category"
+                    (selectionChange)="changeCategory(item, $event.value)"
+                  >
+                    @for (category of categories; track category.value) {
+                      <mat-option [value]="category.value">{{ category.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
               </td>
             </ng-container>
 

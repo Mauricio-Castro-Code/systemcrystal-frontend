@@ -156,41 +156,49 @@
   color: var(--of-title);
 }
 
-.category-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
+.category-select {
+  width: 155px;
+  --category-color: var(--of-text-muted);
+}
+
+.category-select[data-category='VAJILLA'] {
+  --category-color: #1d2f58;
+}
+
+.category-select[data-category='MOBILIARIO'] {
+  --category-color: #277740;
+}
+
+.category-select[data-category='MANTELERIA'] {
+  --category-color: #9f3d8a;
+}
+
+.category-select[data-category='CARPAS'] {
+  --category-color: #a8690a;
+}
+
+.category-select[data-category='OTROS'] {
+  --category-color: #5a5a5a;
+}
+
+:host ::ng-deep .category-select .mat-mdc-text-field-wrapper {
+  background: transparent;
+}
+
+:host ::ng-deep .category-select .mat-mdc-form-field-infix {
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  min-height: 0;
+}
+
+:host ::ng-deep .category-select .mat-mdc-select-value-text {
+  color: var(--category-color);
   font-weight: 700;
-  letter-spacing: 0.02em;
-  background: rgba(100, 100, 100, 0.12);
-  color: var(--of-text-muted);
+  font-size: 0.82rem;
 }
 
-.category-badge[data-category='VAJILLA'] {
-  background: rgba(29, 47, 88, 0.12);
-  color: #1d2f58;
-}
-
-.category-badge[data-category='MOBILIARIO'] {
-  background: rgba(39, 119, 64, 0.12);
-  color: #277740;
-}
-
-.category-badge[data-category='MANTELERIA'] {
-  background: rgba(159, 61, 138, 0.12);
-  color: #9f3d8a;
-}
-
-.category-badge[data-category='CARPAS'] {
-  background: rgba(198, 132, 12, 0.14);
-  color: #a8690a;
-}
-
-.category-badge[data-category='OTROS'] {
-  background: rgba(120, 120, 120, 0.14);
-  color: #5a5a5a;
+:host ::ng-deep .category-select .mat-mdc-select-arrow {
+  color: var(--category-color);
 }
 
 .inventory-table__actions {
