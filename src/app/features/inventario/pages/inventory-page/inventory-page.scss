@@ -44,6 +44,11 @@
   flex: 1 1 320px;
 }
 
+.inventory-page__category-filter {
+  flex: 0 1 220px;
+  min-width: 180px;
+}
+
 .inventory-page__refresh {
   min-height: 3rem;
   padding: 0 1.2rem;
@@ -61,11 +66,9 @@
   border-color: rgba(var(--of-accent-rgb), 0.32);
 }
 
-.inventory-page__grid {
+.inventory-page__stack {
   display: grid;
-  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.4fr);
   gap: 1.25rem;
-  align-items: start;
 }
 
 .inventory-page__state {
@@ -116,10 +119,20 @@
   gap: 1rem;
 }
 
+.inventory-form--horizontal {
+  grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr) minmax(140px, 1fr) minmax(160px, 1fr);
+  align-items: start;
+}
+
+.inventory-form__name {
+  grid-column: span 1;
+}
+
 .inventory-form__actions {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+  grid-column: 1 / -1;
 }
 
 .inventory-card__action-message {
@@ -141,6 +154,33 @@
 
 .inventory-table__name {
   color: var(--of-title);
+}
+
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: rgba(100, 100, 100, 0.12);
+  color: var(--of-text-muted);
+}
+
+.category-badge[data-category='VAJILLA'] {
+  background: rgba(29, 47, 88, 0.12);
+  color: #1d2f58;
+}
+
+.category-badge[data-category='MOBILIARIO'] {
+  background: rgba(39, 119, 64, 0.12);
+  color: #277740;
+}
+
+.category-badge[data-category='OTROS'] {
+  background: rgba(120, 120, 120, 0.14);
+  color: #5a5a5a;
 }
 
 .inventory-table__actions {
@@ -225,7 +265,21 @@
 }
 
 @media (max-width: 1080px) {
-  .inventory-page__grid {
+  .inventory-form--horizontal {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .inventory-form__name {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .inventory-form--horizontal {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-page__category-filter {
+    flex: 1 1 100%;
   }
 }

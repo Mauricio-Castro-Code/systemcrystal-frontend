@@ -20,6 +20,16 @@
       />
     </mat-form-field>
 
+    <mat-form-field class="inventory-page__category-filter" appearance="outline">
+      <mat-label>Categoria</mat-label>
+      <mat-select [formControl]="categoryFilterControl">
+        <mat-option value="ALL">Todas las categorias</mat-option>
+        @for (category of categories; track category.value) {
+          <mat-option [value]="category.value">{{ category.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
     <button class="inventory-page__refresh" type="button" (click)="reloadInventory()">
       {{ isLoading() ? 'Actualizando...' : 'Recargar inventario' }}
     </button>
@@ -37,7 +47,7 @@
     </section>
   }
 
-  <section class="inventory-page__grid">
+  <section class="inventory-page__stack">
     <mat-card class="inventory-card inventory-card--form">
       <mat-card-header>
         <mat-card-title>
@@ -49,13 +59,22 @@
       </mat-card-header>
 
       <mat-card-content class="inventory-card__content">
-        <form class="inventory-form" [formGroup]="inventoryForm">
-          <mat-form-field appearance="outline">
+        <form class="inventory-form inventory-form--horizontal" [formGroup]="inventoryForm">
+          <mat-form-field appearance="outline" class="inventory-form__name">
             <mat-label>Nombre del Producto</mat-label>
             <input matInput formControlName="name" />
             @if (inventoryForm.controls.name.touched && inventoryForm.controls.name.hasError('required')) {
               <mat-error>El nombre del producto es requerido.</mat-error>
             }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Categoria</mat-label>
+            <mat-select formControlName="category">
+              @for (category of categories; track category.value) {
+                <mat-option [value]="category.value">{{ category.label }}</mat-option>
+              }
+            </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -129,6 +148,15 @@
               </td>
             </ng-container>
 
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Categoria</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="category-badge" [attr.data-category]="item.category">
+                  {{ categoryLabel(item.category) }}
+                </span>
+              </td>
+            </ng-container>
+
             <ng-container matColumnDef="quantity">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Cantidad</th>
               <td mat-cell *matCellDef="let item">{{ item.quantity }}</td>
@@ -181,8 +209,8 @@
         </div>
 
         <mat-paginator
-          [pageSize]="6"
-          [pageSizeOptions]="[6, 12, 24]"
+          [pageSize]="24"
+          [pageSizeOptions]="[12, 24, 48, 96]"
           showFirstLastButtons
         ></mat-paginator>
       </mat-card-content>

@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { startWith } from 'rxjs';
+import { combineLatest, startWith } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -19,6 +19,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
@@ -26,9 +27,18 @@ import { InventoryService } from '../../../../core/services/inventory.service';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import {
+  INVENTORY_CATEGORIES,
+  InventoryCategory,
   InventoryItem,
   InventoryItemPayload,
 } from '../../models/inventory-item.model';
+
+type CategoryFilter = InventoryCategory | 'ALL';
+
+interface InventoryTableFilter {
+  search: string;
+  category: CategoryFilter;
+}
 
 @Component({
   selector: 'app-inventory-page',
@@ -41,6 +51,7 @@ import {
     MatIconModule,
     MatInputModule,
     MatPaginatorModule,
+    MatSelectModule,
     MatSortModule,
     MatTableModule,
   ],
@@ -59,12 +70,15 @@ export class InventoryPageComponent implements AfterViewInit {
   @ViewChild(MatSort) sort?: MatSort;
 
   readonly searchControl = new FormControl('', { nonNullable: true });
+  readonly categoryFilterControl = new FormControl<CategoryFilter>('ALL', { nonNullable: true });
+  readonly categories = INVENTORY_CATEGORIES;
   readonly inventoryForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
+    category: ['OTROS' as InventoryCategory, [Validators.required]],
     quantity: [0, [Validators.required, Validators.min(0)]],
     unitPrice: [0, [Validators.required, Validators.min(0)]],
   });
-  readonly displayedColumns = ['name', 'quantity', 'unitPrice', 'actions'];
+  readonly displayedColumns = ['name', 'category', 'quantity', 'unitPrice', 'actions'];
   readonly dataSource = new MatTableDataSource<InventoryItem>([]);
   readonly editingItemId = signal<number | null>(null);
   readonly actionMessage = signal('');
@@ -75,7 +89,16 @@ export class InventoryPageComponent implements AfterViewInit {
 
   constructor() {
     this.dataSource.filterPredicate = (item, filter) => {
-      const normalizedFilter = filter.trim().toLowerCase();
+      const { search, category } = JSON.parse(filter) as InventoryTableFilter;
+
+      if (category !== 'ALL' && item.category !== category) {
+        return false;
+      }
+
+      if (!search) {
+        return true;
+      }
+
       const searchableValues = [
         item.name,
         String(item.quantity),
@@ -83,14 +106,21 @@ export class InventoryPageComponent implements AfterViewInit {
       ];
 
       return searchableValues.some((value) =>
-        value.toLowerCase().includes(normalizedFilter),
+        value.toLowerCase().includes(search),
       );
     };
 
-    this.searchControl.valueChanges
-      .pipe(startWith(''), takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        this.dataSource.filter = value.trim().toLowerCase();
+    combineLatest([
+      this.searchControl.valueChanges.pipe(startWith('')),
+      this.categoryFilterControl.valueChanges.pipe(startWith(this.categoryFilterControl.value)),
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([search, category]) => {
+        const tableFilter: InventoryTableFilter = {
+          search: search.trim().toLowerCase(),
+          category,
+        };
+        this.dataSource.filter = JSON.stringify(tableFilter);
         this.paginator?.firstPage();
       });
 
@@ -152,6 +182,7 @@ export class InventoryPageComponent implements AfterViewInit {
     this.editingItemId.set(item.id);
     this.inventoryForm.setValue({
       name: item.name,
+      category: item.category,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
     });
@@ -191,11 +222,16 @@ export class InventoryPageComponent implements AfterViewInit {
     return item.id;
   }
 
+  categoryLabel(category: InventoryCategory): string {
+    return this.categories.find((option) => option.value === category)?.label ?? category;
+  }
+
   private buildPayload(): InventoryItemPayload {
     const formValue = this.inventoryForm.getRawValue();
 
     return {
       name: String(formValue.name ?? '').trim(),
+      category: formValue.category ?? 'OTROS',
       quantity: Number(formValue.quantity ?? 0),
       unitPrice: Number(formValue.unitPrice ?? 0),
     };
@@ -205,6 +241,7 @@ export class InventoryPageComponent implements AfterViewInit {
     this.editingItemId.set(null);
     this.inventoryForm.reset({
       name: '',
+      category: 'OTROS',
       quantity: 0,
       unitPrice: 0,
     });

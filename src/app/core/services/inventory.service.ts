@@ -186,6 +186,7 @@ export class InventoryService {
       name: String(item.name ?? '').trim() || 'Producto sin nombre',
       quantity: Number(item.quantity ?? 0),
       unitPrice: Number(item.unitPrice ?? 0),
+      category: item.category === 'VAJILLA' || item.category === 'MOBILIARIO' ? item.category : 'OTROS',
     };
   }
 
