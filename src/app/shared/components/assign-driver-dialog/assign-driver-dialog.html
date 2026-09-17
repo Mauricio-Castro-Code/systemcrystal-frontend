@@ -33,6 +33,7 @@
 
         <app-place-autocomplete-input
           placeholder="Busca la dirección en Maps…"
+          [initialValue]="note.address === 'Domicilio pendiente' ? '' : note.address"
           (placeSelected)="onPlaceSelected(note.orderId, $event)"
         />
         @if (resolvedAddresses()[note.orderId]; as resolved) {

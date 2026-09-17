@@ -36,6 +36,9 @@ export class PlaceAutocompleteInputComponent implements AfterViewInit, OnDestroy
   private readonly loader = inject(GoogleMapsLoaderService);
 
   readonly placeholder = input('Busca la dirección…');
+  // Texto con el que arranca la búsqueda (ej. la dirección ya escrita en la
+  // nota), para no obligar a retipearla desde cero.
+  readonly initialValue = input('');
 
   readonly placeSelected = output<PlaceSelection>();
 
@@ -54,6 +57,9 @@ export class PlaceAutocompleteInputComponent implements AfterViewInit, OnDestroy
       includedRegionCodes: ['mx'],
     });
     this.element.placeholder = this.placeholder();
+    if (this.initialValue()) {
+      this.element.value = this.initialValue();
+    }
     this.element.addEventListener('gmp-select', this.onSelect);
     this.containerRef.nativeElement.appendChild(this.element);
     this.forceDropdownAboveDialog();
