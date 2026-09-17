@@ -49,30 +49,14 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Direccion del Evento</mat-label>
+            <mat-label>Calle y número</mat-label>
             <input matInput formControlName="address" />
           </mat-form-field>
 
-          <div class="field-with-hint">
-            <mat-form-field appearance="outline">
-              <mat-label>Colonia</mat-label>
-              <input matInput formControlName="neighborhood" />
-            </mat-form-field>
-            @if (freightSuggestion(); as zone) {
-              <button
-                type="button"
-                class="freight-chip"
-                (click)="applyFreightSuggestion()"
-                title="Click para aplicar este flete"
-              >
-                <span class="freight-chip__icon">🚚</span>
-                <span class="freight-chip__text">
-                  Flete sugerido <strong>{{ zone.name }}</strong>: ${{ zone.price }}
-                </span>
-                <span class="freight-chip__action">Aplicar</span>
-              </button>
-            }
-          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Colonia</mat-label>
+            <input matInput formControlName="neighborhood" />
+          </mat-form-field>
 
           <mat-form-field appearance="outline" class="field--full">
             <mat-label>Referencias del domicilio</mat-label>

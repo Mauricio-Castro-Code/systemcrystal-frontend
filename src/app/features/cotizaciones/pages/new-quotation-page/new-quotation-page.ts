@@ -207,6 +207,8 @@ export class NewQuotationPageComponent {
   readonly isSaving = signal(false);
   readonly freightZones = signal<FreightZone[]>([]);
   readonly freightSuggestion = signal<FreightZone | null>(null);
+  private lastAutoAppliedZoneId: number | null = null;
+  private suppressFreightAutoApply = false;
 
   readonly colorPrompt = signal<{ row: EquipmentRowForm; baseValue: string } | null>(null);
   readonly colorInput = signal('');
@@ -594,12 +596,6 @@ export class NewQuotationPageComponent {
     this.colorInput.set('');
   }
 
-  applyFreightSuggestion(): void {
-    const zone = this.freightSuggestion();
-    if (!zone) return;
-    this.logisticsForm.controls.freight.setValue(zone.price);
-  }
-
   private requiresColorInput(equipment: string): boolean {
     const normalized = equipment.toLowerCase().trim();
     return this.COLOR_TRIGGERS.some((trigger) => normalized.includes(trigger));
@@ -622,6 +618,7 @@ export class NewQuotationPageComponent {
     const neighborhood = (this.clientInfoForm.controls.neighborhood.value ?? '').toLowerCase().trim();
     if (!neighborhood || neighborhood.length < 3) {
       this.freightSuggestion.set(null);
+      this.lastAutoAppliedZoneId = null;
       return;
     }
     const zones = this.freightZones();
@@ -631,6 +628,27 @@ export class NewQuotationPageComponent {
         neighborhood.includes(z.name.toLowerCase()),
     );
     this.freightSuggestion.set(match ?? null);
+
+    if (!match) {
+      this.lastAutoAppliedZoneId = null;
+      return;
+    }
+
+    if (this.suppressFreightAutoApply) {
+      this.lastAutoAppliedZoneId = match.id;
+      return;
+    }
+
+    if (match.id === this.lastAutoAppliedZoneId) {
+      return;
+    }
+
+    this.lastAutoAppliedZoneId = match.id;
+    this.logisticsForm.controls.freight.setValue(match.price);
+    this.notifications.info(
+      `Flete asignado automáticamente por el sistema (${match.name}: $${match.price}).`,
+      { duration: 5000 },
+    );
   }
 
   private createEquipmentRow(initialValue?: Partial<QuotationEquipmentItem>): EquipmentRowForm {
@@ -785,6 +803,16 @@ export class NewQuotationPageComponent {
 
   // Vuelca una cotización/nota en los formularios (reutilizado por editar y duplicar).
   private applyQuotationToForms(quotation: QuotationNote): void {
+    // Evita que el flete cargado se sobrescriba con la auto-asignación por colonia.
+    this.suppressFreightAutoApply = true;
+    try {
+      this.applyQuotationToFormsInternal(quotation);
+    } finally {
+      this.suppressFreightAutoApply = false;
+    }
+  }
+
+  private applyQuotationToFormsInternal(quotation: QuotationNote): void {
     this.clientInfoForm.patchValue({
       fullName: quotation.clientInfo.fullName,
       phoneNumber: quotation.clientInfo.phoneNumber,
@@ -918,18 +946,24 @@ export class NewQuotationPageComponent {
         reference = '';
       }
 
-      this.clientInfoForm.patchValue({
-        fullName: clientInfo.fullName,
-        phoneNumber: clientInfo.phoneNumber,
-        birthDate: this.parseDate(clientInfo.birthDate),
-        address,
-        neighborhood,
-        reference,
-        deliveryInstructions: clientInfo.deliveryInstructions,
-      });
+      // Evita que la auto-asignación por colonia pisotee el flete guardado del cliente.
+      this.suppressFreightAutoApply = true;
+      try {
+        this.clientInfoForm.patchValue({
+          fullName: clientInfo.fullName,
+          phoneNumber: clientInfo.phoneNumber,
+          birthDate: this.parseDate(clientInfo.birthDate),
+          address,
+          neighborhood,
+          reference,
+          deliveryInstructions: clientInfo.deliveryInstructions,
+        });
 
-      if (chosenFreight !== null && chosenFreight > 0) {
-        this.logisticsForm.controls.freight.setValue(chosenFreight);
+        if (chosenFreight !== null && chosenFreight > 0) {
+          this.logisticsForm.controls.freight.setValue(chosenFreight);
+        }
+      } finally {
+        this.suppressFreightAutoApply = false;
       }
 
       this.actionMessage.set(
