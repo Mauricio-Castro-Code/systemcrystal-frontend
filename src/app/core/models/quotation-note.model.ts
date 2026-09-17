@@ -19,6 +19,7 @@ export interface QuotationEquipmentItem {
   equipment: string;
   unitPrice: number;
   total: number;
+  productId?: number | null;
 }
 
 export interface QuotationLogistics {

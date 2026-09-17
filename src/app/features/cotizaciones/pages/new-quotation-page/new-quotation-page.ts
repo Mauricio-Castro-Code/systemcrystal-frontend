@@ -56,9 +56,41 @@ import { FreightZone } from '../../../fletes/models/freight-zone.model';
 type EquipmentRowForm = FormGroup<{
   quantity: FormControl<number>;
   equipment: FormControl<string>;
+  productId: FormControl<number | null>;
+  productLinkDirty: FormControl<boolean>;
   unitPrice: FormControl<number>;
   total: FormControl<number>;
 }>;
+
+// Validador a nivel de grupo que refleja el error en el control "equipment"
+// (en vez de en el grupo) para que Material muestre el mat-error de forma nativa.
+const productLinkValidator: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  const equipmentControl = control.get('equipment');
+  const productIdControl = control.get('productId');
+  const productLinkDirtyControl = control.get('productLinkDirty');
+
+  if (!equipmentControl || !productIdControl || !productLinkDirtyControl) {
+    return null;
+  }
+
+  const requiresProduct = productLinkDirtyControl.value && !productIdControl.value;
+  const currentErrors = equipmentControl.errors;
+  const hasFlag = !!currentErrors?.['productRequired'];
+
+  if (requiresProduct && !hasFlag) {
+    equipmentControl.setErrors({ ...currentErrors, productRequired: true });
+  } else if (!requiresProduct && hasFlag) {
+    const remainingErrors = { ...currentErrors };
+    delete remainingErrors['productRequired'];
+    equipmentControl.setErrors(
+      Object.keys(remainingErrors).length ? remainingErrors : null,
+    );
+  }
+
+  return null;
+};
 
 const phoneTenDigitsValidator: ValidatorFn = (
   control: AbstractControl,
@@ -552,11 +584,17 @@ export class NewQuotationPageComponent {
 
     row.controls.equipment.setValue(inventoryItem.name);
     row.controls.unitPrice.setValue(inventoryItem.unitPrice);
+    row.controls.productId.setValue(inventoryItem.id);
 
     if (this.requiresColorInput(inventoryItem.name)) {
       this.colorInput.set('');
       this.colorPrompt.set({ row, baseValue: inventoryItem.name });
     }
+  }
+
+  onEquipmentInput(row: EquipmentRowForm): void {
+    row.controls.productLinkDirty.setValue(true);
+    row.controls.productId.setValue(null);
   }
 
   getInventoryMatches(searchTerm: string): InventoryItem[] {
@@ -655,21 +693,26 @@ export class NewQuotationPageComponent {
     const quantity = Math.max(1, Number(initialValue?.quantity ?? 1));
     const unitPrice = Math.max(0, Number(initialValue?.unitPrice ?? 0));
 
-    const row: EquipmentRowForm = new FormGroup({
-      quantity: this.formBuilder.nonNullable.control(quantity, {
-        validators: [Validators.required, Validators.min(1)],
-      }),
-      equipment: this.formBuilder.nonNullable.control(initialValue?.equipment ?? '', {
-        validators: [Validators.required, Validators.maxLength(120)],
-      }),
-      unitPrice: this.formBuilder.nonNullable.control(unitPrice, {
-        validators: [Validators.required, Validators.min(0)],
-      }),
-      total: new FormControl<number>(
-        { value: quantity * unitPrice, disabled: true },
-        { nonNullable: true },
-      ),
-    });
+    const row: EquipmentRowForm = new FormGroup(
+      {
+        quantity: this.formBuilder.nonNullable.control(quantity, {
+          validators: [Validators.required, Validators.min(1)],
+        }),
+        equipment: this.formBuilder.nonNullable.control(initialValue?.equipment ?? '', {
+          validators: [Validators.required, Validators.maxLength(120)],
+        }),
+        productId: this.formBuilder.control<number | null>(initialValue?.productId ?? null),
+        productLinkDirty: this.formBuilder.nonNullable.control(false),
+        unitPrice: this.formBuilder.nonNullable.control(unitPrice, {
+          validators: [Validators.required, Validators.min(0)],
+        }),
+        total: new FormControl<number>(
+          { value: quantity * unitPrice, disabled: true },
+          { nonNullable: true },
+        ),
+      },
+      { validators: [productLinkValidator] },
+    );
 
     row.controls.quantity.valueChanges
       .pipe(startWith(row.controls.quantity.value), takeUntilDestroyed(this.destroyRef))
@@ -747,6 +790,7 @@ export class NewQuotationPageComponent {
         equipment: row.controls.equipment.value.trim(),
         unitPrice,
         total: quantity * unitPrice,
+        productId: row.controls.productId.value,
       };
     });
     const subtotal = this.roundCurrency(
