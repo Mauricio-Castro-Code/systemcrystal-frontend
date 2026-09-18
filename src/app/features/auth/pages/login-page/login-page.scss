@@ -208,50 +208,6 @@
   cursor: progress;
 }
 
-/* ── Role selector ── */
-
-.role-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  padding: 0.3rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-}
-
-.role-selector__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  padding: 0.65rem 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: rgba(245, 245, 250, 0.45);
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 180ms ease,
-    color 180ms ease;
-}
-
-.role-selector__btn--active {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.role-selector__btn:hover:not(.role-selector__btn--active) {
-  color: rgba(245, 245, 250, 0.7);
-}
-
-.role-selector__icon {
-  font-size: 1rem;
-  line-height: 1;
-}
-
 /* ── Mode switch link ── */
 
 .login-page__switch {

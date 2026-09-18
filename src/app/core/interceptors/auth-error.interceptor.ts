@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
+import { API_BASE_URL } from '../config/api.config';
 import { AuthService } from '../services/auth.service';
 
 // El login/registro maneja sus propios 401 (credenciales inválidas) como error
@@ -23,10 +24,12 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
       const isSessionExpired =
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
+        req.url.startsWith(`${API_BASE_URL}/`) &&
         !EXEMPT_PATHS.some((path) => req.url.includes(path));
 
       if (isSessionExpired) {
-        void authService.signOut().then(() => router.navigateByUrl('/login'));
+        authService.clearSession();
+        void router.navigateByUrl('/login');
       }
 
       return throwError(() => error);

@@ -64,28 +64,6 @@
   } @else {
     <form class="login-form" [formGroup]="registerForm" (ngSubmit)="submitRegistration()" novalidate>
 
-      <!-- Role selector -->
-      <div class="role-selector">
-        <button
-          type="button"
-          class="role-selector__btn"
-          [class.role-selector__btn--active]="selectedRole === 'ventas'"
-          (click)="setRole('ventas')"
-        >
-          <span class="role-selector__icon">🛒</span>
-          Ventas
-        </button>
-        <button
-          type="button"
-          class="role-selector__btn"
-          [class.role-selector__btn--active]="selectedRole === 'admin'"
-          (click)="setRole('admin')"
-        >
-          <span class="role-selector__icon">🔑</span>
-          Admin
-        </button>
-      </div>
-
       <div class="login-form__field">
         <input
           id="register-email"

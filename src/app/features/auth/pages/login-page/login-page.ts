@@ -7,7 +7,6 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { LoginCredentials } from '../../models/login-credentials.model';
 import { RegisterCredentials } from '../../models/register-credentials.model';
 
-import { UserRole } from '../../models/register-credentials.model';
 
 type AuthMode = 'login' | 'register';
 type LoginFieldName = 'identifier' | 'password';
@@ -40,7 +39,6 @@ export class LoginPageComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     registrationKey: ['', [Validators.required, Validators.minLength(6)]],
-    role: ['ventas' as UserRole],
   });
 
   setAuthMode(mode: AuthMode): void {
@@ -103,14 +101,6 @@ export class LoginPageComponent {
   hasLoginFieldError(fieldName: LoginFieldName): boolean {
     const control = this.loginForm.controls[fieldName];
     return control.invalid && control.touched;
-  }
-
-  setRole(role: UserRole): void {
-    this.registerForm.controls.role.setValue(role);
-  }
-
-  get selectedRole(): UserRole {
-    return this.registerForm.controls.role.value as UserRole;
   }
 
   hasRegisterFieldError(fieldName: RegisterFieldName): boolean {

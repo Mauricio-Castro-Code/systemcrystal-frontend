@@ -2,6 +2,24 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.2.
 
+## Instalación y verificación
+
+Dependencias verificadas con Node 22.15 y npm 11.19.1. Usar `npm ci` para respetar
+`package-lock.json`. Algunas versiones antiguas de npm 10 fallan al resolver los
+peers opcionales de Vitest; actualizar npm si aparece el error `edgesOut`.
+
+```bash
+npm ci
+npm test -- --watch=false
+npm run build
+npm audit
+```
+
+TypeScript rechaza imports y parámetros sin uso. El registro público crea usuarios
+de ventas; los permisos de administrador se gestionan desde Equipo o el backend.
+Un 401 de la API limpia la sesión local sin iniciar solicitudes de logout en bucle.
+`vercel.json` incluye cabeceras contra framing y detección incorrecta del tipo de contenido.
+
 ## Development server
 
 To start a local development server, run:

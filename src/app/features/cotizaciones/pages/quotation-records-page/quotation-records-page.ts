@@ -6,7 +6,6 @@ import {
   ViewChild,
   effect,
   inject,
-  signal,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';

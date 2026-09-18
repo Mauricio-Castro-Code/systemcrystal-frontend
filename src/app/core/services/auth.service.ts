@@ -35,6 +35,7 @@ export class AuthService {
 
   async signOut(): Promise<void> {
     const currentSession = this.session();
+    this.clearSession();
 
     try {
       if (currentSession) {
@@ -52,10 +53,12 @@ export class AuthService {
       }
     } catch {
       // El cierre local no debe quedar bloqueado si el backend no responde.
-    } finally {
-      this.session.set(null);
-      this.clearPersistedSession();
     }
+  }
+
+  clearSession(): void {
+    this.session.set(null);
+    this.clearPersistedSession();
   }
 
   getAccessToken(): string | null {
