@@ -1,14 +1,13 @@
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { PdfPreviewComponent } from '../../../../shared/components/pdf-preview/pdf-preview';
 import {
   ChangeDetectionStrategy,
   Component,
-  OnDestroy,
   computed,
   effect,
   inject,
   signal,
 } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -25,10 +24,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
 import { TeamService } from '../../../../core/services/team.service';
 import { WhatsAppMessageDialogComponent } from '../../../../shared/components/whatsapp-message-dialog/whatsapp-message-dialog';
-import {
-  OrderBillingStatus,
-  OrderOperationalStatus,
-} from '../../models/order-record.model';
+import { OrderBillingStatus, OrderOperationalStatus } from '../../models/order-record.model';
 
 const OPERATIONAL_STATUS_OPTIONS: Array<{
   value: OrderOperationalStatus;
@@ -54,6 +50,7 @@ const BILLING_STATUS_OPTIONS: Array<{
 @Component({
   selector: 'app-order-note-page',
   imports: [
+    PdfPreviewComponent,
     CommonModule,
     ReactiveFormsModule,
     CurrencyPipe,
@@ -69,13 +66,12 @@ const BILLING_STATUS_OPTIONS: Array<{
   styleUrl: './order-note-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderNotePageComponent implements OnDestroy {
+export class OrderNotePageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly authService = inject(AuthService);
   private readonly teamService = inject(TeamService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly dialog = inject(MatDialog);
 
   readonly isAdmin = this.authService.isAdmin;
@@ -89,7 +85,6 @@ export class OrderNotePageComponent implements OnDestroy {
   readonly isSavingAssignment = signal(false);
   readonly assignmentMessage = signal('');
   readonly isTogglingCancel = signal(false);
-  private pdfObjectUrl: string | null = null;
 
   readonly orderId = this.route.snapshot.paramMap.get('orderId') ?? '';
   readonly isArchiveRoute = signal(this.router.url.startsWith('/pedidos/registro'));
@@ -102,7 +97,7 @@ export class OrderNotePageComponent implements OnDestroy {
   readonly workflowMessage = signal('');
   readonly isSavingWorkflow = signal(false);
   readonly pdfPreviewErrorMessage = signal('');
-  readonly pdfPreviewUrl = signal<SafeResourceUrl | null>(null);
+  readonly pdfPreviewBlob = signal<Blob | null>(null);
   readonly sectionLabel = computed(() =>
     this.isArchiveRoute() ? 'Registro Notas' : 'Notas Activas',
   );
@@ -180,11 +175,10 @@ export class OrderNotePageComponent implements OnDestroy {
       await this.orderRecordsService.assignOrder(record.orderId, { driverId, mapsUrl });
 
       const driverName =
-        this.assignableDrivers().find((driver) => Number(driver.id) === driverId)?.displayName ?? '';
+        this.assignableDrivers().find((driver) => Number(driver.id) === driverId)?.displayName ??
+        '';
       this.assignmentMessage.set(
-        driverId
-          ? `Nota asignada a ${driverName}.`
-          : 'Chofer desasignado de la nota.',
+        driverId ? `Nota asignada a ${driverName}.` : 'Chofer desasignado de la nota.',
       );
     } catch (error) {
       this.assignmentMessage.set(
@@ -193,10 +187,6 @@ export class OrderNotePageComponent implements OnDestroy {
     } finally {
       this.isSavingAssignment.set(false);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.revokePdfPreview();
   }
 
   toDate(value: string | null): Date | null {
@@ -214,9 +204,7 @@ export class OrderNotePageComponent implements OnDestroy {
   }
 
   async goBack(): Promise<void> {
-    await this.router.navigateByUrl(
-      this.isArchiveRoute() ? '/pedidos/registro' : '/pedidos',
-    );
+    await this.router.navigateByUrl(this.isArchiveRoute() ? '/pedidos/registro' : '/pedidos');
   }
 
   async goToEdit(): Promise<void> {
@@ -234,7 +222,13 @@ export class OrderNotePageComponent implements OnDestroy {
     const record = this.orderRecord();
     if (!record) return;
     const newState = !record.isCancelled;
-    if (newState && !confirm(`¿Cancelar la nota ${record.orderId}? Dejará de contar en contabilidad pero quedará en el registro.`)) return;
+    if (
+      newState &&
+      !confirm(
+        `¿Cancelar la nota ${record.orderId}? Dejará de contar en contabilidad pero quedará en el registro.`,
+      )
+    )
+      return;
     this.isTogglingCancel.set(true);
     try {
       await this.orderRecordsService.setCancelled(record.orderId, newState);
@@ -251,9 +245,7 @@ export class OrderNotePageComponent implements OnDestroy {
       await this.orderRecordsService.downloadOrderPdf(this.orderId);
     } catch (error) {
       this.loadErrorMessage.set(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible descargar el PDF de la nota.',
+        error instanceof Error ? error.message : 'No fue posible descargar el PDF de la nota.',
       );
     } finally {
       this.isDownloadingPdf.set(false);
@@ -268,9 +260,7 @@ export class OrderNotePageComponent implements OnDestroy {
       await this.orderRecordsService.downloadOrderExcel(this.orderId);
     } catch (error) {
       this.loadErrorMessage.set(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible descargar el Excel de la nota.',
+        error instanceof Error ? error.message : 'No fue posible descargar el Excel de la nota.',
       );
     } finally {
       this.isDownloadingExcel.set(false);
@@ -305,9 +295,7 @@ export class OrderNotePageComponent implements OnDestroy {
       await this.orderRecordsService.downloadOrderPdf(this.orderId);
     } catch (error) {
       this.loadErrorMessage.set(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible descargar el PDF de la nota.',
+        error instanceof Error ? error.message : 'No fue posible descargar el PDF de la nota.',
       );
     }
 
@@ -333,10 +321,7 @@ export class OrderNotePageComponent implements OnDestroy {
     const billingStatus = this.billingStatusControl.value;
     const comment = this.workflowCommentControl.value.trim();
 
-    if (
-      operationalStatus === record.operationalStatus &&
-      billingStatus === record.billingStatus
-    ) {
+    if (operationalStatus === record.operationalStatus && billingStatus === record.billingStatus) {
       this.workflowMessage.set(
         'Selecciona un nuevo estado operativo o de cobranza para mover la nota.',
       );
@@ -405,33 +390,14 @@ export class OrderNotePageComponent implements OnDestroy {
 
     try {
       const pdfBlob = await this.orderRecordsService.getOrderPdfBlob(this.orderId);
-      this.setPdfPreviewBlob(pdfBlob);
+      this.pdfPreviewBlob.set(pdfBlob);
     } catch (error) {
-      this.revokePdfPreview();
+      this.pdfPreviewBlob.set(null);
       this.pdfPreviewErrorMessage.set(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible generar la vista previa del PDF.',
+        error instanceof Error ? error.message : 'No fue posible generar la vista previa del PDF.',
       );
     } finally {
       this.isLoadingPdfPreview.set(false);
     }
-  }
-
-  private setPdfPreviewBlob(pdfBlob: Blob): void {
-    this.revokePdfPreview();
-    this.pdfObjectUrl = URL.createObjectURL(pdfBlob);
-    this.pdfPreviewUrl.set(
-      this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl),
-    );
-  }
-
-  private revokePdfPreview(): void {
-    if (this.pdfObjectUrl && typeof URL !== 'undefined') {
-      URL.revokeObjectURL(this.pdfObjectUrl);
-    }
-
-    this.pdfObjectUrl = null;
-    this.pdfPreviewUrl.set(null);
   }
 }

@@ -1,13 +1,6 @@
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { PdfPreviewComponent } from '../../../../shared/components/pdf-preview/pdf-preview';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -21,19 +14,24 @@ import { WhatsAppMessageDialogComponent } from '../../../../shared/components/wh
 
 @Component({
   selector: 'app-quotation-note-page',
-  imports: [CommonModule, CurrencyPipe, DatePipe, MatButtonModule, MatIconModule],
+  imports: [
+    PdfPreviewComponent,
+    CommonModule,
+    CurrencyPipe,
+    DatePipe,
+    MatButtonModule,
+    MatIconModule,
+  ],
   templateUrl: './quotation-note-page.html',
   styleUrl: './quotation-note-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class QuotationNotePageComponent implements OnDestroy {
+export class QuotationNotePageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly quotationRecordsService = inject(QuotationRecordsService);
   private readonly folioStrategyService = inject(FolioStrategyService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly dialog = inject(MatDialog);
-  private pdfObjectUrl: string | null = null;
 
   readonly quotationId = this.route.snapshot.paramMap.get('quotationId') ?? '';
   readonly quotationRecord = computed(() =>
@@ -45,15 +43,11 @@ export class QuotationNotePageComponent implements OnDestroy {
   readonly isLoadingPdfPreview = signal(true);
   readonly loadErrorMessage = signal('');
   readonly pdfPreviewErrorMessage = signal('');
-  readonly pdfPreviewUrl = signal<SafeResourceUrl | null>(null);
+  readonly pdfPreviewBlob = signal<Blob | null>(null);
 
   constructor() {
     void this.loadQuotationRecord();
     void this.loadPdfPreview();
-  }
-
-  ngOnDestroy(): void {
-    this.revokePdfPreview();
   }
 
   toDate(value: string | null): Date | null {
@@ -176,9 +170,7 @@ export class QuotationNotePageComponent implements OnDestroy {
       await this.quotationRecordsService.loadQuotationById(this.quotationId);
     } catch (error) {
       this.loadErrorMessage.set(
-        error instanceof Error
-          ? error.message
-          : 'No se pudo cargar la cotizacion solicitada.',
+        error instanceof Error ? error.message : 'No se pudo cargar la cotizacion solicitada.',
       );
     } finally {
       this.isLoading.set(false);
@@ -196,36 +188,15 @@ export class QuotationNotePageComponent implements OnDestroy {
     this.pdfPreviewErrorMessage.set('');
 
     try {
-      const pdfBlob = await this.quotationRecordsService.getQuotationPdfBlob(
-        this.quotationId,
-      );
-      this.setPdfPreviewBlob(pdfBlob);
+      const pdfBlob = await this.quotationRecordsService.getQuotationPdfBlob(this.quotationId);
+      this.pdfPreviewBlob.set(pdfBlob);
     } catch (error) {
-      this.revokePdfPreview();
+      this.pdfPreviewBlob.set(null);
       this.pdfPreviewErrorMessage.set(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible generar la vista previa del PDF.',
+        error instanceof Error ? error.message : 'No fue posible generar la vista previa del PDF.',
       );
     } finally {
       this.isLoadingPdfPreview.set(false);
     }
-  }
-
-  private setPdfPreviewBlob(pdfBlob: Blob): void {
-    this.revokePdfPreview();
-    this.pdfObjectUrl = URL.createObjectURL(pdfBlob);
-    this.pdfPreviewUrl.set(
-      this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl),
-    );
-  }
-
-  private revokePdfPreview(): void {
-    if (this.pdfObjectUrl && typeof URL !== 'undefined') {
-      URL.revokeObjectURL(this.pdfObjectUrl);
-    }
-
-    this.pdfObjectUrl = null;
-    this.pdfPreviewUrl.set(null);
   }
 }

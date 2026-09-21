@@ -67,14 +67,6 @@
   line-height: 1.65;
 }
 
-.quotation-note-page__preview-frame {
-  width: 100%;
-  min-height: 940px;
-  border: 0;
-  border-radius: var(--of-radius-md);
-  background: #fff;
-}
-
 .quotation-note-page__preview-empty {
   display: grid;
   gap: 0.4rem;
@@ -319,10 +311,6 @@
   .quotation-note-sheet__grid,
   .quotation-note-sheet__grid--three-columns {
     grid-template-columns: 1fr;
-  }
-
-  .quotation-note-page__preview-frame {
-    min-height: 680px;
   }
 }
 

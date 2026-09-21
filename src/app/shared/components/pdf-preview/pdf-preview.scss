@@ -1,0 +1,34 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.pdf-toolbar,
+.pdf-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pdf-toolbar {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.pdf-pagination {
+  color: var(--of-title);
+  font-size: 0.85rem;
+}
+.pdf-toolbar a {
+  border-radius: 10px;
+  min-height: 44px;
+}
+.pdf-page {
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  background: white;
+}
+p {
+  color: var(--of-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

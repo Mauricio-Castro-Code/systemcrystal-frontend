@@ -98,12 +98,8 @@
           <h3>Generando vista previa</h3>
           <p>Excel esta preparando el PDF real de la cotizacion...</p>
         </section>
-      } @else if (pdfPreviewUrl(); as previewUrl) {
-        <iframe
-          class="quotation-note-page__preview-frame"
-          [src]="previewUrl"
-          title="Vista previa PDF de la cotizacion"
-        ></iframe>
+      } @else if (pdfPreviewBlob(); as previewBlob) {
+        <app-pdf-preview [file]="previewBlob" />
       } @else {
         <section class="quotation-note-page__preview-empty">
           <h3>No fue posible mostrar el PDF</h3>

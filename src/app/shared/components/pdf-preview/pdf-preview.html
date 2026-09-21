@@ -1,0 +1,35 @@
+<div class="pdf-toolbar">
+  <div class="pdf-pagination" role="group" aria-label="Páginas del PDF">
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Página anterior"
+      [disabled]="!document() || pageNumber() <= 1"
+      (click)="pageNumber.set(pageNumber() - 1)"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <span aria-live="polite">Página {{ pageNumber() }} de {{ document()?.numPages ?? '…' }}</span>
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Página siguiente"
+      [disabled]="!document() || pageNumber() >= (document()?.numPages ?? 0)"
+      (click)="pageNumber.set(pageNumber() + 1)"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+  @if (fileUrl()) {
+    <a mat-stroked-button [href]="fileUrl()" target="_blank" rel="noopener">
+      <mat-icon>open_in_new</mat-icon> Abrir PDF
+    </a>
+  }
+</div>
+@if (loading()) {
+  <p role="status">Preparando página…</p>
+}
+@if (error()) {
+  <p role="alert">{{ error() }}</p>
+}
+<div #pageHost class="pdf-page" [attr.aria-busy]="loading()"></div>

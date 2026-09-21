@@ -218,14 +218,6 @@
   line-height: 1.7;
 }
 
-.note-page__preview-frame {
-  width: 100%;
-  min-height: 940px;
-  border: 0;
-  border-radius: 18px;
-  background: #fff;
-}
-
 .note-page__preview-empty {
   display: grid;
   gap: 0.45rem;
@@ -510,10 +502,6 @@
   .order-note-sheet__grid,
   .order-note-sheet__grid--three-columns {
     grid-template-columns: 1fr;
-  }
-
-  .note-page__preview-frame {
-    min-height: 680px;
   }
 }
 

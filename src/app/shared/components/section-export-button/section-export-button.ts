@@ -19,7 +19,11 @@ import { NotificationService } from '../../services/notification.service';
       <mat-icon>file_download</mat-icon>
       {{ isExporting() ? 'Preparando Excel…' : 'Exportar todo a Excel' }}
     </button>
-    <span>ZIP con todos los registros de esta sección</span>
+    <span>{{
+      section() === 'clients'
+        ? 'Un Excel con todos los clientes y sus direcciones'
+        : 'ZIP con un Excel por nota, en su formato original'
+    }}</span>
     <span class="export-status" role="status">{{ statusMessage() }}</span>
   `,
   styles: `
@@ -57,7 +61,11 @@ export class SectionExportButtonComponent {
   async download(): Promise<void> {
     if (this.isExporting()) return;
     this.isExporting.set(true);
-    this.statusMessage.set('Preparando el Excel de toda la sección.');
+    this.statusMessage.set(
+      this.section() === 'clients'
+        ? 'Preparando todos los clientes en Excel.'
+        : 'Preparando un Excel por nota. Esto puede tardar unos momentos.',
+    );
     try {
       await this.exports.download(this.section());
       this.statusMessage.set('Archivo listo. Descarga iniciada.');
