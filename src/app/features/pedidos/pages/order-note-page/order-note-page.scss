@@ -10,50 +10,133 @@
 }
 
 .order-note-page__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  overflow: hidden;
+  border: var(--of-glass-border);
+  border-radius: 20px;
+  background: var(--of-glass);
 }
 
-.order-note-page__breadcrumbs {
-  margin: 0;
-  color: var(--of-accent);
-  font-size: 0.82rem;
+.order-note-page__navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--of-border);
+}
+
+.order-note-page__back {
+  color: var(--of-title);
   font-weight: 700;
-  letter-spacing: 0.12em;
+}
+
+.order-note-page__location {
+  padding-left: 1rem;
+  border-left: 1px solid var(--of-border);
+  color: var(--of-text-muted);
+  font-size: 0.8rem;
+}
+
+.order-note-page__heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem 2rem;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.order-note-page__identity {
+  min-width: 0;
+}
+
+.order-note-page__eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--of-accent-strong);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .order-note-page__header h1 {
-  margin: 1rem 0 0;
+  margin: 0;
   color: var(--of-title);
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+.order-note-page__header h1 span {
+  white-space: nowrap;
 }
 
 .order-note-page__description {
-  margin: 1rem 0 0;
-  max-width: 38rem;
+  margin: 0.65rem 0 0;
   color: var(--of-text-muted);
-  line-height: 1.75;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-.order-note-page__actions {
+.order-note-page__actions,
+.order-note-page__downloads {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.65rem;
+}
+
+.order-note-page__header button {
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.order-note-page__header button:focus-visible {
+  outline: 2px solid var(--of-accent);
+  outline-offset: 3px;
 }
 
 .order-note-page__actions button[mat-raised-button] {
   background: var(--of-accent);
   color: #fff;
-  font-weight: 700;
+  box-shadow: none;
+}
+
+.order-note-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.85rem clamp(1.25rem, 2.5vw, 2rem);
+  border-top: 1px solid var(--of-border);
+  background: rgba(var(--of-primary-rgb), 0.025);
+}
+
+.order-note-page__toolbar-label {
+  margin-right: 0.35rem;
+  color: var(--of-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.order-note-page__more {
+  color: var(--of-text-muted);
+}
+
+.order-note-page__cancel,
+.order-note-page__cancel .mat-icon {
+  color: var(--of-danger);
 }
 
 .order-note-page__workflow-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
   gap: 1rem;
 }
 
@@ -65,9 +148,7 @@
   border: var(--of-glass-border);
   border-radius: 22px;
   background: var(--of-glass);
-  box-shadow:
-    var(--of-glass-shadow),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
 .order-note-page__workflow-heading {
@@ -96,6 +177,7 @@
 .order-note-page__folder-list {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 0.55rem;
 }
 
@@ -178,9 +260,7 @@
   border: var(--of-glass-border);
   border-radius: 22px;
   background: var(--of-glass);
-  box-shadow:
-    var(--of-glass-shadow),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
 .order-note-page__preview-description,
@@ -219,9 +299,7 @@
   border: var(--of-glass-border);
   border-radius: 22px;
   background: var(--of-glass-strong);
-  box-shadow:
-    var(--of-glass-shadow-elevated),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow-elevated), var(--of-glass-highlight);
 }
 
 .order-note-sheet__topbar {
@@ -260,7 +338,11 @@
   min-width: 240px;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(var(--of-accent-rgb), 0.08), rgba(var(--of-accent-rgb), 0.02));
+  background: linear-gradient(
+    135deg,
+    rgba(var(--of-accent-rgb), 0.08),
+    rgba(var(--of-accent-rgb), 0.02)
+  );
 }
 
 .order-note-sheet__meta span,
@@ -367,7 +449,11 @@
 
 .order-note-sheet__summary-total {
   border: 1px solid rgba(var(--of-accent-rgb), 0.22);
-  background: linear-gradient(135deg, rgba(var(--of-accent-rgb), 0.12), rgba(var(--of-accent-rgb), 0.03)) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--of-accent-rgb), 0.12),
+    rgba(var(--of-accent-rgb), 0.03)
+  ) !important;
 }
 
 .order-note-page__empty {
@@ -462,14 +548,12 @@
 
 @media (max-width: 960px) {
   .order-note-page__workflow-grid,
-  .order-note-page__header,
   .order-note-page__preview-card,
   .order-note-sheet__topbar,
   .order-note-sheet__summary {
     grid-template-columns: 1fr;
   }
 
-  .order-note-page__header,
   .order-note-page__workflow-grid,
   .order-note-page__preview-card,
   .order-note-sheet__topbar {
@@ -564,30 +648,34 @@
   }
 }
 
-/* ── Cancel action row ── */
-
-.cancel-action-row {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.cancel-action-btn {
-  padding: 0.35rem 1rem;
-  border: 1.5px solid var(--of-danger, #c0392b);
-  border-radius: var(--of-radius-sm);
-  background: transparent;
-  color: var(--of-danger, #c0392b);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 150ms ease;
-
-  &:hover:not(:disabled) {
-    background: var(--of-danger-soft, rgba(192, 57, 43, 0.08));
+@media (max-width: 599px) {
+  .order-note-page__navigation {
+    padding: 0.5rem 0.75rem;
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: progress;
+  .order-note-page__location {
+    display: none;
+  }
+
+  .order-note-page__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .order-note-page__toolbar-label {
+    width: 100%;
+  }
+
+  .order-note-page__downloads {
+    flex: 1 1 100%;
+  }
+
+  .order-note-page__downloads button {
+    flex: 1;
+  }
+
+  .order-note-page__more {
+    margin-left: auto;
   }
 }

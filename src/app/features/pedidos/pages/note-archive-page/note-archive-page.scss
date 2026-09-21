@@ -103,9 +103,7 @@
   border: var(--of-glass-border);
   border-radius: 16px;
   background: var(--of-glass);
-  box-shadow:
-    var(--of-glass-shadow),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
 .order-records-page__table-header {
@@ -272,4 +270,12 @@
   .order-records-page {
     padding-top: 2rem;
   }
+}
+
+.order-records-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
 }

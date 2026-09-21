@@ -4,10 +4,10 @@
       <p class="clients-page__breadcrumbs">Crystal Alquiler / Clientes</p>
       <h1>Base de Clientes</h1>
       <p class="clients-page__description">
-        Administra tu directorio comercial y localiza rapidamente clientes por
-        nombre o telefono.
+        Administra tu directorio comercial y localiza rapidamente clientes por nombre o telefono.
       </p>
     </div>
+    <app-section-export-button section="clients" />
   </header>
 
   <section class="clients-page__actions">
@@ -120,9 +120,7 @@
       @if (!isLoading() && !errorMessage() && dataSource.filteredData.length === 0) {
         <div class="clients-page__empty">
           <strong>No hay clientes para mostrar.</strong>
-          <p>
-            El directorio real esta vacio o tu filtro actual no coincide con ningun registro.
-          </p>
+          <p>El directorio real esta vacio o tu filtro actual no coincide con ningun registro.</p>
         </div>
       }
     </div>

@@ -1,3 +1,4 @@
+import { SectionExportButtonComponent } from '../../../../shared/components/section-export-button/section-export-button';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -36,6 +37,7 @@ import {
 @Component({
   selector: 'app-clients',
   imports: [
+    SectionExportButtonComponent,
     CommonModule,
     ReactiveFormsModule,
     MatTableModule,
@@ -75,9 +77,7 @@ export class ClientsPageComponent implements AfterViewInit {
       const normalizedFilter = filter.trim().toLowerCase();
       const searchableValues = [client.clientName, client.phoneNumber, client.address];
 
-      return searchableValues.some((value) =>
-        value.toLowerCase().includes(normalizedFilter),
-      );
+      return searchableValues.some((value) => value.toLowerCase().includes(normalizedFilter));
     };
 
     this.searchControl.valueChanges
@@ -139,7 +139,9 @@ export class ClientsPageComponent implements AfterViewInit {
       this.notifications.success('Cliente creado correctamente.');
       await this.reloadClients();
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : 'No fue posible crear el cliente.');
+      this.notifications.error(
+        error instanceof Error ? error.message : 'No fue posible crear el cliente.',
+      );
     }
   }
 

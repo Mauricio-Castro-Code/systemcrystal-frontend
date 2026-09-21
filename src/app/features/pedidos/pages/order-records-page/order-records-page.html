@@ -9,8 +9,9 @@
       </p>
     </div>
 
-    @if (isAdmin()) {
-      <div class="order-records-page__header-actions">
+    <div class="order-records-page__header-actions">
+      <app-section-export-button section="active" />
+      @if (isAdmin()) {
         <input #importInput type="file" accept=".xlsx" hidden (change)="handleImportFile($event)" />
         <button
           mat-flat-button
@@ -22,8 +23,8 @@
           <mat-icon>upload_file</mat-icon>
           {{ isImporting() ? 'Importando...' : 'Importar nota' }}
         </button>
-      </div>
-    }
+      }
+    </div>
   </header>
 
   <section class="order-records-page__toolbar">

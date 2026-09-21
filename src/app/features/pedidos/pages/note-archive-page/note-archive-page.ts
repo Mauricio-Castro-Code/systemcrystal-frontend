@@ -1,3 +1,4 @@
+import { SectionExportButtonComponent } from '../../../../shared/components/section-export-button/section-export-button';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -37,15 +38,13 @@ import {
   NoteFolderKey,
   NoteFolderOption,
 } from '../../models/note-folder.model';
-import {
-  NOTE_SORT_OPTIONS,
-  NoteSortKey,
-} from '../../models/note-sort.model';
+import { NOTE_SORT_OPTIONS, NoteSortKey } from '../../models/note-sort.model';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
 
 @Component({
   selector: 'app-note-archive-page',
   imports: [
+    SectionExportButtonComponent,
     CommonModule,
     ReactiveFormsModule,
     CurrencyPipe,
@@ -104,12 +103,9 @@ export class NoteArchivePageComponent implements AfterViewInit {
         !searchTerm ||
         record.orderId.toLowerCase().includes(searchTerm) ||
         record.clientName.toLowerCase().includes(searchTerm) ||
-        record.folderLabels.some((folderLabel) =>
-          folderLabel.toLowerCase().includes(searchTerm),
-        );
+        record.folderLabels.some((folderLabel) => folderLabel.toLowerCase().includes(searchTerm));
 
-      const matchesFolder =
-        selectedFolder === 'all' || record.folderKeys.includes(selectedFolder);
+      const matchesFolder = selectedFolder === 'all' || record.folderKeys.includes(selectedFolder);
 
       return matchesSearch && matchesFolder;
     });
@@ -233,9 +229,13 @@ export class NoteArchivePageComponent implements AfterViewInit {
         case 'id-asc':
           return this.resolveOrderSequence(firstRecord) - this.resolveOrderSequence(secondRecord);
         case 'delivery-asc':
-          return this.resolveDeliveryTimestamp(firstRecord) - this.resolveDeliveryTimestamp(secondRecord);
+          return (
+            this.resolveDeliveryTimestamp(firstRecord) - this.resolveDeliveryTimestamp(secondRecord)
+          );
         case 'delivery-desc':
-          return this.resolveDeliveryTimestamp(secondRecord) - this.resolveDeliveryTimestamp(firstRecord);
+          return (
+            this.resolveDeliveryTimestamp(secondRecord) - this.resolveDeliveryTimestamp(firstRecord)
+          );
         case 'id-desc':
         default:
           return this.resolveOrderSequence(secondRecord) - this.resolveOrderSequence(firstRecord);
@@ -245,7 +245,7 @@ export class NoteArchivePageComponent implements AfterViewInit {
 
   private resolveOrderSequence(record: OrderRecord): number {
     const parts = record.orderId.split('-');
-    const num  = Number.parseInt(parts[0]?.replace(/\D/g, '') || '0', 10);
+    const num = Number.parseInt(parts[0]?.replace(/\D/g, '') || '0', 10);
     const year = Number.parseInt(parts[1]?.replace(/\D/g, '') || '0', 10);
     return (Number.isFinite(year) ? year : 0) * 100_000 + (Number.isFinite(num) ? num : 0);
   }

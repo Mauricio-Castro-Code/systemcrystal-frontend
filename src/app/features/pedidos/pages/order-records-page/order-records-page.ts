@@ -1,3 +1,4 @@
+import { SectionExportButtonComponent } from '../../../../shared/components/section-export-button/section-export-button';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -47,6 +48,7 @@ import {
 @Component({
   selector: 'app-order-records',
   imports: [
+    SectionExportButtonComponent,
     CommonModule,
     ReactiveFormsModule,
     CurrencyPipe,

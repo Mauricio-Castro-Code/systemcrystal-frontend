@@ -109,9 +109,7 @@
   border: var(--of-glass-border);
   border-radius: 16px;
   background: var(--of-glass);
-  box-shadow:
-    var(--of-glass-shadow),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
 .clients-page__table-header {
@@ -226,7 +224,9 @@
   font: inherit;
   font-size: var(--of-fs-sm);
   font-weight: 700;
-  transition: background-color 150ms ease, border-color 150ms ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
 }
 
 .clients-table__details-button:hover {
@@ -360,4 +360,12 @@
     height: 1.25rem;
     font-size: 1.25rem;
   }
+}
+
+.clients-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
 }

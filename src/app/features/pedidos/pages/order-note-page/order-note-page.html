@@ -6,75 +6,104 @@
     </section>
   } @else if (orderRecord(); as record) {
     <header class="order-note-page__header">
-      <div>
-        <p class="order-note-page__breadcrumbs">
-          Crystal Alquiler / {{ sectionLabel() }} / {{ record.orderId }}
-        </p>
-        <h1>Nota del Pedido {{ record.orderId }}</h1>
-        <p class="order-note-page__description">
-          Vista lista para impresion o guardado en PDF del pedido confirmado.
-        </p>
-      </div>
-
-      <div class="order-note-page__actions">
-        <button mat-stroked-button type="button" (click)="goBack()">
+      <nav class="order-note-page__navigation" aria-label="Navegación de la nota">
+        <button mat-button class="order-note-page__back" type="button" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
           {{ backLabel() }}
         </button>
-        <button mat-stroked-button type="button" (click)="goToEdit()">
-          <mat-icon>edit</mat-icon>
-          Editar Pedido
-        </button>
-        <button mat-stroked-button type="button" (click)="duplicateInNewQuotation()">
-          <mat-icon>content_copy</mat-icon>
-          Duplicar en cotización
-        </button>
+        <span class="order-note-page__location">Detalle del pedido</span>
+      </nav>
+
+      <div class="order-note-page__heading-row">
+        <div class="order-note-page__identity">
+          <p class="order-note-page__eyebrow">Nota de pedido</p>
+          <h1>
+            Pedido <span>{{ record.orderId }}</span>
+          </h1>
+          <p class="order-note-page__description">{{ record.clientName }}</p>
+        </div>
+        <div class="order-note-page__actions" role="group" aria-label="Acciones principales">
+          <button mat-stroked-button type="button" (click)="goToEdit()">
+            <mat-icon>edit</mat-icon>
+            Editar pedido
+          </button>
+          <button mat-raised-button type="button" (click)="sendWhatsApp()">
+            <mat-icon>chat</mat-icon>
+            Enviar por WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <div class="order-note-page__toolbar">
+        <div class="order-note-page__downloads" role="group" aria-label="Descargar nota">
+          <span class="order-note-page__toolbar-label">Descargar nota</span>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="isDownloadingPdf()"
+            [attr.aria-busy]="isDownloadingPdf()"
+            aria-label="Descargar nota en PDF"
+            (click)="downloadPdf()"
+          >
+            <mat-icon>file_download</mat-icon>
+            {{ isDownloadingPdf() ? 'Descargando…' : 'PDF' }}
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="isDownloadingExcel()"
+            [attr.aria-busy]="isDownloadingExcel()"
+            aria-label="Descargar nota en Excel"
+            (click)="downloadExcel()"
+          >
+            <mat-icon>table_view</mat-icon>
+            {{ isDownloadingExcel() ? 'Descargando…' : 'Excel' }}
+          </button>
+        </div>
         <button
-          mat-stroked-button
+          mat-button
+          class="order-note-page__more"
           type="button"
-          [disabled]="isDownloadingPdf()"
-          (click)="downloadPdf()"
+          [matMenuTriggerFor]="noteActions"
         >
-          <mat-icon>file_download</mat-icon>
-          Descargar PDF
+          <mat-icon>more_horiz</mat-icon>
+          Más acciones
         </button>
-        <button
-          mat-stroked-button
-          type="button"
-          [disabled]="isDownloadingExcel()"
-          (click)="downloadExcel()"
-        >
-          <mat-icon>table_view</mat-icon>
-          Descargar Excel
-        </button>
-        <button
-          mat-raised-button
-          type="button"
-          color="primary"
-          (click)="sendWhatsApp()"
-        >
-          <mat-icon>send</mat-icon>
-          Enviar por WhatsApp
-        </button>
+        <mat-menu #noteActions="matMenu">
+          <button mat-menu-item (click)="duplicateInNewQuotation()">
+            <mat-icon>content_copy</mat-icon>
+            <span>Duplicar en cotización</span>
+          </button>
+          @if (isAdmin() && !record.isCancelled) {
+            <button
+              mat-menu-item
+              class="order-note-page__cancel"
+              [disabled]="isTogglingCancel()"
+              (click)="toggleCancel()"
+            >
+              <mat-icon>block</mat-icon>
+              <span>{{ isTogglingCancel() ? 'Procesando…' : 'Cancelar nota' }}</span>
+            </button>
+          }
+        </mat-menu>
       </div>
     </header>
 
     @if (record.isCancelled) {
       <div class="cancelled-banner">
         <span class="cancelled-banner__icon">⚠️</span>
-        <span>Esta nota está <strong>cancelada</strong> — no cuenta en contabilidad pero queda en el registro.</span>
+        <span
+          >Esta nota está <strong>cancelada</strong> — no cuenta en contabilidad pero queda en el
+          registro.</span
+        >
         @if (isAdmin()) {
-          <button class="cancelled-banner__restore" type="button" [disabled]="isTogglingCancel()" (click)="toggleCancel()">
+          <button
+            class="cancelled-banner__restore"
+            type="button"
+            [disabled]="isTogglingCancel()"
+            (click)="toggleCancel()"
+          >
             Reactivar nota
-          </button>
-        }
-      </div>
-    }
-
-    @if (isAdmin()) {
-      <div class="cancel-action-row">
-        @if (!record.isCancelled) {
-          <button class="cancel-action-btn" type="button" [disabled]="isTogglingCancel()" (click)="toggleCancel()">
-            {{ isTogglingCancel() ? 'Procesando...' : 'Cancelar nota' }}
           </button>
         }
       </div>
@@ -103,7 +132,7 @@
 
         <div class="order-note-page__status-grid">
           <article>
-            <span>Operacion</span>
+            <span>Operación</span>
             <strong>{{ record.operationalStatusLabel }}</strong>
           </article>
           <article>
@@ -234,7 +263,8 @@
           <p class="order-note-page__workflow-eyebrow">Vista Exacta</p>
           <h2>PDF generado desde Excel</h2>
           <p class="order-note-page__preview-description">
-            Esta vista respeta el formato operativo real de tu nota, incluyendo logos, clausulas y acomodo original.
+            Esta vista respeta el formato operativo real de tu nota, incluyendo logos, clausulas y
+            acomodo original.
           </p>
         </div>
 
@@ -265,8 +295,8 @@
           <h3>No fue posible mostrar el PDF</h3>
           <p>
             {{
-              pdfPreviewErrorMessage()
-                || 'La vista previa del documento no pudo generarse en este momento.'
+              pdfPreviewErrorMessage() ||
+                'La vista previa del documento no pudo generarse en este momento.'
             }}
           </p>
         </section>
@@ -352,7 +382,9 @@
           </article>
           <article>
             <span>Recoleccion</span>
-            <strong>{{ toDate(record.quotation.schedule.collectionDate) | date: 'dd MMM y' }}</strong>
+            <strong>{{
+              toDate(record.quotation.schedule.collectionDate) | date: 'dd MMM y'
+            }}</strong>
           </article>
         </div>
 
@@ -361,8 +393,7 @@
             <span>Instrucciones de Entrega</span>
             <strong>
               {{
-                record.quotation.clientInfo.deliveryInstructions
-                  || 'Sin instrucciones de entrega'
+                record.quotation.clientInfo.deliveryInstructions || 'Sin instrucciones de entrega'
               }}
             </strong>
           </article>
@@ -407,15 +438,21 @@
       <section class="order-note-sheet__summary">
         <div>
           <span>Subtotal</span>
-          <strong>{{ record.quotation.summary.subtotal | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.subtotal | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>Flete</span>
-          <strong>{{ record.quotation.summary.freight | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.freight | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>IVA</span>
-          <strong>{{ record.quotation.summary.taxAmount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.taxAmount | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>Deposito</span>
@@ -425,11 +462,15 @@
         </div>
         <div>
           <span>Descuento</span>
-          <strong>{{ record.quotation.summary.discount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.discount | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>Anticipo</span>
-          <strong>{{ record.quotation.summary.advancePayment | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.advancePayment | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div class="order-note-sheet__summary-total">
           <span>Total a Pagar</span>
@@ -491,8 +532,8 @@
       <h2>Pedido no encontrado</h2>
       <p>
         {{
-          loadErrorMessage()
-            || 'El registro solicitado ya no existe o no pudo cargarse correctamente.'
+          loadErrorMessage() ||
+            'El registro solicitado ya no existe o no pudo cargarse correctamente.'
         }}
       </p>
       <button mat-raised-button type="button" (click)="goBack()">
