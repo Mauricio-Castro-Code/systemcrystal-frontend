@@ -1,0 +1,157 @@
+@mixin document-header($page) {
+  .#{$page}__header {
+    overflow: hidden;
+    border: var(--of-glass-border);
+    border-radius: 20px;
+    background: var(--of-glass);
+  }
+
+  .#{$page}__navigation {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--of-border);
+  }
+
+  .#{$page}__back {
+    color: var(--of-title);
+    font-weight: 700;
+  }
+
+  .#{$page}__location {
+    padding-left: 1rem;
+    border-left: 1px solid var(--of-border);
+    color: var(--of-text-muted);
+    font-size: 0.8rem;
+  }
+
+  .#{$page}__heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.25rem 2rem;
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+  }
+
+  .#{$page}__identity {
+    min-width: 0;
+  }
+
+  .#{$page}__eyebrow {
+    margin: 0 0 0.5rem;
+    color: var(--of-accent-strong);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .#{$page}__header h1 {
+    margin: 0;
+    color: var(--of-title);
+    font-size: clamp(1.65rem, 3vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.04em;
+    overflow-wrap: anywhere;
+  }
+
+  .#{$page}__header h1 span {
+    white-space: nowrap;
+  }
+
+  .#{$page}__description {
+    margin: 0.65rem 0 0;
+    color: var(--of-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .#{$page}__actions,
+  .#{$page}__downloads {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .#{$page}__header button {
+    min-height: 44px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .#{$page}__header button:focus-visible {
+    outline: 2px solid var(--of-accent);
+    outline-offset: 3px;
+  }
+
+  .#{$page}__actions button[mat-raised-button]:not(:disabled) {
+    background: var(--of-accent);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .#{$page}__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.85rem clamp(1.25rem, 2.5vw, 2rem);
+    border-top: 1px solid var(--of-border);
+    background: rgba(var(--of-primary-rgb), 0.025);
+  }
+
+  .#{$page}__toolbar-label {
+    margin-right: 0.35rem;
+    color: var(--of-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .#{$page}__more {
+    color: var(--of-text-muted);
+  }
+
+  .#{$page}__cancel,
+  .#{$page}__cancel .mat-icon {
+    color: var(--of-danger);
+  }
+
+  @media (max-width: 599px) {
+    .#{$page}__navigation {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .#{$page}__location {
+      display: none;
+    }
+
+    .#{$page}__actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      width: 100%;
+    }
+
+    .#{$page}__toolbar-label {
+      width: 100%;
+    }
+
+    .#{$page}__downloads {
+      flex: 1 1 100%;
+    }
+
+    .#{$page}__downloads button {
+      flex: 1;
+    }
+
+    .#{$page}__more {
+      margin-left: auto;
+    }
+  }
+}

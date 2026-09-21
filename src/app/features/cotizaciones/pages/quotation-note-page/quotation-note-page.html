@@ -6,45 +6,61 @@
     </section>
   } @else if (quotationRecord(); as record) {
     <header class="quotation-note-page__header">
-      <div>
-        <p class="quotation-note-page__breadcrumbs">
-          Crystal Alquiler / Cotizaciones / {{ record.quotationId }}
-        </p>
-        <h1>Cotizacion {{ record.quotationId }}</h1>
-        <p class="quotation-note-page__description">
-          Vista lista para impresion o envio previo a la confirmacion del cliente.
-        </p>
+      <nav class="quotation-note-page__navigation" aria-label="Navegación de la cotización">
+        <button mat-button class="quotation-note-page__back" type="button" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver al registro
+        </button>
+        <span class="quotation-note-page__location">Detalle de la cotización</span>
+      </nav>
+      <div class="quotation-note-page__heading-row">
+        <div class="quotation-note-page__identity">
+          <p class="quotation-note-page__eyebrow">Cotización activa</p>
+          <h1>
+            Cotización <span>{{ record.quotationId }}</span>
+          </h1>
+          <p class="quotation-note-page__description">{{ record.quotation.clientInfo.fullName }}</p>
+        </div>
+        <div class="quotation-note-page__actions" role="group" aria-label="Acciones principales">
+          <button mat-stroked-button type="button" [disabled]="isSubmitting()" (click)="goToEdit()">
+            <mat-icon>edit</mat-icon>
+            Editar cotización
+          </button>
+          <button
+            mat-raised-button
+            type="button"
+            [disabled]="isSubmitting()"
+            (click)="sendWhatsApp()"
+          >
+            <mat-icon>chat</mat-icon>
+            Enviar por WhatsApp
+          </button>
+        </div>
       </div>
-
-      <div class="quotation-note-page__actions">
-        <button mat-stroked-button type="button" (click)="goBack()">
-          Volver al Registro
-        </button>
-        <button mat-stroked-button type="button" [disabled]="isSubmitting()" (click)="goToEdit()">
-          <mat-icon>edit</mat-icon>
-          Editar Cotizacion
-        </button>
-        <button
-          mat-stroked-button
-          type="button"
-          [disabled]="isSubmitting() || isDownloadingPdf()"
-          (click)="downloadPdf()"
-        >
-          <mat-icon>file_download</mat-icon>
-          Descargar PDF
-        </button>
+      <div class="quotation-note-page__toolbar">
+        <div class="quotation-note-page__downloads" role="group" aria-label="Descargar cotización">
+          <span class="quotation-note-page__toolbar-label">Descargar cotización</span>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="isSubmitting() || isDownloadingPdf()"
+            [attr.aria-busy]="isDownloadingPdf()"
+            aria-label="Descargar cotización en PDF"
+            (click)="downloadPdf()"
+          >
+            <mat-icon>file_download</mat-icon>
+            {{ isDownloadingPdf() ? 'Descargando…' : 'PDF' }}
+          </button>
+        </div>
         <button
           mat-stroked-button
           type="button"
           [disabled]="isSubmitting()"
-          (click)="sendWhatsApp()"
+          [attr.aria-busy]="isSubmitting()"
+          (click)="confirmOrder()"
         >
-          <mat-icon>send</mat-icon>
-          Enviar por WhatsApp
-        </button>
-        <button mat-raised-button type="button" [disabled]="isSubmitting()" (click)="confirmOrder()">
           <mat-icon>task_alt</mat-icon>
-          Confirmar Pedido
+          {{ isSubmitting() ? 'Confirmando…' : 'Confirmar pedido' }}
         </button>
       </div>
     </header>
@@ -61,7 +77,8 @@
           <p class="quotation-note-page__preview-eyebrow">Vista Exacta</p>
           <h2>PDF generado desde Excel</h2>
           <p class="quotation-note-page__preview-description">
-            Esta vista conserva el formato real de tu plantilla, incluyendo logos, clausulas y distribucion.
+            Esta vista conserva el formato real de tu plantilla, incluyendo logos, clausulas y
+            distribucion.
           </p>
         </div>
 
@@ -92,8 +109,8 @@
           <h3>No fue posible mostrar el PDF</h3>
           <p>
             {{
-              pdfPreviewErrorMessage()
-                || 'La vista previa del documento no pudo generarse en este momento.'
+              pdfPreviewErrorMessage() ||
+                'La vista previa del documento no pudo generarse en este momento.'
             }}
           </p>
         </section>
@@ -143,9 +160,7 @@
           <article>
             <span>Cumpleanos</span>
             <strong>
-              {{
-                toDate(record.quotation.clientInfo.birthDate) | date: 'dd MMM y'
-              }}
+              {{ toDate(record.quotation.clientInfo.birthDate) | date: 'dd MMM y' }}
             </strong>
           </article>
           <article>
@@ -179,7 +194,9 @@
           </article>
           <article>
             <span>Recoleccion</span>
-            <strong>{{ toDate(record.quotation.schedule.collectionDate) | date: 'dd MMM y' }}</strong>
+            <strong>{{
+              toDate(record.quotation.schedule.collectionDate) | date: 'dd MMM y'
+            }}</strong>
           </article>
         </div>
 
@@ -188,8 +205,7 @@
             <span>Instrucciones de Entrega</span>
             <strong>
               {{
-                record.quotation.clientInfo.deliveryInstructions
-                  || 'Sin instrucciones de entrega'
+                record.quotation.clientInfo.deliveryInstructions || 'Sin instrucciones de entrega'
               }}
             </strong>
           </article>
@@ -234,15 +250,21 @@
       <section class="quotation-note-sheet__summary">
         <div>
           <span>Subtotal</span>
-          <strong>{{ record.quotation.summary.subtotal | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.subtotal | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>Flete</span>
-          <strong>{{ record.quotation.summary.freight | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.freight | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>IVA</span>
-          <strong>{{ record.quotation.summary.taxAmount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.taxAmount | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>Deposito</span>
@@ -252,11 +274,15 @@
         </div>
         <div>
           <span>Descuento</span>
-          <strong>{{ record.quotation.summary.discount | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.discount | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div>
           <span>Anticipo</span>
-          <strong>{{ record.quotation.summary.advancePayment | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+          <strong>{{
+            record.quotation.summary.advancePayment | currency: 'MXN' : 'symbol' : '1.0-0'
+          }}</strong>
         </div>
         <div class="quotation-note-sheet__summary-total">
           <span>Total a Pagar</span>
@@ -277,13 +303,11 @@
       <h2>Cotizacion no encontrada</h2>
       <p>
         {{
-          loadErrorMessage()
-            || 'El borrador solicitado ya no existe o no pudo cargarse correctamente.'
+          loadErrorMessage() ||
+            'El borrador solicitado ya no existe o no pudo cargarse correctamente.'
         }}
       </p>
-      <button mat-raised-button type="button" (click)="goBack()">
-        Volver al Registro
-      </button>
+      <button mat-raised-button type="button" (click)="goBack()">Volver al Registro</button>
     </section>
   }
 </section>

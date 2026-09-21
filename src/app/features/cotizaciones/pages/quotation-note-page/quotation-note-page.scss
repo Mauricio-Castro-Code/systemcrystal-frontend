@@ -1,3 +1,5 @@
+@use '../../../../shared/styles/document-header';
+
 :host {
   display: block;
 }
@@ -9,49 +11,7 @@
   padding: 4.8rem clamp(1.25rem, 3vw, 2rem) 2rem;
 }
 
-.quotation-note-page__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.quotation-note-page__breadcrumbs {
-  margin: 0;
-  color: var(--of-accent);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.quotation-note-page__header h1 {
-  margin: 0.75rem 0 0;
-  color: var(--of-title);
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-}
-
-.quotation-note-page__description {
-  margin: 0.75rem 0 0;
-  max-width: 38rem;
-  color: var(--of-text-muted);
-  font-size: 0.92rem;
-  line-height: 1.7;
-}
-
-.quotation-note-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}
-
-.quotation-note-page__actions button[mat-raised-button] {
-  background: linear-gradient(135deg, var(--of-accent), var(--of-accent-strong));
-  color: #fff;
-  font-weight: 700;
-}
+@include document-header.document-header('quotation-note-page');
 
 .quotation-note-page__feedback {
   padding: 0.85rem 1rem;
@@ -72,9 +32,7 @@
   border: var(--of-glass-border);
   border-radius: var(--of-radius-lg);
   background: var(--of-glass);
-  box-shadow:
-    var(--of-glass-shadow),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
 .quotation-note-page__preview-header {
@@ -140,9 +98,7 @@
   border: var(--of-glass-border);
   border-radius: var(--of-radius-lg);
   background: var(--of-glass-strong);
-  box-shadow:
-    var(--of-glass-shadow-elevated),
-    var(--of-glass-highlight);
+  box-shadow: var(--of-glass-shadow-elevated), var(--of-glass-highlight);
 }
 
 .quotation-note-sheet__topbar {
@@ -183,7 +139,11 @@
   min-width: 240px;
   padding: 0.9rem 1rem;
   border-radius: var(--of-radius-sm);
-  background: linear-gradient(135deg, rgba(var(--of-accent-rgb), 0.06), rgba(var(--of-primary-rgb), 0.03));
+  background: linear-gradient(
+    135deg,
+    rgba(var(--of-accent-rgb), 0.06),
+    rgba(var(--of-primary-rgb), 0.03)
+  );
   border: 1px solid rgba(var(--of-accent-rgb), 0.08);
 }
 
@@ -294,7 +254,11 @@
 
 .quotation-note-sheet__summary-total {
   border: 1px solid rgba(var(--of-accent-rgb), 0.15) !important;
-  background: linear-gradient(135deg, rgba(var(--of-accent-rgb), 0.08), rgba(var(--of-accent-rgb), 0.02)) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--of-accent-rgb), 0.08),
+    rgba(var(--of-accent-rgb), 0.02)
+  ) !important;
 }
 
 /* ── Empty state ── */
@@ -341,14 +305,12 @@
 }
 
 @media (max-width: 960px) {
-  .quotation-note-page__header,
   .quotation-note-page__preview-header,
   .quotation-note-sheet__topbar,
   .quotation-note-sheet__summary {
     grid-template-columns: 1fr;
   }
 
-  .quotation-note-page__header,
   .quotation-note-page__preview-header,
   .quotation-note-sheet__topbar {
     display: grid;
@@ -367,7 +329,6 @@
 @media print {
   :host ::ng-deep app-sidebar,
   :host ::ng-deep .main-layout__menu-toggle,
-  .quotation-note-page__header,
   .quotation-note-page__preview-card {
     display: none !important;
   }

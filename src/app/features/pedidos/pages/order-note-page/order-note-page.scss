@@ -1,147 +1,27 @@
+@use '../../../../shared/styles/document-header';
+
 :host {
   display: block;
 }
 
-.order-note-page {
+.note-page {
   display: grid;
   gap: 1.25rem;
   max-width: 1240px;
   padding: 4.8rem clamp(1.25rem, 3vw, 2rem) 2rem;
 }
 
-.order-note-page__header {
-  overflow: hidden;
-  border: var(--of-glass-border);
-  border-radius: 20px;
-  background: var(--of-glass);
-}
+@include document-header.document-header('note-page');
 
-.order-note-page__navigation {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--of-border);
-}
-
-.order-note-page__back {
-  color: var(--of-title);
-  font-weight: 700;
-}
-
-.order-note-page__location {
-  padding-left: 1rem;
-  border-left: 1px solid var(--of-border);
-  color: var(--of-text-muted);
-  font-size: 0.8rem;
-}
-
-.order-note-page__heading-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1.25rem 2rem;
-  padding: clamp(1.25rem, 2.5vw, 2rem);
-}
-
-.order-note-page__identity {
-  min-width: 0;
-}
-
-.order-note-page__eyebrow {
-  margin: 0 0 0.5rem;
-  color: var(--of-accent-strong);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.order-note-page__header h1 {
-  margin: 0;
-  color: var(--of-title);
-  font-size: clamp(1.65rem, 3vw, 2.25rem);
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.04em;
-  overflow-wrap: anywhere;
-}
-
-.order-note-page__header h1 span {
-  white-space: nowrap;
-}
-
-.order-note-page__description {
-  margin: 0.65rem 0 0;
-  color: var(--of-text-muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.order-note-page__actions,
-.order-note-page__downloads {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}
-
-.order-note-page__header button {
-  min-height: 44px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.order-note-page__header button:focus-visible {
-  outline: 2px solid var(--of-accent);
-  outline-offset: 3px;
-}
-
-.order-note-page__actions button[mat-raised-button] {
-  background: var(--of-accent);
-  color: #fff;
-  box-shadow: none;
-}
-
-.order-note-page__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.85rem clamp(1.25rem, 2.5vw, 2rem);
-  border-top: 1px solid var(--of-border);
-  background: rgba(var(--of-primary-rgb), 0.025);
-}
-
-.order-note-page__toolbar-label {
-  margin-right: 0.35rem;
-  color: var(--of-text-muted);
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.order-note-page__more {
-  color: var(--of-text-muted);
-}
-
-.order-note-page__cancel,
-.order-note-page__cancel .mat-icon {
-  color: var(--of-danger);
-}
-
-.order-note-page__workflow-grid {
+.note-workflow-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   align-items: start;
   gap: 1rem;
 }
 
-.order-note-page__workflow-card,
-.order-note-page__history-card {
+.note-workflow-card,
+.note-page__history-card {
   display: grid;
   gap: 1rem;
   padding: 1.2rem;
@@ -151,14 +31,14 @@
   box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
-.order-note-page__workflow-heading {
+.note-workflow-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.order-note-page__workflow-eyebrow {
+.note-workflow-eyebrow {
   margin: 0;
   color: var(--of-accent);
   font-size: 0.78rem;
@@ -167,21 +47,21 @@
   text-transform: uppercase;
 }
 
-.order-note-page__workflow-heading h2 {
+.note-workflow-heading h2 {
   margin: 0.55rem 0 0;
   color: var(--of-title);
   font-size: 1.3rem;
   font-weight: 800;
 }
 
-.order-note-page__folder-list {
+.note-page__folder-list {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 0.55rem;
 }
 
-.order-note-page__folder-chip {
+.note-page__folder-chip {
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.85rem;
@@ -193,59 +73,127 @@
   letter-spacing: 0.04em;
 }
 
-.order-note-page__status-grid {
+.note-page__status-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
-.order-note-page__status-grid article {
-  min-height: 5rem;
-  padding: 1rem;
-  border-radius: 18px;
-  border: var(--of-glass-border-subtle);
-  background:
-    linear-gradient(145deg, rgba(var(--of-primary-rgb), 0.03), rgba(var(--of-accent-rgb), 0.06)),
-    rgba(var(--of-surface-strong-rgb), 0.35);
+.note-page__status-grid article {
+  min-width: 0;
+  padding: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--of-border);
+  background: rgba(var(--of-primary-rgb), 0.025);
+  overflow-wrap: anywhere;
 }
 
-.order-note-page__status-grid span,
-.order-note-page__history-meta span,
-.order-note-page__history-footer span {
+.note-page__status-grid span,
+.note-page__history-meta span,
+.note-page__history-footer span {
   display: block;
   color: var(--of-text-muted);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-.order-note-page__status-grid strong,
-.order-note-page__history-meta strong {
+.note-page__status-grid strong,
+.note-page__history-meta strong {
   color: var(--of-title);
   line-height: 1.6;
 }
 
-.order-note-page__workflow-form {
+.note-workflow-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
 }
 
-.order-note-page__workflow-comment {
+.note-workflow-comment {
   grid-column: 1 / -1;
 }
 
-.order-note-page__workflow-actions {
+.note-workflow-actions {
   display: flex;
   justify-content: flex-end;
 }
 
-.order-note-page__workflow-actions button[mat-raised-button] {
+.note-workflow-actions button:not(:disabled) {
   background: var(--of-accent);
   color: #fff;
   font-weight: 700;
 }
 
-.order-note-page__feedback {
+.note-workflow-card {
+  min-width: 0;
+  align-content: start;
+  padding: 1.25rem;
+  border-radius: 20px;
+  box-shadow: none;
+}
+.note-workflow-card--movement {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.note-workflow-card--delivery {
+  grid-column: 1;
+}
+.note-workflow-card .note-workflow-heading {
+  justify-content: flex-start;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--of-border);
+}
+.note-workflow-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--of-accent-rgb), 0.09);
+  color: var(--of-accent-strong);
+}
+.note-workflow-card h2 {
+  margin-top: 0.3rem;
+  font-size: 1.1rem;
+  letter-spacing: -0.025em;
+}
+.note-workflow-card .note-workflow-eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.09em;
+}
+.note-page__status-grid article:last-child {
+  grid-column: 1 / -1;
+}
+.note-workflow-card--delivery .note-workflow-form {
+  grid-template-columns: 1fr;
+}
+.note-workflow-form mat-form-field {
+  min-width: 0;
+  width: 100%;
+  --mdc-outlined-text-field-container-shape: 10px;
+}
+.note-workflow-actions {
+  padding-top: 1rem;
+  border-top: 1px solid var(--of-border);
+}
+.note-workflow-actions button {
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: none;
+}
+.note-workflow-actions button:focus-visible {
+  outline: 2px solid var(--of-accent);
+  outline-offset: 3px;
+}
+.note-page__assignment-feedback {
+  margin: 0;
+  color: var(--of-text-muted);
+}
+
+.note-page__feedback {
   padding: 0.95rem 1rem;
   border-radius: 16px;
   background: rgba(var(--of-primary-rgb), 0.05);
@@ -253,7 +201,7 @@
   line-height: 1.65;
 }
 
-.order-note-page__preview-card {
+.note-page__preview-card {
   display: grid;
   gap: 1rem;
   padding: 1.2rem;
@@ -263,14 +211,14 @@
   box-shadow: var(--of-glass-shadow), var(--of-glass-highlight);
 }
 
-.order-note-page__preview-description,
-.order-note-page__preview-empty p {
+.note-page__preview-description,
+.note-page__preview-empty p {
   margin: 0.7rem 0 0;
   color: var(--of-text-muted);
   line-height: 1.7;
 }
 
-.order-note-page__preview-frame {
+.note-page__preview-frame {
   width: 100%;
   min-height: 940px;
   border: 0;
@@ -278,7 +226,7 @@
   background: #fff;
 }
 
-.order-note-page__preview-empty {
+.note-page__preview-empty {
   display: grid;
   gap: 0.45rem;
   justify-items: start;
@@ -287,7 +235,7 @@
   background: var(--of-surface-muted);
 }
 
-.order-note-page__preview-empty h3 {
+.note-page__preview-empty h3 {
   margin: 0;
   color: var(--of-title);
 }
@@ -456,7 +404,7 @@
   ) !important;
 }
 
-.order-note-page__empty {
+.note-page__empty {
   display: grid;
   gap: 0.8rem;
   justify-items: start;
@@ -467,22 +415,22 @@
   box-shadow: var(--of-glass-shadow);
 }
 
-.order-note-page__empty h2 {
+.note-page__empty h2 {
   margin: 0;
   color: var(--of-title);
 }
 
-.order-note-page__empty p {
+.note-page__empty p {
   margin: 0;
   color: var(--of-text-muted);
 }
 
-.order-note-page__history-list {
+.note-page__history-list {
   display: grid;
   gap: 0.85rem;
 }
 
-.order-note-page__history-item {
+.note-page__history-item {
   display: grid;
   gap: 0.65rem;
   padding: 1rem 1.05rem;
@@ -490,38 +438,29 @@
   background: var(--of-surface-muted);
 }
 
-.order-note-page__history-meta {
+.note-page__history-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.order-note-page__history-transition,
-.order-note-page__history-comment {
+.note-page__history-transition,
+.note-page__history-comment {
   margin: 0;
   color: var(--of-title);
   line-height: 1.65;
 }
 
-.order-note-page__history-comment {
+.note-page__history-comment {
   color: var(--of-text-muted);
 }
 
-.order-note-page__history-footer {
+.note-page__history-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: space-between;
-}
-
-:host ::ng-deep .mat-mdc-button,
-:host ::ng-deep .mat-mdc-outlined-button,
-:host ::ng-deep .mat-mdc-raised-button,
-:host ::ng-deep .mat-mdc-form-field,
-:host ::ng-deep .mat-mdc-select-value,
-:host ::ng-deep textarea.mat-mdc-input-element {
-  font-family: 'Inter', sans-serif;
 }
 
 :host ::ng-deep .mat-mdc-text-field-wrapper {
@@ -535,39 +474,45 @@
 }
 
 @media (max-width: 959px) {
-  .order-note-page {
+  .note-page {
     padding-top: 1.5rem;
   }
 }
 
 @media (min-width: 960px) {
-  .order-note-page {
+  .note-page {
     padding-top: 2rem;
   }
 }
 
 @media (max-width: 960px) {
-  .order-note-page__workflow-grid,
-  .order-note-page__preview-card,
+  .note-workflow-card--movement,
+  .note-workflow-card--delivery {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .note-workflow-grid,
+  .note-page__preview-card,
   .order-note-sheet__topbar,
   .order-note-sheet__summary {
     grid-template-columns: 1fr;
   }
 
-  .order-note-page__workflow-grid,
-  .order-note-page__preview-card,
+  .note-workflow-grid,
+  .note-page__preview-card,
   .order-note-sheet__topbar {
     display: grid;
   }
 
-  .order-note-page__status-grid,
-  .order-note-page__workflow-form,
+  .note-page__status-grid,
+  .note-workflow-form,
   .order-note-sheet__grid,
   .order-note-sheet__grid--three-columns {
     grid-template-columns: 1fr;
   }
 
-  .order-note-page__preview-frame {
+  .note-page__preview-frame {
     min-height: 680px;
   }
 }
@@ -575,11 +520,11 @@
 @media print {
   :host ::ng-deep app-sidebar,
   :host ::ng-deep .main-layout__menu-toggle,
-  .order-note-page__header,
-  .order-note-page__workflow-grid,
-  .order-note-page__preview-card,
-  .order-note-page__history-card,
-  .order-note-page__feedback {
+  .note-page__header,
+  .note-workflow-grid,
+  .note-page__preview-card,
+  .note-page__history-card,
+  .note-page__feedback {
     display: none !important;
   }
 
@@ -591,7 +536,7 @@
     background: var(--of-surface-strong) !important;
   }
 
-  .order-note-page {
+  .note-page {
     padding: 0 !important;
   }
 
@@ -649,33 +594,7 @@
 }
 
 @media (max-width: 599px) {
-  .order-note-page__navigation {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .order-note-page__location {
-    display: none;
-  }
-
-  .order-note-page__actions {
-    display: grid;
-    grid-template-columns: 1fr;
+  .note-workflow-actions button {
     width: 100%;
-  }
-
-  .order-note-page__toolbar-label {
-    width: 100%;
-  }
-
-  .order-note-page__downloads {
-    flex: 1 1 100%;
-  }
-
-  .order-note-page__downloads button {
-    flex: 1;
-  }
-
-  .order-note-page__more {
-    margin-left: auto;
   }
 }

@@ -1,28 +1,28 @@
-<section class="order-note-page">
+<section class="note-page">
   @if (isLoading()) {
-    <section class="order-note-page__empty">
+    <section class="note-page__empty">
       <h2>Cargando pedido</h2>
       <p>Consultando la nota real desde el backend...</p>
     </section>
   } @else if (orderRecord(); as record) {
-    <header class="order-note-page__header">
-      <nav class="order-note-page__navigation" aria-label="Navegación de la nota">
-        <button mat-button class="order-note-page__back" type="button" (click)="goBack()">
+    <header class="note-page__header">
+      <nav class="note-page__navigation" aria-label="Navegación de la nota">
+        <button mat-button class="note-page__back" type="button" (click)="goBack()">
           <mat-icon>arrow_back</mat-icon>
           {{ backLabel() }}
         </button>
-        <span class="order-note-page__location">Detalle del pedido</span>
+        <span class="note-page__location">Detalle del pedido</span>
       </nav>
 
-      <div class="order-note-page__heading-row">
-        <div class="order-note-page__identity">
-          <p class="order-note-page__eyebrow">Nota de pedido</p>
+      <div class="note-page__heading-row">
+        <div class="note-page__identity">
+          <p class="note-page__eyebrow">Nota de pedido</p>
           <h1>
             Pedido <span>{{ record.orderId }}</span>
           </h1>
-          <p class="order-note-page__description">{{ record.clientName }}</p>
+          <p class="note-page__description">{{ record.clientName }}</p>
         </div>
-        <div class="order-note-page__actions" role="group" aria-label="Acciones principales">
+        <div class="note-page__actions" role="group" aria-label="Acciones principales">
           <button mat-stroked-button type="button" (click)="goToEdit()">
             <mat-icon>edit</mat-icon>
             Editar pedido
@@ -34,9 +34,9 @@
         </div>
       </div>
 
-      <div class="order-note-page__toolbar">
-        <div class="order-note-page__downloads" role="group" aria-label="Descargar nota">
-          <span class="order-note-page__toolbar-label">Descargar nota</span>
+      <div class="note-page__toolbar">
+        <div class="note-page__downloads" role="group" aria-label="Descargar nota">
+          <span class="note-page__toolbar-label">Descargar nota</span>
           <button
             mat-stroked-button
             type="button"
@@ -60,12 +60,7 @@
             {{ isDownloadingExcel() ? 'Descargando…' : 'Excel' }}
           </button>
         </div>
-        <button
-          mat-button
-          class="order-note-page__more"
-          type="button"
-          [matMenuTriggerFor]="noteActions"
-        >
+        <button mat-button class="note-page__more" type="button" [matMenuTriggerFor]="noteActions">
           <mat-icon>more_horiz</mat-icon>
           Más acciones
         </button>
@@ -77,7 +72,7 @@
           @if (isAdmin() && !record.isCancelled) {
             <button
               mat-menu-item
-              class="order-note-page__cancel"
+              class="note-page__cancel"
               [disabled]="isTogglingCancel()"
               (click)="toggleCancel()"
             >
@@ -110,27 +105,28 @@
     }
 
     @if (loadErrorMessage()) {
-      <section class="order-note-page__feedback">
+      <section class="note-page__feedback">
         {{ loadErrorMessage() }}
       </section>
     }
 
-    <section class="order-note-page__workflow-grid">
-      <article class="order-note-page__workflow-card">
-        <div class="order-note-page__workflow-heading">
+    <section class="note-workflow-grid">
+      <article class="note-workflow-card note-workflow-card--status">
+        <div class="note-workflow-heading">
+          <mat-icon class="note-workflow-icon" aria-hidden="true">folder_open</mat-icon>
           <div>
-            <p class="order-note-page__workflow-eyebrow">Carpetas de negocio</p>
+            <p class="note-workflow-eyebrow">Carpetas de negocio</p>
             <h2>Estado actual de la nota</h2>
           </div>
         </div>
 
-        <div class="order-note-page__folder-list">
+        <div class="note-page__folder-list">
           @for (folderLabel of record.folderLabels; track folderLabel) {
-            <span class="order-note-page__folder-chip">{{ folderLabel }}</span>
+            <span class="note-page__folder-chip">{{ folderLabel }}</span>
           }
         </div>
 
-        <div class="order-note-page__status-grid">
+        <div class="note-page__status-grid">
           <article>
             <span>Operación</span>
             <strong>{{ record.operationalStatusLabel }}</strong>
@@ -146,15 +142,16 @@
         </div>
       </article>
 
-      <article class="order-note-page__workflow-card">
-        <div class="order-note-page__workflow-heading">
+      <article class="note-workflow-card note-workflow-card--movement">
+        <div class="note-workflow-heading">
+          <mat-icon class="note-workflow-icon" aria-hidden="true">drive_file_move</mat-icon>
           <div>
-            <p class="order-note-page__workflow-eyebrow">Movimiento operativo</p>
+            <p class="note-workflow-eyebrow">Movimiento operativo</p>
             <h2>Mover entre carpetas</h2>
           </div>
         </div>
 
-        <div class="order-note-page__workflow-form">
+        <div class="note-workflow-form">
           <mat-form-field appearance="outline">
             <mat-label>Estado operativo</mat-label>
             <mat-select [formControl]="operationalStatusControl">
@@ -173,7 +170,7 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="order-note-page__workflow-comment">
+          <mat-form-field appearance="outline" class="note-workflow-comment">
             <mat-label>Comentario del movimiento</mat-label>
             <textarea
               matInput
@@ -184,7 +181,7 @@
           </mat-form-field>
         </div>
 
-        <div class="order-note-page__workflow-actions">
+        <div class="note-workflow-actions">
           <button
             mat-raised-button
             type="button"
@@ -192,21 +189,22 @@
             (click)="saveWorkflowChanges()"
           >
             <mat-icon>folder_open</mat-icon>
-            Guardar Movimiento
+            {{ isSavingWorkflow() ? 'Guardando…' : 'Guardar movimiento' }}
           </button>
         </div>
       </article>
 
       @if (canAssignDriver() && isActiveNote()) {
-        <article class="order-note-page__workflow-card">
-          <div class="order-note-page__workflow-heading">
+        <article class="note-workflow-card note-workflow-card--delivery">
+          <div class="note-workflow-heading">
+            <mat-icon class="note-workflow-icon" aria-hidden="true">local_shipping</mat-icon>
             <div>
-              <p class="order-note-page__workflow-eyebrow">Reparto</p>
+              <p class="note-workflow-eyebrow">Reparto</p>
               <h2>Asignar chofer</h2>
             </div>
           </div>
 
-          <div class="order-note-page__workflow-form">
+          <div class="note-workflow-form">
             <mat-form-field appearance="outline">
               <mat-label>Chofer asignado</mat-label>
               <mat-select [formControl]="driverControl">
@@ -220,7 +218,7 @@
               }
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="order-note-page__workflow-comment">
+            <mat-form-field appearance="outline" class="note-workflow-comment">
               <mat-label>Ubicación (link de Google Maps)</mat-label>
               <input
                 matInput
@@ -232,7 +230,7 @@
             </mat-form-field>
           </div>
 
-          <div class="order-note-page__workflow-actions">
+          <div class="note-workflow-actions">
             <button
               mat-raised-button
               type="button"
@@ -245,24 +243,24 @@
           </div>
 
           @if (assignmentMessage()) {
-            <p class="order-note-page__assignment-feedback">{{ assignmentMessage() }}</p>
+            <p class="note-page__assignment-feedback">{{ assignmentMessage() }}</p>
           }
         </article>
       }
     </section>
 
     @if (workflowMessage()) {
-      <section class="order-note-page__feedback">
+      <section class="note-page__feedback">
         {{ workflowMessage() }}
       </section>
     }
 
-    <section class="order-note-page__preview-card">
-      <div class="order-note-page__workflow-heading">
+    <section class="note-page__preview-card">
+      <div class="note-workflow-heading">
         <div>
-          <p class="order-note-page__workflow-eyebrow">Vista Exacta</p>
+          <p class="note-workflow-eyebrow">Vista Exacta</p>
           <h2>PDF generado desde Excel</h2>
-          <p class="order-note-page__preview-description">
+          <p class="note-page__preview-description">
             Esta vista respeta el formato operativo real de tu nota, incluyendo logos, clausulas y
             acomodo original.
           </p>
@@ -280,18 +278,18 @@
       </div>
 
       @if (isLoadingPdfPreview()) {
-        <section class="order-note-page__preview-empty">
+        <section class="note-page__preview-empty">
           <h3>Generando vista previa</h3>
           <p>Excel esta preparando el PDF real de la nota...</p>
         </section>
       } @else if (pdfPreviewUrl(); as previewUrl) {
         <iframe
-          class="order-note-page__preview-frame"
+          class="note-page__preview-frame"
           [src]="previewUrl"
           title="Vista previa PDF de la nota"
         ></iframe>
       } @else {
-        <section class="order-note-page__preview-empty">
+        <section class="note-page__preview-empty">
           <h3>No fue posible mostrar el PDF</h3>
           <p>
             {{
@@ -487,23 +485,23 @@
       </section>
     </article>
 
-    <section class="order-note-page__history-card">
-      <div class="order-note-page__workflow-heading">
+    <section class="note-page__history-card">
+      <div class="note-workflow-heading">
         <div>
-          <p class="order-note-page__workflow-eyebrow">Historial</p>
+          <p class="note-workflow-eyebrow">Historial</p>
           <h2>Trazabilidad de la nota</h2>
         </div>
       </div>
 
-      <div class="order-note-page__history-list">
+      <div class="note-page__history-list">
         @for (event of record.workflowHistory ?? []; track event.id) {
-          <article class="order-note-page__history-item">
-            <div class="order-note-page__history-meta">
+          <article class="note-page__history-item">
+            <div class="note-page__history-meta">
               <span>{{ event.categoryLabel }}</span>
               <strong>{{ event.toStatusLabel }}</strong>
             </div>
 
-            <p class="order-note-page__history-transition">
+            <p class="note-page__history-transition">
               @if (event.fromStatusLabel && event.fromStatusLabel !== 'Sin estado previo') {
                 {{ event.fromStatusLabel }} -> {{ event.toStatusLabel }}
               } @else {
@@ -512,23 +510,23 @@
             </p>
 
             @if (event.comment) {
-              <p class="order-note-page__history-comment">{{ event.comment }}</p>
+              <p class="note-page__history-comment">{{ event.comment }}</p>
             }
 
-            <div class="order-note-page__history-footer">
+            <div class="note-page__history-footer">
               <span>{{ event.createdAt | date: 'dd MMM y, h:mm a' }}</span>
               <span>{{ event.changedBy }}</span>
             </div>
           </article>
         } @empty {
-          <section class="order-note-page__feedback">
+          <section class="note-page__feedback">
             Esta nota todavia no tiene movimientos registrados en su historial.
           </section>
         }
       </div>
     </section>
   } @else {
-    <section class="order-note-page__empty">
+    <section class="note-page__empty">
       <h2>Pedido no encontrado</h2>
       <p>
         {{
