@@ -1,5 +1,6 @@
+import { sessionSignal } from './session-state.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '../config/api.config';
@@ -17,9 +18,9 @@ export class TeamService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  private readonly membersState = signal<TeamMember[]>([]);
-  private readonly loadingState = signal(false);
-  private readonly errorState = signal('');
+  private readonly membersState = sessionSignal<TeamMember[]>([]);
+  private readonly loadingState = sessionSignal(false);
+  private readonly errorState = sessionSignal('');
 
   readonly members = this.membersState.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();

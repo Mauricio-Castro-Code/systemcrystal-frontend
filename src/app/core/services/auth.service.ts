@@ -1,3 +1,4 @@
+import { SessionStateService } from './session-state.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -13,6 +14,7 @@ const ORDERFLOW_SESSION_KEY = 'orderflow.session';
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly sessionState = inject(SessionStateService);
   private readonly http = inject(HttpClient);
   private readonly session = signal<UserSession | null>(this.loadStoredSession());
 
@@ -57,6 +59,7 @@ export class AuthService {
   }
 
   clearSession(): void {
+    this.sessionState.reset();
     this.session.set(null);
     this.clearPersistedSession();
   }
@@ -69,11 +72,17 @@ export class AuthService {
     endpoint: string,
     payload: LoginCredentials | RegisterCredentials,
   ): Promise<UserSession> {
+    this.clearSession();
+    const generation = this.sessionState.generation();
     try {
       const userSession = await firstValueFrom(
         this.http.post<UserSession>(`${API_BASE_URL}${endpoint}`, payload),
       );
 
+      if (generation !== this.sessionState.generation()) {
+        throw new Error('La sesión cambió. Vuelve a iniciar sesión.');
+      }
+      this.sessionState.reset();
       this.session.set(userSession);
       this.persistSession(userSession);
 

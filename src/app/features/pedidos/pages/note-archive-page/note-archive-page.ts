@@ -63,6 +63,7 @@ import { OrderRecordsService } from '../../../../core/services/order-records.ser
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NoteArchivePageComponent implements AfterViewInit {
+  readonly isAdmin = inject(AuthService).isAdmin;
   private readonly destroyRef = inject(DestroyRef);
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly router = inject(Router);
@@ -149,6 +150,7 @@ export class NoteArchivePageComponent implements AfterViewInit {
   }
 
   async handleRename(record: OrderRecord): Promise<void> {
+    if (!this.isAdmin()) return;
     const ref = this.dialog.open(RenameOrderDialogComponent, {
       width: '440px',
       data: { currentOrderId: record.orderId },
@@ -172,6 +174,7 @@ export class NoteArchivePageComponent implements AfterViewInit {
   }
 
   async handleDelete(record: OrderRecord): Promise<void> {
+    if (!this.isAdmin()) return;
     const confirmed = await this.confirmService.confirmDelete(
       `Eliminar nota ${record.orderId}`,
       `¿Estás seguro de que deseas eliminar la nota de ${record.clientName}?`,

@@ -149,22 +149,26 @@
                 >
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button
-                  mat-icon-button
-                  type="button"
-                  [attr.aria-label]="'Cambiar folio ' + record.orderId"
-                  (click)="handleRename(record)"
-                >
-                  <mat-icon>edit_note</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  type="button"
-                  [attr.aria-label]="'Eliminar ' + record.orderId"
-                  (click)="handleDelete(record)"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
+                @if (isAdmin()) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Cambiar folio ' + record.orderId"
+                    (click)="handleRename(record)"
+                  >
+                    <mat-icon>edit_note</mat-icon>
+                  </button>
+                }
+                @if (isAdmin()) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Eliminar ' + record.orderId"
+                    (click)="handleDelete(record)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
               </div>
             </td>
           </ng-container>

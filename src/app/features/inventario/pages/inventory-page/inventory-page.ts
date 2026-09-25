@@ -1,8 +1,10 @@
+import { AuthService } from '../../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   ViewChild,
   effect,
@@ -60,6 +62,7 @@ interface InventoryTableFilter {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventoryPageComponent implements AfterViewInit {
+  readonly canManageInventory = inject(AuthService).isAdmin;
   private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
@@ -78,7 +81,9 @@ export class InventoryPageComponent implements AfterViewInit {
     quantity: [0, [Validators.required, Validators.min(0)]],
     unitPrice: [0, [Validators.required, Validators.min(0)]],
   });
-  readonly displayedColumns = ['name', 'category', 'quantity', 'unitPrice', 'actions'];
+  readonly displayedColumns = computed(() => this.canManageInventory()
+    ? ['name', 'category', 'quantity', 'unitPrice', 'actions']
+    : ['name', 'category', 'quantity', 'unitPrice']);
   readonly dataSource = new MatTableDataSource<InventoryItem>([]);
   readonly editingItemId = signal<number | null>(null);
   readonly actionMessage = signal('');
@@ -146,6 +151,7 @@ export class InventoryPageComponent implements AfterViewInit {
   }
 
   async submitForm(): Promise<void> {
+    if (!this.canManageInventory()) return;
     this.inventoryForm.markAllAsTouched();
 
     if (this.inventoryForm.invalid) {
@@ -179,6 +185,7 @@ export class InventoryPageComponent implements AfterViewInit {
   }
 
   startEdit(item: InventoryItem): void {
+    if (!this.canManageInventory()) return;
     this.editingItemId.set(item.id);
     this.inventoryForm.setValue({
       name: item.name,
@@ -195,6 +202,7 @@ export class InventoryPageComponent implements AfterViewInit {
   }
 
   async deleteItem(item: InventoryItem): Promise<void> {
+    if (!this.canManageInventory()) return;
     const confirmed = await this.confirmService.confirmDelete(
       'Eliminar producto',
       `¿Confirmas que deseas eliminar el producto ${item.name}?`,
@@ -223,6 +231,7 @@ export class InventoryPageComponent implements AfterViewInit {
   }
 
   async changeCategory(item: InventoryItem, category: InventoryCategory): Promise<void> {
+    if (!this.canManageInventory()) return;
     if (category === item.category) {
       return;
     }
@@ -238,6 +247,10 @@ export class InventoryPageComponent implements AfterViewInit {
     } catch (error) {
       this.notifications.error(this.resolveErrorMessage(error));
     }
+  }
+
+  categoryLabel(category: InventoryCategory): string {
+    return this.categories.find((item) => item.value === category)?.label ?? category;
   }
 
   private buildPayload(): InventoryItemPayload {

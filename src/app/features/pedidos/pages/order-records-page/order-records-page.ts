@@ -210,6 +210,7 @@ export class OrderRecordsPageComponent implements AfterViewInit {
   }
 
   async handleDelete(record: OrderRecord): Promise<void> {
+    if (!this.isAdmin()) return;
     const confirmed = await this.confirmService.confirmDelete(
       `Eliminar nota ${record.orderId}`,
       `¿Estás seguro de que deseas eliminar la nota de ${record.clientName}?`,

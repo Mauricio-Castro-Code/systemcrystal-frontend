@@ -1,5 +1,6 @@
+import { sessionSignal } from './session-state.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '../config/api.config';
@@ -28,11 +29,11 @@ export class DriverRouteService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  private readonly routeState = signal<DriverRoute | null>(null);
-  private readonly loadingState = signal(false);
-  private readonly errorState = signal('');
-  private readonly optimizingState = signal(false);
-  private readonly optimizeErrorState = signal('');
+  private readonly routeState = sessionSignal<DriverRoute | null>(null);
+  private readonly loadingState = sessionSignal(false);
+  private readonly errorState = sessionSignal('');
+  private readonly optimizingState = sessionSignal(false);
+  private readonly optimizeErrorState = sessionSignal('');
 
   readonly route = this.routeState.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();

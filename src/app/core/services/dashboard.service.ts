@@ -1,10 +1,11 @@
+import { sessionSignal } from './session-state.service';
 import {
   HttpClient,
   HttpErrorResponse,
   HttpHeaders,
   HttpParams,
 } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '../config/api.config';
@@ -26,9 +27,9 @@ export class DashboardService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  private readonly overviewState = signal<DashboardOverview | null>(null);
-  private readonly loadingState = signal(false);
-  private readonly errorState = signal('');
+  private readonly overviewState = sessionSignal<DashboardOverview | null>(null);
+  private readonly loadingState = sessionSignal(false);
+  private readonly errorState = sessionSignal('');
 
   readonly overview = this.overviewState.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();

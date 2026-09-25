@@ -1,5 +1,6 @@
+import { sessionSignal } from './session-state.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '../config/api.config';
@@ -18,9 +19,9 @@ export class ClientDirectoryService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  private readonly clientsState = signal<Client[]>([]);
-  private readonly loadingState = signal(false);
-  private readonly errorState = signal('');
+  private readonly clientsState = sessionSignal<Client[]>([]);
+  private readonly loadingState = sessionSignal(false);
+  private readonly errorState = sessionSignal('');
 
   readonly clients = this.clientsState.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();

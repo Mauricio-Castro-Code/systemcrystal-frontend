@@ -1,5 +1,6 @@
+import { sessionSignal } from './session-state.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '../config/api.config';
@@ -57,14 +58,14 @@ export class OrderRecordsService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  private readonly recordsState = signal<OrderRecord[]>([]);
-  private readonly archivedRecordsState = signal<OrderRecord[]>([]);
-  private readonly loadingState = signal(false);
-  private readonly archivedLoadingState = signal(false);
-  private readonly loadedState = signal(false);
-  private readonly archivedLoadedState = signal(false);
-  private readonly errorState = signal('');
-  private readonly archivedErrorState = signal('');
+  private readonly recordsState = sessionSignal<OrderRecord[]>([]);
+  private readonly archivedRecordsState = sessionSignal<OrderRecord[]>([]);
+  private readonly loadingState = sessionSignal(false);
+  private readonly archivedLoadingState = sessionSignal(false);
+  private readonly loadedState = sessionSignal(false);
+  private readonly archivedLoadedState = sessionSignal(false);
+  private readonly errorState = sessionSignal('');
+  private readonly archivedErrorState = sessionSignal('');
 
   readonly orderRecords = this.recordsState.asReadonly();
   readonly archivedOrderRecords = this.archivedRecordsState.asReadonly();

@@ -5,8 +5,7 @@
       <h1>Cotizaciones Activas</h1>
       <p class="quotation-records-page__description">
         Consulta las cotizaciones activas en borrador con folios tipo
-        <strong>001COTI-26</strong> y confirmalas como pedido cuando el cliente
-        autorice la nota.
+        <strong>001COTI-26</strong> y confirmalas como pedido cuando el cliente autorice la nota.
       </p>
     </div>
   </header>
@@ -27,9 +26,7 @@
       {{ errorMessage() }}
     </section>
   } @else if (isLoading() && dataSource.data.length === 0) {
-    <section class="quotation-records-page__feedback">
-      Cargando cotizaciones reales...
-    </section>
+    <section class="quotation-records-page__feedback">Cargando cotizaciones reales...</section>
   }
 
   <section class="quotation-records-page__table-card">
@@ -62,9 +59,11 @@
           <ng-container matColumnDef="date">
             <th mat-header-cell *matHeaderCellDef>Fecha de Evento</th>
             <td mat-cell *matCellDef="let record">
-              {{ record.quotation.schedule.eventDate
+              {{
+                record.quotation.schedule.eventDate
                   ? (record.quotation.schedule.eventDate | date: 'dd MMM y')
-                  : '—' }}
+                  : '—'
+              }}
             </td>
           </ng-container>
 
@@ -96,14 +95,16 @@
                 >
                   <mat-icon>task_alt</mat-icon>
                 </button>
-                <button
-                  mat-icon-button
-                  type="button"
-                  [attr.aria-label]="'Eliminar ' + record.quotationId"
-                  (click)="handleDelete(record)"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
+                @if (isAdmin()) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Eliminar ' + record.quotationId"
+                    (click)="handleDelete(record)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
               </div>
             </td>
           </ng-container>

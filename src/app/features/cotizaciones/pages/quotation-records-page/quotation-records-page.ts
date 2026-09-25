@@ -1,3 +1,4 @@
+import { AuthService } from '../../../../core/services/auth.service';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -45,6 +46,7 @@ import { QuotationRecord } from '../../models/quotation-record.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuotationRecordsPageComponent implements AfterViewInit {
+  readonly isAdmin = inject(AuthService).isAdmin;
   private readonly destroyRef = inject(DestroyRef);
   private readonly quotationRecordsService = inject(QuotationRecordsService);
   private readonly folioStrategyService = inject(FolioStrategyService);
@@ -138,6 +140,7 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
   }
 
   async handleDelete(record: QuotationRecord): Promise<void> {
+    if (!this.isAdmin()) return;
     const confirmed = await this.confirmService.confirmDelete(
       `Eliminar cotización ${record.quotationId}`,
       `¿Estás seguro de que deseas eliminar la cotización de ${record.clientName}?`,
