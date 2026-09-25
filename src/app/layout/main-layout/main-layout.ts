@@ -67,7 +67,7 @@ export class MainLayoutComponent {
     { id: 'pedidos', label: 'Notas Activas', icon: 'clipboard-list', route: '/pedidos' },
     { id: 'pedidos-registro', label: 'Registro', icon: 'file-text', route: '/pedidos/registro' },
     { id: 'fletes', label: 'Flete', icon: 'map-pin', route: '/fletes' },
-    { id: 'contabilidad', label: 'Contabilidad', icon: 'bar-chart-2', route: '/contabilidad', adminOnly: true },
+    { id: 'contabilidad', label: 'Análisis de datos', icon: 'bar-chart-2', route: '/contabilidad', adminOnly: true },
     { id: 'equipo', label: 'Gestion de Usuarios', icon: 'settings', route: '/equipo', adminOnly: true },
   ];
 

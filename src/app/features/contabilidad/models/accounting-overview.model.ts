@@ -30,6 +30,8 @@ export interface AccountingSummary {
   ytdRevenue: number;
   prevYtdRevenue: number;
   monthRevenue: number;
+  yearFreight: number;
+  monthFreight: number;
   yoyPct: number | null;
   prevYear: number;
   totalOrders: number;

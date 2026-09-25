@@ -1,5 +1,6 @@
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import {
   DashboardAgendaOrder,
@@ -8,7 +9,7 @@ import {
 
 @Component({
   selector: 'app-order-agenda-board',
-  imports: [CommonModule, CurrencyPipe],
+  imports: [CommonModule, CurrencyPipe, RouterLink],
   templateUrl: './order-agenda-board.html',
   styleUrl: './order-agenda-board.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,17 +27,17 @@ export class OrderAgendaBoardComponent {
 
   resolveEyebrow(group: DashboardOrderGroup): string {
     if (group.id === 'today') {
-      return 'Prioridad Inmediata';
+      return 'Tu día de hoy';
     }
 
     if (group.id === 'tomorrow') {
-      return 'Siguiente Jornada';
+      return 'Lo que sigue';
     }
 
     if (group.id === 'delivery-range') {
-      return 'Entregas Filtradas';
+      return 'Resultado de tu consulta';
     }
 
-    return 'Planeacion Anticipada';
+    return 'Prepárate con tiempo';
   }
 }

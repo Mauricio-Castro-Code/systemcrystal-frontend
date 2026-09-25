@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -18,6 +19,7 @@ import { OrderAgendaBoardComponent } from '../../components/order-agenda-board/o
   selector: 'app-dashboard',
   imports: [
     CommonModule,
+    RouterLink,
     DatePipe,
     ReactiveFormsModule,
     MatButtonModule,
@@ -55,14 +57,14 @@ export class DashboardPageComponent {
 
   readonly summaryTitle = computed(() => {
     if (this.errorMessage()) {
-      return 'Sincronizacion pendiente';
+      return 'No se pudo actualizar';
     }
 
     if (this.isLoading()) {
       return 'Actualizando datos';
     }
 
-    return 'Datos en vivo';
+    return 'Resumen actualizado';
   });
 
   readonly summaryMessage = computed(() => {
@@ -73,14 +75,14 @@ export class DashboardPageComponent {
     }
 
     if (this.isLoading() && !generatedAt) {
-      return 'Consultando el backend para construir el resumen operativo real.';
+      return 'Estamos preparando tu agenda y el resumen de tus notas.';
     }
 
     if (!generatedAt) {
-      return 'Todavia no hay un resumen operativo disponible.';
+      return 'Todavía no hay un resumen disponible.';
     }
 
-    return 'Resumen consolidado generado desde el backend actual del sistema.';
+    return 'Tus notas y entregas, en un solo lugar.';
   });
 
   constructor() {
@@ -101,13 +103,21 @@ export class DashboardPageComponent {
     await this.reloadDashboard();
   }
 
-  private resolveDeliveryRangeFilters():
-    | { deliveryDateFrom: string; deliveryDateTo: string }
-    | null {
+  private resolveDeliveryRangeFilters(): {
+    deliveryDateFrom: string;
+    deliveryDateTo: string;
+  } | null {
     const startDate = this.deliveryDateFromControl.value;
     const endDate = this.deliveryDateToControl.value;
 
-    if (!startDate || !endDate) {
+    if (
+      !startDate ||
+      !endDate ||
+      this.deliveryDateFromControl.invalid ||
+      this.deliveryDateToControl.invalid ||
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime())
+    ) {
       this.deliveryRangeErrorMessage.set(
         'Selecciona la fecha inicial y la fecha final del rango de entrega.',
       );

@@ -1,77 +1,113 @@
-<section class="dashboard-page">
-
+<section class="dashboard-page" [attr.aria-busy]="isLoading()">
   <header class="dashboard-page__header">
     <div class="dashboard-page__intro">
-      <h1>Panel de Control</h1>
+      <span class="dashboard-page__eyebrow">Todo listo para tu día</span>
+      <h1>Hola, {{ userSession()?.displayName || 'bienvenido' }}</h1>
       <p class="dashboard-page__greeting">
-        Hola, <strong>{{ userSession()?.displayName }}</strong>
-        @if (generatedAt()) {
-          &nbsp;· Actualizado {{ generatedAt() | date: 'dd MMM, HH:mm' }}
-        }
+        Tus notas, entregas y próximos eventos, en un solo lugar.
       </p>
     </div>
+    <a class="dashboard-page__primary-action" routerLink="/cotizaciones/nueva">
+      <span aria-hidden="true">＋</span> Nueva cotización
+    </a>
+  </header>
 
+  <div class="dashboard-page__status-bar">
+    <div role="status" aria-live="polite">
+      <span
+        class="dashboard-page__status-dot"
+        [class.dashboard-page__status-dot--warning]="!!errorMessage()"
+        aria-hidden="true"
+      ></span>
+      <strong>{{ summaryTitle() }}</strong>
+      @if (generatedAt()) {
+        <span class="dashboard-page__timestamp"
+          >Última actualización: {{ generatedAt() | date: 'dd MMM, HH:mm' }}</span
+        >
+      }
+    </div>
     <button
       class="dashboard-page__refresh"
       type="button"
       [disabled]="isLoading()"
       (click)="reloadDashboard()"
     >
-      {{ isLoading() ? 'Actualizando...' : 'Recargar' }}
+      <span aria-hidden="true">↻</span> {{ isLoading() ? 'Actualizando…' : 'Actualizar' }}
     </button>
-  </header>
+  </div>
 
   @if (errorMessage()) {
-    <div class="dashboard-page__alert">{{ summaryMessage() }}</div>
+    <div class="dashboard-page__alert" role="alert">{{ summaryMessage() }}</div>
   }
 
-  <app-stat-cards [stats]="stats()" />
+  @if (isLoading() && !generatedAt()) {
+    <div class="dashboard-page__loading" role="status">Preparando tu resumen y tu agenda…</div>
+  } @else if (generatedAt()) {
+    <app-stat-cards [stats]="stats()" />
+    <section class="dashboard-page__agenda" aria-labelledby="agenda-title">
+      <div class="dashboard-page__section-heading">
+        <div>
+          <h2 id="agenda-title">Tu agenda de notas</h2>
+          <p>Abre cualquier nota para consultar sus detalles.</p>
+        </div>
+        <a class="dashboard-page__text-link" routerLink="/pedidos"
+          >Ver notas activas <span aria-hidden="true">↗</span></a
+        >
+      </div>
+      <app-order-agenda-board [groups]="orderGroups()" />
+    </section>
+  }
 
-  <app-order-agenda-board [groups]="orderGroups()" />
-
-  <section class="dashboard-page__range-panel">
-    <h2 class="dashboard-page__range-title">Notas por rango de entrega</h2>
-
-    <div class="dashboard-page__range-controls">
-      <mat-form-field appearance="outline">
+  <section class="dashboard-page__range-panel" aria-labelledby="delivery-range-title">
+    <div class="dashboard-page__section-heading">
+      <div>
+        <span class="dashboard-page__eyebrow">Planea tus entregas</span>
+        <h2 id="delivery-range-title">Consulta por fechas</h2>
+        <p>Encuentra las notas con entrega programada dentro de un periodo.</p>
+      </div>
+    </div>
+    <form class="dashboard-page__range-controls" (ngSubmit)="applyDeliveryRange()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Desde</mat-label>
         <input
           matInput
           [matDatepicker]="deliveryDateFromPicker"
           [formControl]="deliveryDateFromControl"
+          aria-describedby="delivery-range-feedback"
         />
         <mat-datepicker-toggle matIconSuffix [for]="deliveryDateFromPicker"></mat-datepicker-toggle>
         <mat-datepicker #deliveryDateFromPicker></mat-datepicker>
       </mat-form-field>
-
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Hasta</mat-label>
         <input
           matInput
           [matDatepicker]="deliveryDateToPicker"
           [formControl]="deliveryDateToControl"
+          aria-describedby="delivery-range-feedback"
         />
         <mat-datepicker-toggle matIconSuffix [for]="deliveryDateToPicker"></mat-datepicker-toggle>
         <mat-datepicker #deliveryDateToPicker></mat-datepicker>
       </mat-form-field>
-
-      <button
-        class="dashboard-page__range-submit"
-        type="button"
-        [disabled]="isLoading()"
-        (click)="applyDeliveryRange()"
-      >
-        {{ isLoading() ? 'Consultando...' : 'Aplicar' }}
+      <button class="dashboard-page__range-submit" type="submit" [disabled]="isLoading()">
+        {{ isLoading() ? 'Consultando…' : 'Consultar notas' }}
       </button>
-    </div>
-
-    @if (deliveryRangeErrorMessage()) {
-      <p class="dashboard-page__range-feedback">{{ deliveryRangeErrorMessage() }}</p>
+    </form>
+    <p id="delivery-range-feedback" class="dashboard-page__range-feedback" aria-live="polite">
+      {{ deliveryRangeErrorMessage() }}
+    </p>
+    @if (deliveryRange(); as range) {
+      <div class="dashboard-page__range-summary">
+        <span
+          >Resultados del {{ range.startDate | date: 'dd MMM yyyy' }} al
+          {{ range.endDate | date: 'dd MMM yyyy' }}</span
+        >
+        <strong
+          >{{ range.group.orders.length }}
+          {{ range.group.orders.length === 1 ? 'nota' : 'notas' }}</strong
+        >
+      </div>
+      <app-order-agenda-board [groups]="deliveryRangeGroup()" />
     }
   </section>
-
-  @if (deliveryRangeGroup().length > 0) {
-    <app-order-agenda-board [groups]="deliveryRangeGroup()" />
-  }
-
 </section>

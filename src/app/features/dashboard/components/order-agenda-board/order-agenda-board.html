@@ -1,52 +1,52 @@
-<section class="order-agenda-board" aria-label="Agenda operativa de pedidos">
-  <article
-    class="order-agenda-board__group"
-    *ngFor="let group of groups(); trackBy: trackByGroupId"
-    [class.order-agenda-board__group--today]="group.id === 'today'"
-    [class.order-agenda-board__group--tomorrow]="group.id === 'tomorrow'"
-    [class.order-agenda-board__group--weekend]="group.id === 'weekend'"
-    [class.order-agenda-board__group--delivery-range]="group.id === 'delivery-range'"
-  >
-    <header class="order-agenda-board__group-header">
-      <div>
-        <p class="order-agenda-board__eyebrow">
-          {{ resolveEyebrow(group) }}
-        </p>
-        <h2>{{ group.title }}</h2>
-        <p class="order-agenda-board__subtitle">{{ group.subtitle }}</p>
-      </div>
-
-      <span class="order-agenda-board__count">{{ group.orders.length }}</span>
-    </header>
-
-    @if (group.orders.length > 0) {
-      <div class="order-agenda-board__table-head">
-        <span>ID</span>
-        <span>Nombre</span>
-        <span>Domicilio</span>
-        <span>Total</span>
-      </div>
-
-      <div class="order-agenda-board__list">
-        <article
-          class="order-agenda-board__row"
-          *ngFor="let order of group.orders; trackBy: trackByOrderId"
+<section class="order-agenda-board" aria-label="Notas por periodo">
+  @for (group of groups(); track group.id) {
+    <article
+      class="order-agenda-board__group"
+      [class.order-agenda-board__group--today]="group.id === 'today'"
+      [class.order-agenda-board__group--delivery-range]="group.id === 'delivery-range'"
+    >
+      <header class="order-agenda-board__group-header">
+        <div>
+          <p class="order-agenda-board__eyebrow">{{ resolveEyebrow(group) }}</p>
+          <h3>{{ group.title }}</h3>
+          <p class="order-agenda-board__subtitle">{{ group.subtitle }}</p>
+        </div>
+        <span
+          class="order-agenda-board__count"
+          [attr.aria-label]="group.orders.length + ' notas'"
+          >{{ group.orders.length }}</span
         >
-          <strong class="order-agenda-board__order-id">{{ order.id }}</strong>
-          <div class="order-agenda-board__client">
-            <strong>{{ order.clientName }}</strong>
+      </header>
+      <div class="order-agenda-board__list">
+        @for (order of group.orders; track order.id) {
+          <a
+            class="order-agenda-board__row"
+            [routerLink]="['/pedidos', order.id]"
+            [attr.aria-label]="'Ver nota ' + order.id + ' de ' + order.clientName"
+          >
+            <span class="order-agenda-board__order-id">Nota {{ order.id }}</span>
+            <strong class="order-agenda-board__client">{{ order.clientName }}</strong>
+            <span class="order-agenda-board__address">{{
+              order.address || 'Sin domicilio registrado'
+            }}</span>
+            <span class="order-agenda-board__footer">
+              <strong class="order-agenda-board__total"
+                >{{ order.total | currency: 'MXN' : 'symbol-narrow' : '1.0-0' }}
+                <small>MXN</small></strong
+              >
+              <span class="order-agenda-board__open"
+                >Ver nota <span aria-hidden="true">↗</span></span
+              >
+            </span>
+          </a>
+        } @empty {
+          <div class="order-agenda-board__empty">
+            <span class="order-agenda-board__empty-mark" aria-hidden="true">—</span>
+            <strong>Sin notas en este periodo</strong>
+            <p>{{ group.emptyMessage }}</p>
           </div>
-          <p class="order-agenda-board__address">{{ order.address }}</p>
-          <strong class="order-agenda-board__total">
-            {{ order.total | currency: 'MXN':'symbol-narrow':'1.0-0' }}
-          </strong>
-        </article>
+        }
       </div>
-    } @else {
-      <div class="order-agenda-board__empty">
-        <strong>Sin pedidos cargados</strong>
-        <p>{{ group.emptyMessage }}</p>
-      </div>
-    }
-  </article>
+    </article>
+  }
 </section>

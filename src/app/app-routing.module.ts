@@ -64,7 +64,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'contabilidad',
-    title: 'Contabilidad',
+    title: 'Análisis de datos',
     canActivate: [adminGuard],
     loadChildren: () =>
       import('./features/contabilidad/contabilidad.routes').then(

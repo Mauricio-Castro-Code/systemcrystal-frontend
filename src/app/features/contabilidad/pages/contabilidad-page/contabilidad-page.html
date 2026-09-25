@@ -1,66 +1,95 @@
 <div class="ac-page">
-
   <!-- Header -->
   <div class="ac-page__header">
     <div class="ac-page__title-block">
-      <h1>Contabilidad</h1>
-      <p class="ac-page__subtitle">Analisis de ventas por mes y productos mas rentados</p>
+      <span class="ac-kicker">Tu negocio, en perspectiva</span>
+      <h1>Análisis de datos</h1>
+      <p class="ac-page__subtitle">
+        Explora tus ingresos, identifica tendencias y conoce qué impulsa tus eventos.
+      </p>
     </div>
   </div>
 
   @if (loading()) {
-    <div class="ac-state ac-state--loading">
+    <div class="ac-state ac-state--loading" role="status" aria-live="polite">
       <div class="ac-spinner"></div>
       <span>Cargando datos...</span>
     </div>
   } @else if (error()) {
-    <div class="ac-state ac-state--error">{{ error() }}</div>
+    <div class="ac-state ac-state--error" role="alert">
+      <span>{{ error() }}</span
+      ><button type="button" class="ac-year-tab" (click)="retry()">Volver a intentar</button>
+    </div>
   } @else if (overview(); as data) {
-
     <!-- Year selector -->
     <div class="ac-year-bar">
-      <span class="ac-year-bar__label">Ano fiscal</span>
-      <div class="ac-year-bar__tabs">
+      <div>
+        <span class="ac-year-bar__label">Periodo de análisis</span
+        ><span class="ac-year-bar__hint">Selecciona el año que quieres explorar</span>
+      </div>
+      <div class="ac-year-bar__tabs" role="group" aria-label="Año de análisis">
         @for (year of data.availableYears; track year) {
           <button
             class="ac-year-tab"
             [class.ac-year-tab--active]="year === data.selectedYear"
+            [attr.aria-pressed]="year === data.selectedYear"
             type="button"
             (click)="selectYear(year)"
-          >{{ year }}</button>
+          >
+            {{ year }}
+          </button>
         }
       </div>
     </div>
 
+    <div class="ac-section-heading">
+      <h2>Resumen del año</h2>
+      <span>Importes en MXN · {{ data.selectedYear }}</span>
+    </div>
     <!-- Summary cards -->
     <div class="ac-summary">
       <div class="ac-card ac-card--primary">
         <span class="ac-card__eyebrow">Ingresos {{ data.selectedYear }}</span>
         <strong class="ac-card__value">{{ formatCurrency(data.summary.yearRevenue) }}</strong>
-        <span class="ac-card__detail">{{ data.summary.totalOrders }} notas confirmadas</span>
+        <span class="ac-card__detail">Ingresos de notas confirmadas</span>
       </div>
       <div class="ac-card ac-card--costs">
         <span class="ac-card__eyebrow">Costos externos {{ data.selectedYear }}</span>
         <strong class="ac-card__value">{{ formatCurrency(data.summary.yearExtraCosts) }}</strong>
-        <span class="ac-card__detail">Sub-arriendos, meseros y otros</span>
+        <span class="ac-card__detail">Subarriendos, meseros y otros</span>
       </div>
-      <div class="ac-card ac-card--utility" [class.ac-card--up]="data.summary.yearUtility > 0" [class.ac-card--down]="data.summary.yearUtility < 0">
+      <div
+        class="ac-card ac-card--utility"
+        [class.ac-card--up]="data.summary.yearUtility > 0"
+        [class.ac-card--down]="data.summary.yearUtility < 0"
+      >
         <span class="ac-card__eyebrow">Utilidad {{ data.selectedYear }}</span>
         <strong class="ac-card__value">{{ formatCurrency(data.summary.yearUtility) }}</strong>
         <span class="ac-card__detail">Ingresos − costos externos</span>
       </div>
-      <div class="ac-card">
-        <span class="ac-card__eyebrow">Mes actual</span>
+    </div>
+    <div class="ac-context">
+      <div class="ac-card ac-card--month">
+        <span class="ac-card__eyebrow"
+          >Ingresos · {{ freightMonthLabel(data.generatedAt) }} {{ data.selectedYear }}</span
+        >
         <strong class="ac-card__value">{{ formatCurrency(data.summary.monthRevenue) }}</strong>
       </div>
-      <div class="ac-card" [class.ac-card--up]="(data.summary.yoyPct ?? 0) > 0" [class.ac-card--down]="(data.summary.yoyPct ?? 0) < 0">
-        <span class="ac-card__eyebrow">vs {{ data.summary.prevYear }} (Ene–{{ currentMonthLabel() }})</span>
+      <div
+        class="ac-card"
+        [class.ac-card--up]="(data.summary.yoyPct ?? 0) > 0"
+        [class.ac-card--down]="(data.summary.yoyPct ?? 0) < 0"
+      >
+        <span class="ac-card__eyebrow"
+          >Comparativo anual · {{ comparisonPeriod(data.generatedAt) }}</span
+        >
         @if (data.summary.yoyPct !== null) {
           <strong class="ac-card__value">
             {{ data.summary.yoyPct > 0 ? '+' : '' }}{{ data.summary.yoyPct }}%
           </strong>
           <span class="ac-card__detail">
-            {{ formatCurrency(data.summary.ytdRevenue) }} vs {{ formatCurrency(data.summary.prevYtdRevenue) }}
+            {{ data.selectedYear }}: {{ formatCurrency(data.summary.ytdRevenue) }} ·
+            {{ data.summary.prevYear }}: {{ formatCurrency(data.summary.prevYtdRevenue) }}
           </span>
         } @else {
           <strong class="ac-card__value">—</strong>
@@ -69,109 +98,178 @@
       </div>
     </div>
 
-    <!-- Monthly chart -->
-    <div class="ac-panel">
-      <div class="ac-panel__header">
-        <div>
-          <h2 class="ac-panel__title">Ventas por mes — {{ data.selectedYear }}</h2>
-          <p class="ac-panel__hint">Total de notas confirmadas por fecha de evento</p>
-        </div>
-      </div>
-
-      @let maxVal = getMaxValue(data.monthlySales);
-
-      <div class="ac-bar-chart">
-        @for (point of data.monthlySales; track point.month) {
-          <div class="ac-bar-chart__col">
-            @if (point.value > 0) {
-              <span class="ac-bar-chart__amount">{{ formatCurrency(point.value) }}</span>
-            } @else {
-              <span class="ac-bar-chart__amount ac-bar-chart__amount--zero">—</span>
-            }
-            <div class="ac-bar-chart__track">
-              <div
-                class="ac-bar-chart__fill"
-                [style.height.%]="(point.value / maxVal) * 100"
-                [class.ac-bar-chart__fill--empty]="point.value === 0"
-              ></div>
-            </div>
-            <span class="ac-bar-chart__label">{{ point.label }}</span>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Top products -->
-    <div class="ac-panel">
-      <div class="ac-panel__header">
-        <div>
-          <h2 class="ac-panel__title">Productos mas rentados</h2>
-          <p class="ac-panel__hint">Top 15 — {{ data.selectedYear }}</p>
-        </div>
-        <div class="ac-sort-toggle">
-          <button
-            class="ac-sort-btn"
-            [class.ac-sort-btn--active]="productsSort() === 'qty'"
-            type="button"
-            (click)="setSortProducts('qty')"
-          >Cantidad</button>
-          <button
-            class="ac-sort-btn"
-            [class.ac-sort-btn--active]="productsSort() === 'revenue'"
-            type="button"
-            (click)="setSortProducts('revenue')"
-          >Dinero</button>
-        </div>
-      </div>
-
-      @let sorted = getSortedProducts(data.topProducts);
-      @let maxQty = getMaxQty(sorted);
-      @let maxRev = getMaxRevenue(sorted);
-
-      <div class="ac-h-chart">
-        @for (product of sorted; track product.name) {
-          <div class="ac-h-chart__row">
-            <span class="ac-h-chart__name" [title]="product.name">{{ product.name }}</span>
-            <div class="ac-h-chart__track">
-              <div
-                class="ac-h-chart__fill"
-                [style.width.%]="productsSort() === 'revenue'
-                  ? (product.totalRevenue / maxRev) * 100
-                  : (product.totalQty / maxQty) * 100"
-              ></div>
-            </div>
-            <span class="ac-h-chart__qty">
-              {{ productsSort() === 'revenue' ? formatCurrency(product.totalRevenue) : product.totalQty }}
-            </span>
-            <span class="ac-h-chart__rev">
-              {{ productsSort() === 'revenue' ? product.totalQty + ' uds' : formatCurrency(product.totalRevenue) }}
-            </span>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Top clients -->
-    @if (data.topClients.length) {
+    <div class="ac-performance">
+      <!-- Monthly chart -->
       <div class="ac-panel">
         <div class="ac-panel__header">
           <div>
-            <h2 class="ac-panel__title">Top 10 clientes</h2>
-            <p class="ac-panel__hint">{{ data.selectedYear }}</p>
+            <h2 class="ac-panel__title">Evolución de ingresos</h2>
+            <p class="ac-panel__hint">
+              Enero a diciembre de {{ data.selectedYear }} · Por fecha de evento
+            </p>
           </div>
-          <div class="ac-sort-toggle">
+        </div>
+
+        @let maxVal = getMaxValue(data.monthlySales);
+
+        @if (hasMonthlySales(data.monthlySales)) {
+          <div
+            class="ac-bar-chart"
+            tabindex="0"
+            role="region"
+            aria-label="Ingresos por mes. Desplaza horizontalmente para consultar todos los meses."
+          >
+            @for (point of data.monthlySales; track point.month) {
+              <div class="ac-bar-chart__col">
+                @if (point.value > 0) {
+                  <span class="ac-bar-chart__amount">{{ formatCurrency(point.value) }}</span>
+                } @else {
+                  <span class="ac-bar-chart__amount ac-bar-chart__amount--zero">—</span>
+                }
+                <div class="ac-bar-chart__track">
+                  <div
+                    class="ac-bar-chart__fill"
+                    [style.height.%]="(point.value / maxVal) * 100"
+                    [class.ac-bar-chart__fill--empty]="point.value === 0"
+                  ></div>
+                </div>
+                <span class="ac-bar-chart__label">{{ point.label }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="ac-empty">Aún no hay ingresos registrados para este año.</p>
+        }
+      </div>
+
+      <section class="ac-card ac-card--freight" aria-labelledby="freight-title">
+        <div>
+          <span class="ac-kicker">Logística</span>
+          <h2 id="freight-title" class="ac-panel__title">Ingresos por flete</h2>
+          <p class="ac-panel__hint">Notas confirmadas por fecha de evento, hasta hoy</p>
+        </div>
+        <div class="ac-freight-totals">
+          <div class="ac-freight-total">
+            <span class="ac-card__eyebrow">Acumulado {{ data.selectedYear }}</span>
+            <strong class="ac-card__value">{{
+              data.summary.yearFreight | currency: 'MXN' : 'symbol-narrow' : '1.2-2'
+            }}</strong>
+          </div>
+          <div class="ac-freight-total">
+            <span class="ac-card__eyebrow"
+              >{{ freightMonthLabel(data.generatedAt) }} {{ data.selectedYear }}</span
+            >
+            <strong class="ac-card__value">{{
+              data.summary.monthFreight | currency: 'MXN' : 'symbol-narrow' : '1.2-2'
+            }}</strong>
+          </div>
+        </div>
+        <p class="ac-freight-note">
+          El flete forma parte de los ingresos de tus notas. Aquí puedes consultarlo por separado.
+        </p>
+      </section>
+    </div>
+
+    <div class="ac-section-heading">
+      <h2>Lo que mueve tu negocio</h2>
+      <span>Rankings de {{ data.selectedYear }}</span>
+    </div>
+    <div class="ac-rankings">
+      <!-- Top products -->
+      <div class="ac-panel">
+        <div class="ac-panel__header">
+          <div>
+            <h2 class="ac-panel__title">Productos destacados</h2>
+            <p class="ac-panel__hint">Tus 15 productos principales</p>
+          </div>
+          <div class="ac-sort-toggle" role="group" aria-label="Ordenar productos por">
+            <button
+              class="ac-sort-btn"
+              [class.ac-sort-btn--active]="productsSort() === 'qty'"
+              [attr.aria-pressed]="productsSort() === 'qty'"
+              type="button"
+              (click)="setSortProducts('qty')"
+            >
+              Cantidad
+            </button>
+            <button
+              class="ac-sort-btn"
+              [class.ac-sort-btn--active]="productsSort() === 'revenue'"
+              [attr.aria-pressed]="productsSort() === 'revenue'"
+              type="button"
+              (click)="setSortProducts('revenue')"
+            >
+              Ingresos
+            </button>
+          </div>
+        </div>
+
+        @let sorted = getSortedProducts(data.topProducts);
+        @let maxQty = getMaxQty(sorted);
+        @let maxRev = getMaxRevenue(sorted);
+
+        <div class="ac-h-chart">
+          @for (product of sorted; track product.name; let rank = $index) {
+            <div class="ac-h-chart__row">
+              <span class="ac-rank">{{ rank + 1 | number: '2.0-0' }}</span>
+              <span class="ac-h-chart__name" [title]="product.name">{{ product.name }}</span>
+              <div class="ac-h-chart__track">
+                <div
+                  class="ac-h-chart__fill"
+                  [style.width.%]="
+                    productsSort() === 'revenue'
+                      ? (product.totalRevenue / maxRev) * 100
+                      : (product.totalQty / maxQty) * 100
+                  "
+                ></div>
+              </div>
+              <span class="ac-h-chart__qty">
+                {{
+                  productsSort() === 'revenue'
+                    ? formatCurrency(product.totalRevenue)
+                    : product.totalQty
+                }}
+              </span>
+              <span class="ac-h-chart__rev">
+                {{
+                  productsSort() === 'revenue'
+                    ? product.totalQty + ' uds'
+                    : formatCurrency(product.totalRevenue)
+                }}
+              </span>
+            </div>
+          } @empty {
+            <p class="ac-empty">Aún no hay productos rentados en este periodo.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Top clients -->
+      <div class="ac-panel">
+        <div class="ac-panel__header">
+          <div>
+            <h2 class="ac-panel__title">Clientes destacados</h2>
+            <p class="ac-panel__hint">Los 10 clientes con más actividad</p>
+          </div>
+          <div class="ac-sort-toggle" role="group" aria-label="Ordenar clientes por">
             <button
               class="ac-sort-btn"
               [class.ac-sort-btn--active]="clientsSort() === 'orders'"
+              [attr.aria-pressed]="clientsSort() === 'orders'"
               type="button"
               (click)="setSortClients('orders')"
-            >Veces</button>
+            >
+              Notas
+            </button>
             <button
               class="ac-sort-btn"
               [class.ac-sort-btn--active]="clientsSort() === 'sales'"
+              [attr.aria-pressed]="clientsSort() === 'sales'"
               type="button"
               (click)="setSortClients('sales')"
-            >Ventas</button>
+            >
+              Ventas
+            </button>
           </div>
         </div>
 
@@ -180,41 +278,60 @@
         @let maxSales = getMaxSales(sortedClients);
 
         <div class="ac-h-chart">
-          @for (client of sortedClients; track client.code ?? client.name) {
+          @for (client of sortedClients; track client.code ?? client.name; let rank = $index) {
             <div class="ac-h-chart__row">
-              <span
+              <span class="ac-rank">{{ rank + 1 | number: '2.0-0' }}</span>
+              <button
+                type="button"
+                [disabled]="!client.code"
                 class="ac-h-chart__name"
                 [class.ac-h-chart__name--link]="!!client.code"
                 [title]="client.name"
                 (click)="goToClient(client)"
-              >{{ client.name }}</span>
+              >
+                {{ client.name }}
+              </button>
               <div class="ac-h-chart__track">
                 <div
                   class="ac-h-chart__fill"
-                  [style.width.%]="clientsSort() === 'sales'
-                    ? (client.totalSales / maxSales) * 100
-                    : (client.orderCount / maxOrders) * 100"
+                  [style.width.%]="
+                    clientsSort() === 'sales'
+                      ? (client.totalSales / maxSales) * 100
+                      : (client.orderCount / maxOrders) * 100
+                  "
                 ></div>
               </div>
               <span class="ac-h-chart__qty">
-                {{ clientsSort() === 'sales' ? formatCurrency(client.totalSales) : client.orderCount + ' notas' }}
+                {{
+                  clientsSort() === 'sales'
+                    ? formatCurrency(client.totalSales)
+                    : client.orderCount + ' notas'
+                }}
               </span>
               <span class="ac-h-chart__rev">
-                {{ clientsSort() === 'sales' ? client.orderCount + ' notas' : formatCurrency(client.totalSales) }}
+                {{
+                  clientsSort() === 'sales'
+                    ? client.orderCount + ' notas'
+                    : formatCurrency(client.totalSales)
+                }}
               </span>
             </div>
+          } @empty {
+            <p class="ac-empty">Aún no hay clientes con notas en este periodo.</p>
           }
         </div>
       </div>
-    }
+    </div>
 
     <!-- Top colors -->
     @if (data.topColors.length) {
       <div class="ac-panel">
         <div class="ac-panel__header">
           <div>
-            <h2 class="ac-panel__title">Colores mas rentados — manteleria</h2>
-            <p class="ac-panel__hint">Unidades de manteleria por color — {{ data.selectedYear }}</p>
+            <h2 class="ac-panel__title">La paleta de tus eventos</h2>
+            <p class="ac-panel__hint">
+              Colores más rentados en mantelería · {{ data.selectedYear }}
+            </p>
           </div>
         </div>
 
@@ -243,6 +360,5 @@
         </div>
       </div>
     }
-
   }
 </div>

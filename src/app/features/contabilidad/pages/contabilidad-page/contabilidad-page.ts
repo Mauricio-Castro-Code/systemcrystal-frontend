@@ -60,6 +60,10 @@ export class ContabilidadPageComponent implements OnInit {
     return Math.max(...points.map((p) => p.value), 1);
   }
 
+  hasMonthlySales(points: MonthlySalesPoint[]): boolean {
+    return points.some((point) => point.value > 0);
+  }
+
   setSortProducts(sort: ProductsSort): void {
     this.productsSort.set(sort);
   }
@@ -106,9 +110,17 @@ export class ContabilidadPageComponent implements OnInit {
 
   private static readonly MONTH_LABELS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
-  currentMonthLabel(): string {
-    const prev = new Date().getMonth() - 1; // mes anterior al actual (el último completo)
-    return ContabilidadPageComponent.MONTH_LABELS[prev < 0 ? 11 : prev];
+  async retry(): Promise<void> {
+    await this.loadOverview(this.overview()?.selectedYear);
+  }
+
+  comparisonPeriod(generatedAt: string): string {
+    const month = Number(generatedAt.slice(5, 7));
+    return month === 1 ? 'sin meses completos aún' : `Ene–${ContabilidadPageComponent.MONTH_LABELS[month - 2]}`;
+  }
+
+  freightMonthLabel(generatedAt: string): string {
+    return ContabilidadPageComponent.MONTH_LABELS[Number(generatedAt.slice(5, 7)) - 1];
   }
 
   private static readonly COLOR_HEX: Record<string, string> = {
@@ -175,7 +187,7 @@ export class ContabilidadPageComponent implements OnInit {
       const data = await this.accountingService.fetchOverview(year);
       this.overview.set(data);
     } catch {
-      this.error.set('No fue posible cargar la informacion contable.');
+      this.error.set('No fue posible cargar los datos. Intenta nuevamente.');
     } finally {
       this.loading.set(false);
     }
