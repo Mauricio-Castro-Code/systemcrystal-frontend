@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   OnInit,
   inject,
   signal,
@@ -34,6 +35,22 @@ export class ContabilidadPageComponent implements OnInit {
   readonly overview = signal<AccountingOverview | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly previousMonthlySales = signal<MonthlySalesPoint[] | null>(null);
+  readonly comparisonError = signal(false);
+  private loadRequest = 0;
+  readonly monthlyComparison = computed(() => {
+    const previous = new Map(this.previousMonthlySales()?.map((point) => [point.month, point.value]));
+    return (this.overview()?.monthlySales ?? []).map((point) => ({
+      ...point,
+      previousValue: this.previousMonthlySales() === null ? null : (previous.get(point.month) ?? 0),
+    }));
+  });
+  readonly monthlyComparisonMax = computed(() =>
+    Math.max(1, ...this.monthlyComparison().flatMap((point) => [point.value, point.previousValue ?? 0])),
+  );
+  readonly hasMonthlyComparison = computed(() =>
+    this.monthlyComparison().some((point) => point.value > 0 || (point.previousValue ?? 0) > 0),
+  );
   readonly productsSort = signal<ProductsSort>('qty');
   readonly clientsSort = signal<ClientsSort>('orders');
 
@@ -56,14 +73,6 @@ export class ContabilidadPageComponent implements OnInit {
     await this.router.navigate(['/clientes', client.code]);
   }
 
-  getMaxValue(points: MonthlySalesPoint[]): number {
-    return Math.max(...points.map((p) => p.value), 1);
-  }
-
-  hasMonthlySales(points: MonthlySalesPoint[]): boolean {
-    return points.some((point) => point.value > 0);
-  }
-
   setSortProducts(sort: ProductsSort): void {
     this.productsSort.set(sort);
   }
@@ -73,7 +82,7 @@ export class ContabilidadPageComponent implements OnInit {
     const sorted = [...products].sort((a, b) =>
       sort === 'revenue' ? b.totalRevenue - a.totalRevenue : b.totalQty - a.totalQty,
     );
-    return sorted.slice(0, 15);
+    return sorted.slice(0, 10);
   }
 
   getMaxQty(products: TopProduct[]): number {
@@ -181,15 +190,26 @@ export class ContabilidadPageComponent implements OnInit {
   }
 
   private async loadOverview(year?: number): Promise<void> {
+    const request = ++this.loadRequest;
     this.loading.set(true);
     this.error.set(null);
+    this.previousMonthlySales.set(null);
+    this.comparisonError.set(false);
     try {
       const data = await this.accountingService.fetchOverview(year);
+      if (request !== this.loadRequest) return;
       this.overview.set(data);
+      try {
+        const previous = await this.accountingService.fetchOverview(data.selectedYear - 1);
+        if (request !== this.loadRequest) return;
+        this.previousMonthlySales.set(previous.monthlySales);
+      } catch {
+        if (request === this.loadRequest) this.comparisonError.set(true);
+      }
     } catch {
-      this.error.set('No fue posible cargar los datos. Intenta nuevamente.');
+      if (request === this.loadRequest) this.error.set('No fue posible cargar los datos. Intenta nuevamente.');
     } finally {
-      this.loading.set(false);
+      if (request === this.loadRequest) this.loading.set(false);
     }
   }
 }

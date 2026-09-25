@@ -105,40 +105,85 @@
           <div>
             <h2 class="ac-panel__title">Evolución de ingresos</h2>
             <p class="ac-panel__hint">
-              Enero a diciembre de {{ data.selectedYear }} · Por fecha de evento
+              {{ data.selectedYear }} vs {{ data.selectedYear - 1 }} · Por fecha de evento
             </p>
           </div>
         </div>
 
-        @let maxVal = getMaxValue(data.monthlySales);
-
-        @if (hasMonthlySales(data.monthlySales)) {
+        <div class="ac-chart-legend" aria-label="Años comparados">
+          <span
+            ><i class="ac-chart-swatch" aria-hidden="true"></i>{{ data.selectedYear }} · Año
+            seleccionado</span
+          >
+          <span
+            ><i class="ac-chart-swatch ac-chart-swatch--previous" aria-hidden="true"></i
+            >{{ data.selectedYear - 1 }} · Año anterior</span
+          >
+        </div>
+        @if (comparisonError()) {
+          <p class="ac-chart-notice" role="status">
+            No se pudo cargar {{ data.selectedYear - 1 }}. Se muestran los datos de
+            {{ data.selectedYear }}.
+            <button type="button" class="ac-sort-btn" (click)="retry()">Reintentar</button>
+          </p>
+        }
+        @if (hasMonthlyComparison()) {
           <div
             class="ac-bar-chart"
             tabindex="0"
             role="region"
-            aria-label="Ingresos por mes. Desplaza horizontalmente para consultar todos los meses."
+            aria-label="Comparación de ingresos mensuales en MXN. Desplaza horizontalmente para consultar todos los meses."
           >
-            @for (point of data.monthlySales; track point.month) {
+            @for (point of monthlyComparison(); track point.month) {
               <div class="ac-bar-chart__col">
-                @if (point.value > 0) {
-                  <span class="ac-bar-chart__amount">{{ formatCurrency(point.value) }}</span>
-                } @else {
-                  <span class="ac-bar-chart__amount ac-bar-chart__amount--zero">—</span>
-                }
-                <div class="ac-bar-chart__track">
+                <div class="ac-bar-chart__amounts">
+                  <span
+                    class="ac-bar-chart__amount"
+                    [attr.aria-label]="
+                      point.label + ' ' + data.selectedYear + ': ' + formatCurrency(point.value)
+                    "
+                  >
+                    <i class="ac-chart-swatch" aria-hidden="true"></i
+                    >{{ formatCurrency(point.value) }}
+                  </span>
+                  <span
+                    class="ac-bar-chart__amount"
+                    [attr.aria-label]="
+                      point.label +
+                      ' ' +
+                      (data.selectedYear - 1) +
+                      ': ' +
+                      (point.previousValue === null
+                        ? 'No disponible'
+                        : formatCurrency(point.previousValue))
+                    "
+                  >
+                    <i class="ac-chart-swatch ac-chart-swatch--previous" aria-hidden="true"></i
+                    >{{
+                      point.previousValue === null ? 'N/D' : formatCurrency(point.previousValue)
+                    }}
+                  </span>
+                </div>
+                <div class="ac-bar-chart__track" aria-hidden="true">
                   <div
                     class="ac-bar-chart__fill"
-                    [style.height.%]="(point.value / maxVal) * 100"
+                    [style.height.%]="(point.value / monthlyComparisonMax()) * 100"
                     [class.ac-bar-chart__fill--empty]="point.value === 0"
                   ></div>
+                  @if (point.previousValue !== null) {
+                    <div
+                      class="ac-bar-chart__fill ac-bar-chart__fill--previous"
+                      [style.height.%]="(point.previousValue / monthlyComparisonMax()) * 100"
+                      [class.ac-bar-chart__fill--empty]="point.previousValue === 0"
+                    ></div>
+                  }
                 </div>
                 <span class="ac-bar-chart__label">{{ point.label }}</span>
               </div>
             }
           </div>
         } @else {
-          <p class="ac-empty">Aún no hay ingresos registrados para este año.</p>
+          <p class="ac-empty">No hay ingresos registrados en los años consultados.</p>
         }
       </div>
 
@@ -180,7 +225,7 @@
         <div class="ac-panel__header">
           <div>
             <h2 class="ac-panel__title">Productos destacados</h2>
-            <p class="ac-panel__hint">Tus 15 productos principales</p>
+            <p class="ac-panel__hint">Tus 10 productos principales</p>
           </div>
           <div class="ac-sort-toggle" role="group" aria-label="Ordenar productos por">
             <button

@@ -18,15 +18,17 @@
         >
       </header>
       <div class="order-agenda-board__list">
-        @for (order of group.orders; track order.id) {
+        @for (order of visibleOrders(group); track order.id) {
           <a
             class="order-agenda-board__row"
             [routerLink]="['/pedidos', order.id]"
             [attr.aria-label]="'Ver nota ' + order.id + ' de ' + order.clientName"
           >
             <span class="order-agenda-board__order-id">Nota {{ order.id }}</span>
-            <strong class="order-agenda-board__client">{{ order.clientName }}</strong>
-            <span class="order-agenda-board__address">{{
+            <strong class="order-agenda-board__client" [title]="order.clientName">{{
+              order.clientName
+            }}</strong>
+            <span class="order-agenda-board__address" [title]="order.address">{{
               order.address || 'Sin domicilio registrado'
             }}</span>
             <span class="order-agenda-board__footer">
@@ -47,6 +49,35 @@
           </div>
         }
       </div>
+      @if (group.orders.length > 0) {
+        <nav class="order-agenda-board__pagination" [attr.aria-label]="'Páginas de ' + group.title">
+          <span class="order-agenda-board__page-summary" aria-live="polite"
+            >{{ firstVisible(group) }}–{{ lastVisible(group) }} de
+            {{ group.orders.length }} notas</span
+          >
+          @if (pageCount(group) > 1) {
+            <div class="order-agenda-board__page-controls">
+              <button
+                type="button"
+                [disabled]="pageIndex(group) === 0"
+                (click)="changePage(group, -1)"
+                [attr.aria-label]="'Página anterior de ' + group.title"
+              >
+                ‹
+              </button>
+              <span>{{ pageIndex(group) + 1 }} / {{ pageCount(group) }}</span>
+              <button
+                type="button"
+                [disabled]="pageIndex(group) + 1 === pageCount(group)"
+                (click)="changePage(group, 1)"
+                [attr.aria-label]="'Página siguiente de ' + group.title"
+              >
+                ›
+              </button>
+            </div>
+          }
+        </nav>
+      }
     </article>
   }
 </section>
