@@ -21,6 +21,12 @@
         </div>
 
         <div class="qcard__body qcard__body--two-col">
+          <div class="field--full delivery-method" role="group" aria-label="Modalidad de entrega">
+            <mat-checkbox [checked]="clientPickup()" (change)="setClientPickup($event.checked)">
+              Cliente recoge y entrega
+            </mat-checkbox>
+            <span>{{ clientPickup() ? 'Sin cargo de flete' : 'Entrega a domicilio · se agrega flete' }}</span>
+          </div>
           <mat-form-field appearance="outline">
             <mat-label>Nombre Completo</mat-label>
             <input matInput formControlName="fullName" />
@@ -65,7 +71,7 @@
 
           <mat-form-field appearance="outline" class="field--full">
             <mat-label>Instrucciones de Entrega</mat-label>
-            <textarea matInput rows="3" formControlName="deliveryInstructions" placeholder="Ej. Lunes antes de las 12 PM, acceso lateral."></textarea>
+            <textarea matInput rows="3" [readonly]="clientPickup()" formControlName="deliveryInstructions" placeholder="Ej. Lunes antes de las 12 PM, acceso lateral."></textarea>
           </mat-form-field>
         </div>
       </div>
@@ -176,7 +182,6 @@
                     placeholder="Busca un producto del catalogo"
                     [matAutocomplete]="inventoryAutocomplete"
                     (input)="onEquipmentInput(row)"
-                    (blur)="onEquipmentBlur(row)"
                   />
                   <mat-autocomplete
                     #inventoryAutocomplete="matAutocomplete"
@@ -195,6 +200,11 @@
                     <mat-error>Selecciona un producto de la lista de inventario.</mat-error>
                   }
                 </mat-form-field>
+                @if (canManageInventory() && !row.controls.productId.value) {
+                  <button mat-button type="button" (click)="createInventoryProduct(row)">
+                    <mat-icon>add</mat-icon> Registrar este producto en inventario
+                  </button>
+                }
               </td>
             </ng-container>
 
@@ -240,6 +250,12 @@
         </div>
 
         <div class="equipment-table-footer">
+          @if (canManageInventory()) {
+            <button class="btn-add-row" mat-stroked-button type="button" (click)="createInventoryProduct()">
+              <mat-icon>inventory_2</mat-icon>
+              <span>Nuevo producto en inventario</span>
+            </button>
+          }
           <button class="btn-add-row" mat-stroked-button type="button" (click)="addEquipmentRow()">
             <mat-icon>add</mat-icon>
             <span>Agregar articulo</span>
@@ -283,7 +299,7 @@
           <mat-form-field appearance="outline">
             <mat-label>Flete</mat-label>
             <span matTextPrefix>$&nbsp;</span>
-            <input matInput type="number" min="0" formControlName="freight" />
+            <input matInput type="number" min="0" [readonly]="clientPickup()" formControlName="freight" />
           </mat-form-field>
 
           <div class="summary-row">
@@ -297,10 +313,18 @@
             <input matInput type="number" min="0" formControlName="securityDeposit" />
           </mat-form-field>
 
+          <div class="discount-options" role="group" aria-label="Aplicar descuento sobre el subtotal">
+            @for (percentage of discountPercentages; track percentage) {
+              <button mat-stroked-button type="button" (click)="applyDiscountPercentage(percentage)">
+                {{ percentage }}%
+              </button>
+            }
+          </div>
           <mat-form-field appearance="outline">
             <mat-label>Descuento</mat-label>
             <span matTextPrefix>$&nbsp;</span>
             <input matInput type="number" min="0" formControlName="discount" />
+            <mat-hint>Porcentaje sobre el subtotal. Puedes editar el monto.</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -394,36 +418,3 @@
 
   </form>
 </section>
-
-<!-- ── Modal de color / diseño ── -->
-@if (colorPrompt(); as prompt) {
-  <div class="color-backdrop" (click)="dismissColor()">
-    <div class="color-modal" (click)="$event.stopPropagation()">
-      <div class="color-modal__icon">🎨</div>
-      <h3 class="color-modal__title">Color o diseño</h3>
-      <p class="color-modal__desc">
-        <strong>{{ prompt.baseValue }}</strong> — ¿de qué color o diseño?
-      </p>
-
-      <input
-        class="color-modal__input"
-        type="text"
-        placeholder="Ej. Blanco, Azul rey, Flores rosas..."
-        [value]="colorInput()"
-        (input)="colorInput.set($any($event.target).value)"
-        (keydown.enter)="confirmColor()"
-        (keydown.escape)="dismissColor()"
-        autofocus
-      />
-
-      <div class="color-modal__actions">
-        <button class="color-modal__btn color-modal__btn--skip" type="button" (click)="dismissColor()">
-          Omitir
-        </button>
-        <button class="color-modal__btn color-modal__btn--confirm" type="button" (click)="confirmColor()">
-          Agregar ✓
-        </button>
-      </div>
-    </div>
-  </div>
-}

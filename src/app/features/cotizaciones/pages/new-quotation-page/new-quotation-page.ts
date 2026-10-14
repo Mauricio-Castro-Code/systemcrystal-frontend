@@ -21,7 +21,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { startWith } from 'rxjs';
+import { firstValueFrom, startWith } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from '../../../../core/services/auth.service';
+import { CreateInventoryDialogComponent } from '../../../inventario/components/create-inventory-dialog/create-inventory-dialog';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -145,6 +148,8 @@ const scheduleValidator: ValidatorFn = (
   providers: [{ provide: DateAdapter, useClass: CrystalDateAdapter }],
 })
 export class NewQuotationPageComponent {
+  readonly canManageInventory = inject(AuthService).isAdmin;
+  private readonly dialog = inject(MatDialog);
   private readonly formBuilder = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly inventoryService = inject(InventoryService);
@@ -236,21 +241,16 @@ export class NewQuotationPageComponent {
     totalEstimated: 0,
     balanceDue: 0,
   });
+  readonly discountPercentages = [5, 10, 15, 20];
+  readonly clientPickup = signal(false);
+  readonly pickupInstructions = 'CLIENTE RECOGE Y ENTREGA';
+  private homeDeliveryFreight = 0;
+  private homeDeliveryInstructions = '';
   readonly isSaving = signal(false);
   readonly freightZones = signal<FreightZone[]>([]);
   readonly freightSuggestion = signal<FreightZone | null>(null);
   private lastAutoAppliedZoneId: number | null = null;
   private suppressFreightAutoApply = false;
-
-  readonly colorPrompt = signal<{ row: EquipmentRowForm; baseValue: string } | null>(null);
-  readonly colorInput = signal('');
-
-  private readonly COLOR_TRIGGERS = [
-    'mantel',
-    'cubremantel',
-    'camino',
-    'servilleta de tela',
-  ];
 
   readonly quotationForm = this.formBuilder.group({
     clientInfo: this.formBuilder.group({
@@ -586,10 +586,6 @@ export class NewQuotationPageComponent {
     row.controls.unitPrice.setValue(inventoryItem.unitPrice);
     row.controls.productId.setValue(inventoryItem.id);
 
-    if (this.requiresColorInput(inventoryItem.name)) {
-      this.colorInput.set('');
-      this.colorPrompt.set({ row, baseValue: inventoryItem.name });
-    }
   }
 
   onEquipmentInput(row: EquipmentRowForm): void {
@@ -610,37 +606,27 @@ export class NewQuotationPageComponent {
       .slice(0, 8);
   }
 
-  onEquipmentBlur(row: EquipmentRowForm): void {
-    const value = (row.controls.equipment.value ?? '').trim();
-    if (!value || !this.requiresColorInput(value)) return;
-    if (this.alreadyHasColor(value)) return;
-    this.colorInput.set('');
-    this.colorPrompt.set({ row, baseValue: value });
-  }
-
-  confirmColor(): void {
-    const prompt = this.colorPrompt();
-    if (!prompt) return;
-    const color = this.colorInput().trim();
-    if (color) {
-      prompt.row.controls.equipment.setValue(`${prompt.baseValue} - ${color}`);
+  async createInventoryProduct(row?: EquipmentRowForm): Promise<void> {
+    if (!this.canManageInventory()) return;
+    const ref = this.dialog.open<CreateInventoryDialogComponent, { name: string; unitPrice: number }, InventoryItem>(CreateInventoryDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+      data: { name: row?.controls.equipment.value ?? '', unitPrice: row?.controls.unitPrice.value ?? 0 },
+    });
+    const item = await firstValueFrom(ref.afterClosed());
+    if (!item) return;
+    let targetRow = row;
+    if (!targetRow) {
+      targetRow = this.equipmentRows.controls.find(candidate => !candidate.controls.equipment.value.trim());
+      if (!targetRow) {
+        this.addEquipmentRow();
+        targetRow = this.equipmentRows.at(this.equipmentRows.length - 1);
+      }
     }
-    this.colorPrompt.set(null);
-    this.colorInput.set('');
-  }
-
-  dismissColor(): void {
-    this.colorPrompt.set(null);
-    this.colorInput.set('');
-  }
-
-  private requiresColorInput(equipment: string): boolean {
-    const normalized = equipment.toLowerCase().trim();
-    return this.COLOR_TRIGGERS.some((trigger) => normalized.includes(trigger));
-  }
-
-  private alreadyHasColor(equipment: string): boolean {
-    return equipment.includes(' - ');
+    if (!this.equipmentRows.controls.includes(targetRow)) return;
+    targetRow.patchValue({ equipment: item.name, unitPrice: item.unitPrice, productId: item.id, productLinkDirty: false });
+    this.quotationForm.markAsDirty();
+    this.notifications.success(`Producto registrado y agregado: ${item.name}.`);
   }
 
   private async loadFreightZones(): Promise<void> {
@@ -652,7 +638,38 @@ export class NewQuotationPageComponent {
     }
   }
 
+  applyDiscountPercentage(percentage: number): void {
+    const amount = this.roundCurrency(this.summary().subtotal * percentage / 100);
+    this.logisticsForm.controls.discount.setValue(amount);
+    this.logisticsForm.controls.discount.markAsDirty();
+  }
+
+  setClientPickup(pickup: boolean): void {
+    if (pickup === this.clientPickup()) return;
+    if (pickup) {
+      this.homeDeliveryFreight = Number(this.logisticsForm.controls.freight.value ?? 0);
+      this.homeDeliveryInstructions = this.clientInfoForm.controls.deliveryInstructions.value ?? '';
+    }
+    this.clientPickup.set(pickup);
+    this.lastAutoAppliedZoneId = null;
+    this.logisticsForm.controls.freight.setValue(pickup ? 0 : this.homeDeliveryFreight);
+    this.clientInfoForm.controls.deliveryInstructions.setValue(
+      pickup ? this.pickupInstructions : this.homeDeliveryInstructions,
+    );
+    this.quotationForm.markAsDirty();
+  }
+
+  private restoreDeliveryMethod(): void {
+    const pickup = this.clientInfoForm.controls.deliveryInstructions.value === this.pickupInstructions;
+    this.clientPickup.set(pickup);
+    if (pickup) this.logisticsForm.controls.freight.setValue(0);
+  }
+
   private updateFreightSuggestion(): void {
+    if (this.clientPickup()) {
+      this.freightSuggestion.set(null);
+      return;
+    }
     const neighborhood = (this.clientInfoForm.controls.neighborhood.value ?? '').toLowerCase().trim();
     if (!neighborhood || neighborhood.length < 3) {
       this.freightSuggestion.set(null);
@@ -744,7 +761,7 @@ export class NewQuotationPageComponent {
         return runningTotal + Number(row.controls.total.getRawValue() ?? 0);
       }, 0),
     );
-    const freight = this.roundCurrency(Number(this.logisticsForm.controls.freight.value ?? 0));
+    const freight = this.clientPickup() ? 0 : this.roundCurrency(Number(this.logisticsForm.controls.freight.value ?? 0));
     const applyTax = !!this.logisticsForm.controls.applyTax.value;
     const taxAmount = applyTax
       ? this.roundCurrency((subtotal + freight) * 0.16)
@@ -798,7 +815,7 @@ export class NewQuotationPageComponent {
         return runningTotal + item.total;
       }, 0),
     );
-    const freight = this.roundCurrency(Number(logistics.freight ?? 0));
+    const freight = this.clientPickup() ? 0 : this.roundCurrency(Number(logistics.freight ?? 0));
     const applyTax = !!logistics.applyTax;
     const taxAmount = applyTax
       ? this.roundCurrency((subtotal + freight) * 0.16)
@@ -819,7 +836,9 @@ export class NewQuotationPageComponent {
         address: String(clientInfo.address ?? '').trim(),
         neighborhood: String(clientInfo.neighborhood ?? '').trim(),
         reference: String(clientInfo.reference ?? '').trim(),
-        deliveryInstructions: String(clientInfo.deliveryInstructions ?? '').trim(),
+        deliveryInstructions: this.clientPickup()
+          ? this.pickupInstructions
+          : String(clientInfo.deliveryInstructions ?? '').trim(),
       },
       schedule: {
         deliveryDate: this.serializeDate(schedule.deliveryDate),
@@ -857,6 +876,9 @@ export class NewQuotationPageComponent {
   }
 
   private applyQuotationToFormsInternal(quotation: QuotationNote): void {
+    this.clientPickup.set(false);
+    this.homeDeliveryFreight = 0;
+    this.homeDeliveryInstructions = '';
     this.clientInfoForm.patchValue({
       fullName: quotation.clientInfo.fullName,
       phoneNumber: quotation.clientInfo.phoneNumber,
@@ -881,6 +903,7 @@ export class NewQuotationPageComponent {
       advancePayment: quotation.summary.advancePayment,
     });
 
+    this.restoreDeliveryMethod();
     this.equipmentRows.clear();
 
     if (quotation.equipmentItems.length === 0) {
@@ -1010,6 +1033,7 @@ export class NewQuotationPageComponent {
         this.suppressFreightAutoApply = false;
       }
 
+      this.restoreDeliveryMethod();
       this.actionMessage.set(
         `Se cargaron los datos de ${clientProfile.clientName} para iniciar la nueva cotizacion.`,
       );
