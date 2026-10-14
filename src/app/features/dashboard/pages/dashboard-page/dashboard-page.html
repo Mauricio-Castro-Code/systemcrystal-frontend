@@ -66,7 +66,7 @@
         <p>Encuentra las notas con entrega programada dentro de un periodo.</p>
       </div>
     </div>
-    <form class="dashboard-page__range-controls" (ngSubmit)="applyDeliveryRange()">
+    <form class="dashboard-page__range-controls" [formGroup]="deliveryRangeForm" (ngSubmit)="applyDeliveryRange()">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Desde</mat-label>
         <input

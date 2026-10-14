@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
@@ -48,6 +48,10 @@ export class DashboardPageComponent {
   readonly deliveryRange = this.dashboardService.deliveryRange;
   readonly deliveryDateFromControl = new FormControl<Date | null>(this.buildRelativeDate(0));
   readonly deliveryDateToControl = new FormControl<Date | null>(this.buildRelativeDate(5));
+  readonly deliveryRangeForm = new FormGroup({
+    from: this.deliveryDateFromControl,
+    to: this.deliveryDateToControl,
+  });
   readonly deliveryRangeErrorMessage = signal('');
   readonly deliveryRangeGroup = computed(() => {
     const deliveryRange = this.deliveryRange();
