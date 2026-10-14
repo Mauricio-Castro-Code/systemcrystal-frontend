@@ -162,9 +162,7 @@
   align-items: flex-start;
   gap: 0.65rem;
 
-  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-    display: none;
-  }
+  flex-wrap: wrap;
 }
 
 .rcd__add-concepto {
@@ -316,3 +314,9 @@
   opacity: 0.5;
   cursor: default;
 }
+
+.rcd__accounting-note { color: var(--of-text-muted); font-size: 0.85rem; }
+.rcd__deposit { display: grid; gap: 0.5rem; }
+
+.rcd__cost-concepto { min-width: 0; display: grid; gap: 0.25rem; }
+.rcd__cost-concepto mat-form-field { width: 100%; }

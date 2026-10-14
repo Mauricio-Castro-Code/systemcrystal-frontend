@@ -11,9 +11,10 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 
-import { OrderRecord } from '../../../features/pedidos/models/order-record.model';
+import { EXPENSE_CATEGORIES, ExpenseCategory, OrderRecord } from '../../../features/pedidos/models/order-record.model';
 import { OrderRecordsService } from '../../../core/services/order-records.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -29,6 +30,7 @@ import { AuthService } from '../../../core/services/auth.service';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatSelectModule,
   ],
   templateUrl: './registro-costos-dialog.html',
   styleUrl: './registro-costos-dialog.scss',
@@ -42,9 +44,16 @@ export class RegistroCostosDialogComponent {
 
   readonly record = signal<OrderRecord>(this.data);
 
+  readonly categories = EXPENSE_CATEGORIES;
+  readonly categoryControl = new FormControl<ExpenseCategory | null>(null, Validators.required);
+  readonly retainedDepositControl = new FormControl(Number(this.data.retainedDeposit ?? 0), {
+    nonNullable: true,
+    validators: [Validators.required, Validators.min(0), Validators.max(this.data.quotation.summary.securityDeposit)],
+  });
+  readonly isSavingDeposit = signal(false);
   readonly conceptoControl = new FormControl('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.minLength(1)],
+    validators: [Validators.maxLength(220)],
   });
   readonly montoControl = new FormControl<number | null>(null, [
     Validators.required,
@@ -56,15 +65,41 @@ export class RegistroCostosDialogComponent {
   readonly isTogglingClose = signal(false);
   readonly errorMessage = signal('');
 
-  readonly utility = computed(
-    () => this.record().totalEstimated - this.record().totalExtraCosts,
-  );
+  readonly revenue = computed(() => {
+    const record = this.record();
+    return record.accountingRevenue ?? (record.totalEstimated - record.quotation.summary.securityDeposit
+      - record.quotation.summary.discount + Number(record.retainedDeposit ?? 0));
+  });
+  readonly utility = computed(() => this.revenue() - this.record().totalExtraCosts);
+
+  categoryLabel(category?: string): string {
+    return this.categories.find(option => option.value === category)?.label ?? 'Sin clasificar';
+  }
+
+  async saveRetainedDeposit(): Promise<void> {
+    this.retainedDepositControl.markAsTouched();
+    if (this.retainedDepositControl.invalid || this.isSavingDeposit()) return;
+    this.isSavingDeposit.set(true);
+    this.errorMessage.set('');
+    try {
+      this.record.set(await this.orderRecordsService.updateRetainedDeposit(
+        this.record().orderId, this.retainedDepositControl.value,
+      ));
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'No fue posible guardar el depósito.');
+    } finally {
+      this.isSavingDeposit.set(false);
+    }
+  }
 
   async addCost(): Promise<void> {
-    const concepto = this.conceptoControl.value.trim();
+    if (this.isSaving()) return;
+    const categoria = this.categoryControl.value;
+    const concepto = this.conceptoControl.value.trim() || this.categoryLabel(categoria ?? undefined);
     const monto = this.montoControl.value;
 
-    if (!concepto || !monto || monto <= 0) {
+    if (!categoria || this.conceptoControl.invalid || this.montoControl.invalid) {
+      this.categoryControl.markAsTouched();
       this.conceptoControl.markAsTouched();
       this.montoControl.markAsTouched();
       return;
@@ -75,14 +110,29 @@ export class RegistroCostosDialogComponent {
 
     try {
       const updated = await this.orderRecordsService.addExtraCost(this.record().orderId, {
+        categoria,
         concepto,
-        monto,
+        monto: monto!,
       });
       this.record.set(updated);
+      this.categoryControl.reset();
       this.conceptoControl.reset();
       this.montoControl.reset();
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'No fue posible agregar el costo.');
+    } finally {
+      this.isSaving.set(false);
+    }
+  }
+
+  async categorizeCost(costId: number, category: ExpenseCategory): Promise<void> {
+    if (this.isSaving()) return;
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    try {
+      this.record.set(await this.orderRecordsService.categorizeExtraCost(this.record().orderId, costId, category));
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'No fue posible cambiar la categoría.');
     } finally {
       this.isSaving.set(false);
     }

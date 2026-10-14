@@ -1,6 +1,15 @@
 import { QuotationNote } from '../../../core/models/quotation-note.model';
 
+export const EXPENSE_CATEGORIES = [
+  { value: 'SUBARRENDOS', label: 'Subarrendos' },
+  { value: 'MESEROS', label: 'Meseros' },
+  { value: 'CARPAS', label: 'Carpas' },
+  { value: 'OTROS', label: 'Otros' },
+] as const;
+export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number]['value'];
+
 export interface ExtraCost {
+  categoria?: ExpenseCategory | 'UNCLASSIFIED';
   id: number;
   concepto: string;
   monto: number;
@@ -52,6 +61,8 @@ export interface OrderRecord {
   officeClosed: boolean;
   extraCosts: ExtraCost[];
   totalExtraCosts: number;
+  retainedDeposit?: number;
+  accountingRevenue?: number;
   assignedDriver: AssignedDriver | null;
   quotation: QuotationNote;
   workflowHistory?: OrderWorkflowEventRecord[];

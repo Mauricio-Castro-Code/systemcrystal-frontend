@@ -45,6 +45,7 @@ export interface AccountingOverview {
   availableYears: number[];
   summary: AccountingSummary;
   monthlySales: MonthlySalesPoint[];
+  expensesByCategory?: { category: string; label: string; total: number }[];
   topProducts: TopProduct[];
   topColors: TopColor[];
   topClients: TopClient[];

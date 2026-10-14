@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../config/api.config';
 import { QuotationNote } from '../models/quotation-note.model';
 import { AuthService } from './auth.service';
 import {
+  ExpenseCategory,
   OrderBillingStatus,
   OrderOperationalStatus,
   OrderRecord,
@@ -317,7 +318,7 @@ export class OrderRecordsService {
 
   async addExtraCost(
     orderId: string,
-    cost: { concepto: string; monto: number },
+    cost: { categoria: ExpenseCategory; concepto: string; monto: number },
   ): Promise<OrderRecord> {
     const headers = this.requireAuthHeaders();
 
@@ -329,6 +330,30 @@ export class OrderRecordsService {
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible agregar el costo.');
       throw new Error(message);
+    }
+  }
+
+  async updateRetainedDeposit(orderId: string, retainedDeposit: number): Promise<OrderRecord> {
+    try {
+      const updated = await firstValueFrom(this.http.patch<OrderRecord>(
+        `${API_BASE_URL}/orders/${orderId}/costs/`, { retainedDeposit },
+        { headers: this.requireAuthHeaders() },
+      ));
+      return this.upsertOrderRecord(updated);
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible guardar el depósito retenido.'));
+    }
+  }
+
+  async categorizeExtraCost(orderId: string, costId: number, categoria: ExpenseCategory): Promise<OrderRecord> {
+    try {
+      const updated = await firstValueFrom(this.http.patch<OrderRecord>(
+        `${API_BASE_URL}/orders/${orderId}/costs/${costId}/`, { categoria },
+        { headers: this.requireAuthHeaders() },
+      ));
+      return this.upsertOrderRecord(updated);
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible cambiar la categoría.'));
     }
   }
 

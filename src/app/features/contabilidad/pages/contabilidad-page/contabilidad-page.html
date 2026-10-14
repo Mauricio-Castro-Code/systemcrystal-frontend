@@ -215,6 +215,22 @@
       </section>
     </div>
 
+    <section class="ac-panel" aria-labelledby="expenses-title">
+      <div class="ac-panel__header">
+        <div>
+          <h2 id="expenses-title" class="ac-panel__title">Gastos por categoría · {{ data.selectedYear }}</h2>
+          <p class="ac-panel__hint">Por fecha del evento. Los gastos anteriores conservan su detalle en “Sin clasificar”.</p>
+        </div>
+      </div>
+      @for (expense of data.expensesByCategory ?? []; track expense.category) {
+        <div class="ac-expense-row">
+          <span>{{ expense.label }}</span>
+          <strong>{{ expense.total | currency: 'MXN':'symbol-narrow':'1.2-2' }}</strong>
+        </div>
+      }
+      <p class="ac-panel__hint">Los ingresos descuentan el descuento de cada nota y excluyen el depósito, salvo el monto retenido.</p>
+    </section>
+
     <div class="ac-section-heading">
       <h2>Lo que mueve tu negocio</h2>
       <span>Rankings de {{ data.selectedYear }}</span>
