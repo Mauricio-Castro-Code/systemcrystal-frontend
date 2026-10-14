@@ -108,4 +108,44 @@ describe('Quotation form', () => {
     expect(openDialog).not.toHaveBeenCalled();
   });
 
+  it('only offers registration after Enter on a nonempty unknown product and hides it when edited', async () => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[formControlName="equipment"]');
+    const registrationButton = () => Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find(button => (button as HTMLButtonElement).textContent?.includes('Registrar en Inventario'));
+    expect(fixture.nativeElement.textContent).not.toContain('Nuevo producto en inventario');
+    expect(registrationButton()).toBeUndefined();
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    await fixture.whenStable();
+    expect(registrationButton()).toBeUndefined();
+    input.value = 'Producto nuevo';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(registrationButton()).toBeUndefined();
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    input.dispatchEvent(enter);
+    await fixture.whenStable();
+    expect(enter.defaultPrevented).toBe(true);
+    expect(registrationButton()).toBeDefined();
+    input.value = 'Otro producto';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(registrationButton()).toBeUndefined();
+  });
+
+  it('links an exact inventory match on Enter instead of offering registration', async () => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const item = { id: 7, name: 'Mantel azul', quantity: 20, unitPrice: 80, category: 'MANTELERIA' as const };
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[formControlName="equipment"]');
+    input.value = 'mantel azul';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance.equipmentRows.at(0).controls.productId.value).toBe(7);
+    expect(fixture.nativeElement.textContent).not.toContain('Registrar en Inventario');
+  });
+
 });

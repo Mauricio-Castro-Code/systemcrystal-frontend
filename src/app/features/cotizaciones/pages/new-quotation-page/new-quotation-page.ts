@@ -32,6 +32,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
+  MatAutocompleteTrigger,
 } from '@angular/material/autocomplete';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -207,6 +208,7 @@ export class NewQuotationPageComponent {
       : 'Captura la informacion del cliente, programa las fechas y arma el equipo requerido para generar una cotizacion formal.';
   readonly displayedColumns = ['quantity', 'equipment', 'unitPrice', 'total', 'actions'];
   readonly actionMessage = signal('');
+  private readonly registrationCandidates = signal(new Set<EquipmentRowForm>());
   readonly inventoryItems = this.inventoryService.items;
   readonly inventoryLoading = this.inventoryService.isLoading;
   readonly inventoryErrorMessage = this.inventoryService.errorMessage;
@@ -588,7 +590,35 @@ export class NewQuotationPageComponent {
 
   }
 
+  onEquipmentEnter(row: EquipmentRowForm, event: Event, trigger: MatAutocompleteTrigger): void {
+    if (event instanceof KeyboardEvent && event.isComposing) return;
+    event.preventDefault();
+    if (trigger.panelOpen && trigger.activeOption) return;
+    const name = row.controls.equipment.value.trim();
+    if (!name || row.controls.productId.value || this.inventoryLoading() || this.inventoryErrorMessage()) return;
+    const existing = this.inventoryService.findByName(name);
+    if (existing) {
+      row.patchValue({ equipment: existing.name, productId: existing.id, unitPrice: existing.unitPrice });
+      return;
+    }
+    if (!this.canManageInventory()) return;
+    trigger.closePanel();
+    this.registrationCandidates.update(rows => new Set(rows).add(row));
+  }
+
+  canRegisterInventoryProduct(row: EquipmentRowForm): boolean {
+    return this.canManageInventory() && this.registrationCandidates().has(row)
+      && !!row.controls.equipment.value.trim() && !row.controls.productId.value
+      && !this.inventoryService.findByName(row.controls.equipment.value)
+      && !this.inventoryLoading() && !this.inventoryErrorMessage();
+  }
+
   onEquipmentInput(row: EquipmentRowForm): void {
+    this.registrationCandidates.update(rows => {
+      const updated = new Set(rows);
+      updated.delete(row);
+      return updated;
+    });
     row.controls.productLinkDirty.setValue(true);
     row.controls.productId.setValue(null);
   }
