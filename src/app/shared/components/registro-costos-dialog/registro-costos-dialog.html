@@ -84,7 +84,7 @@
 
   <!-- Agregar nuevo costo -->
   <div class="rcd__add-form">
-    <mat-form-field appearance="outline" class="rcd__add-concepto">
+    <mat-form-field appearance="outline" class="rcd__add-category">
       <mat-label>Categoría de gasto</mat-label>
       <mat-select [formControl]="categoryControl">
         @for (category of categories; track category.value) {
@@ -92,15 +92,6 @@
         }
       </mat-select>
       <mat-error>Selecciona una categoría.</mat-error>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="rcd__add-concepto">
-      <mat-label>Detalle (opcional)</mat-label>
-      <input
-        matInput
-        [formControl]="conceptoControl"
-        placeholder="Proveedor o descripción"
-      />
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="rcd__add-monto">

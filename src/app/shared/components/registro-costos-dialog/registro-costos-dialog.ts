@@ -51,10 +51,6 @@ export class RegistroCostosDialogComponent {
     validators: [Validators.required, Validators.min(0), Validators.max(this.data.quotation.summary.securityDeposit)],
   });
   readonly isSavingDeposit = signal(false);
-  readonly conceptoControl = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.maxLength(220)],
-  });
   readonly montoControl = new FormControl<number | null>(null, [
     Validators.required,
     Validators.min(0.01),
@@ -95,12 +91,10 @@ export class RegistroCostosDialogComponent {
   async addCost(): Promise<void> {
     if (this.isSaving()) return;
     const categoria = this.categoryControl.value;
-    const concepto = this.conceptoControl.value.trim() || this.categoryLabel(categoria ?? undefined);
     const monto = this.montoControl.value;
 
-    if (!categoria || this.conceptoControl.invalid || this.montoControl.invalid) {
+    if (!categoria || this.montoControl.invalid) {
       this.categoryControl.markAsTouched();
-      this.conceptoControl.markAsTouched();
       this.montoControl.markAsTouched();
       return;
     }
@@ -111,12 +105,11 @@ export class RegistroCostosDialogComponent {
     try {
       const updated = await this.orderRecordsService.addExtraCost(this.record().orderId, {
         categoria,
-        concepto,
+        concepto: this.categoryLabel(categoria),
         monto: monto!,
       });
       this.record.set(updated);
       this.categoryControl.reset();
-      this.conceptoControl.reset();
       this.montoControl.reset();
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'No fue posible agregar el costo.');

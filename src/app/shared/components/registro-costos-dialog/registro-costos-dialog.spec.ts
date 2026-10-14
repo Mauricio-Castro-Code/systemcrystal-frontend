@@ -30,7 +30,7 @@ describe('RegistroCostosDialogComponent', () => {
     }).compileComponents();
   });
 
-  it('requires a category and sends the standardized code separately from the detail', async () => {
+  it('requires a category and saves its label as the concept without a detail field', async () => {
     const fixture = TestBed.createComponent(RegistroCostosDialogComponent);
     await fixture.whenStable();
     const page = fixture.componentInstance;
@@ -38,10 +38,9 @@ describe('RegistroCostosDialogComponent', () => {
     await page.addCost();
     expect(addExtraCost).not.toHaveBeenCalled();
     page.categoryControl.setValue('CARPAS');
-    page.conceptoControl.setValue('Proveedor A');
     await page.addCost();
     expect(addExtraCost).toHaveBeenCalledExactlyOnceWith('1-26', {
-      categoria: 'CARPAS', concepto: 'Proveedor A', monto: 125,
+      categoria: 'CARPAS', concepto: 'Carpas', monto: 125,
     });
     expect(page.categoryControl.value).toBeNull();
   });
