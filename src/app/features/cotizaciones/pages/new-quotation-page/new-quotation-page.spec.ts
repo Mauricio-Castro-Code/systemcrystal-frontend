@@ -3,7 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
+import { provideRouter, ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NewQuotationPageComponent } from './new-quotation-page';
 import { InventoryService } from '../../../../core/services/inventory.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
@@ -37,6 +37,45 @@ describe('Quotation form', () => {
           ClientDirectoryService, ConfirmService].map(provide => ({ provide, useValue: {} })),
       ],
     }).compileComponents();
+  });
+
+  it('opens a quotation copy as a new editable draft without changing or saving the source', async () => {
+    const quotation = {
+      clientInfo: { fullName: 'Ana', phoneNumber: '5512345678', birthDate: null,
+        address: 'Calle 1', neighborhood: 'Centro', reference: '', deliveryInstructions: 'Portón' },
+      schedule: { deliveryDate: '2026-11-15', eventDate: '2026-11-16', collectionDate: '2026-11-17' },
+      logistics: { freight: 200, securityDeposit: 100, applyTax: false },
+      equipmentItems: [{ quantity: 2, equipment: 'Silla', unitPrice: 50, total: 100 }],
+      summary: { subtotal: 100, freight: 200, taxAmount: 0, securityDeposit: 100,
+        discount: 10, advancePayment: 0, totalEstimated: 400, balanceDue: 390 },
+    };
+    const original = structuredClone(quotation);
+    const createDraft = vi.fn().mockResolvedValue({ quotationId: '002COTI-26' });
+    TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: {
+      paramMap: convertToParamMap({}), queryParamMap: convertToParamMap({ duplicarCotizacionDe: '001COTI-26' }),
+    } } });
+    TestBed.overrideProvider(QuotationRecordsService, { useValue: {
+      loadQuotationById: vi.fn().mockResolvedValue({ quotationId: '001COTI-26', quotation }), createDraft,
+    } });
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    expect(page.clientInfoForm.controls.fullName.value).toBe('Ana');
+    expect(page.scheduleForm.controls.eventDate.value).toEqual(new Date(2026, 10, 16));
+    expect(page.equipmentRows.at(0).controls.quantity.value).toBe(2);
+    expect(page.summary().discount).toBe(10);
+    expect(page.isEditMode).toBe(false);
+    expect(page.quotationForm.dirty).toBe(true);
+    page.clientInfoForm.controls.fullName.setValue('Copia');
+    expect(quotation).toEqual(original);
+    expect(createDraft).not.toHaveBeenCalled();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    await page.saveDraft();
+    expect(createDraft).toHaveBeenCalledWith({ quotation: expect.objectContaining({
+      clientInfo: expect.objectContaining({ fullName: 'Copia' }),
+    }) });
+    expect(navigate).toHaveBeenCalledWith(['/cotizaciones', '002COTI-26']);
+    expect(quotation).toEqual(original);
   });
 
   it('applies each percentage to equipment only and allows a manual amount', async () => {

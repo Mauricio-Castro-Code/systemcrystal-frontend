@@ -72,6 +72,12 @@ export class QuotationNotePageComponent {
     await this.router.navigate(['/cotizaciones', this.quotationId, 'editar']);
   }
 
+  async duplicateQuotation(): Promise<void> {
+    await this.router.navigate(['/cotizaciones/nueva'], {
+      queryParams: { duplicarCotizacionDe: this.quotationId },
+    });
+  }
+
   async confirmOrder(): Promise<void> {
     const folioSelection = await this.folioStrategyService.resolve();
 

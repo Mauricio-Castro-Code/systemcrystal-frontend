@@ -26,6 +26,10 @@
             <mat-icon>edit</mat-icon>
             Editar cotización
           </button>
+          <button mat-stroked-button type="button" [disabled]="isSubmitting()" (click)="duplicateQuotation()">
+            <mat-icon>content_copy</mat-icon>
+            Duplicar cotización
+          </button>
           <button
             mat-raised-button
             type="button"

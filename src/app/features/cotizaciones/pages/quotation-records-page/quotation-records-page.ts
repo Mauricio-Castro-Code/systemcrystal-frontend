@@ -7,12 +7,13 @@ import {
   ViewChild,
   effect,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { startWith } from 'rxjs';
+import { interval, startWith } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -56,6 +57,8 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
 
+  private readonly currentDate = signal(new Date());
+
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly displayedColumns = ['quotationId', 'clientName', 'date', 'actions'];
   readonly isLoading = this.quotationRecordsService.isLoading;
@@ -72,8 +75,19 @@ export class QuotationRecordsPageComponent implements AfterViewInit {
     };
 
     effect(() => {
-      this.dataSource.data = this.quotationRecordsService.quotationRecords();
+      const today = this.currentDate();
+      this.dataSource.data = this.quotationRecordsService.quotationRecords().filter((record) => {
+        const eventDate = record.quotation.schedule.eventDate;
+        if (!eventDate) return true;
+        const [year, month, day] = eventDate.split('-').map(Number);
+        const expiresAt = new Date(year, month - 1, day + 3);
+        return Number.isNaN(expiresAt.getTime()) || today < expiresAt;
+      });
     });
+
+    interval(60_000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.currentDate.set(new Date()));
 
     this.searchControl.valueChanges
       .pipe(startWith(''), takeUntilDestroyed(this.destroyRef))

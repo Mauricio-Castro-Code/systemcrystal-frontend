@@ -187,6 +187,7 @@ export class NewQuotationPageComponent {
     };
   })();
   // Duplicar: prellena la NUEVA cotización con la info de una nota existente.
+  readonly duplicateFromQuotationId = this.route.snapshot.queryParamMap.get('duplicarCotizacionDe');
   readonly duplicateFromOrderId = this.route.snapshot.queryParamMap.get('duplicarDe');
   readonly isEditingOrder = this.editingOrderId !== null;
   readonly isEditingQuotation = this.editingQuotationId !== null;
@@ -291,7 +292,7 @@ export class NewQuotationPageComponent {
 
     if (this.isEditMode) {
       void this.loadRecordForEditing();
-    } else if (this.duplicateFromOrderId) {
+    } else if (this.duplicateFromOrderId || this.duplicateFromQuotationId) {
       void this.loadRecordForDuplication();
     } else if (this.selectedClientId) {
       void this.loadSelectedClientPrefill();
@@ -949,27 +950,29 @@ export class NewQuotationPageComponent {
   }
 
   private async loadRecordForDuplication(): Promise<void> {
-    if (!this.duplicateFromOrderId) {
+    if (!this.duplicateFromOrderId && !this.duplicateFromQuotationId) {
       return;
     }
 
+    const sourceLabel = this.duplicateFromQuotationId ? 'cotización' : 'nota';
     try {
-      const order = await this.orderRecordsService.loadOrderById(this.duplicateFromOrderId);
+      const record = this.duplicateFromQuotationId
+        ? await this.quotationRecordsService.loadQuotationById(this.duplicateFromQuotationId)
+        : await this.orderRecordsService.loadOrderById(this.duplicateFromOrderId!);
 
-      if (!order?.quotation) {
-        this.actionMessage.set('No se encontró la nota a duplicar.');
+      if (!record?.quotation) {
+        this.actionMessage.set(`No se encontró la ${sourceLabel} a duplicar.`);
         return;
       }
 
-      this.applyQuotationToForms(order.quotation);
-      // Dejamos el formulario "sucio": es una cotización nueva por guardar.
+      this.applyQuotationToForms(record.quotation);
       this.quotationForm.markAsDirty();
       this.actionMessage.set(
-        `Se copió la información de la nota ${order.orderId}. Ajusta lo que necesites y guarda la nueva cotización.`,
+        `Se copió la información de la ${sourceLabel} ${this.duplicateFromQuotationId ?? this.duplicateFromOrderId}. Ajusta lo que necesites y guarda la nueva cotización.`,
       );
     } catch (error) {
       this.actionMessage.set(
-        this.resolveActionError(error, 'No se pudo cargar la nota a duplicar.'),
+        this.resolveActionError(error, `No se pudo cargar la ${sourceLabel} a duplicar.`),
       );
     }
   }
