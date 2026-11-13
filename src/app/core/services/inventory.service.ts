@@ -10,6 +10,8 @@ import {
   InventoryCategory,
   InventoryItem,
   InventoryItemPayload,
+  InventoryImportPreview,
+  InventoryImportResult,
 } from '../../features/inventario/models/inventory-item.model';
 
 const VALID_INVENTORY_CATEGORIES = new Set<string>(
@@ -161,6 +163,48 @@ export class InventoryService {
     }
   }
 
+  async exportExcel(): Promise<Blob> {
+    try {
+      return await firstValueFrom(this.http.get(`${API_BASE_URL}/inventory/export/excel/`, {
+        headers: this.requireAuthHeaders(), responseType: 'blob',
+      }));
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible exportar el inventario a Excel.'));
+    }
+  }
+
+  async previewImport(file: File): Promise<InventoryImportPreview> {
+    const body = new FormData();
+    body.append('file', file);
+    try {
+      const preview = await firstValueFrom(this.http.post<InventoryImportPreview>(
+        `${API_BASE_URL}/inventory/import/preview/`, body, { headers: this.requireAuthHeaders() },
+      ));
+      return {
+        ...preview,
+        rows: preview.rows.map(row => ({
+          ...row,
+          quantity: row.quantity == null ? null : Number(row.quantity),
+          unitPrice: row.unitPrice == null ? null : Number(row.unitPrice),
+          highSeasonPrice: row.highSeasonPrice == null ? null : Number(row.highSeasonPrice),
+          replacementCost: row.replacementCost == null ? null : Number(row.replacementCost),
+        })),
+      };
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible revisar el archivo de Excel.'));
+    }
+  }
+
+  async confirmImport(token: string): Promise<InventoryImportResult> {
+    try {
+      return await firstValueFrom(this.http.post<InventoryImportResult>(
+        `${API_BASE_URL}/inventory/import/confirm/`, { token }, { headers: this.requireAuthHeaders() },
+      ));
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible importar el inventario. Vuelve a revisar el archivo.'));
+    }
+  }
+
   findByName(name: string): InventoryItem | null {
     const normalizedName = name.trim().toLowerCase();
 
@@ -193,6 +237,8 @@ export class InventoryService {
       name: String(item.name ?? '').trim() || 'Producto sin nombre',
       quantity: Number(item.quantity ?? 0),
       unitPrice: Number(item.unitPrice ?? 0),
+      highSeasonPrice: item.highSeasonPrice == null ? null : Number(item.highSeasonPrice),
+      replacementCost: Number(item.replacementCost ?? 0),
       category: VALID_INVENTORY_CATEGORIES.has(item.category)
         ? (item.category as InventoryCategory)
         : 'OTROS',

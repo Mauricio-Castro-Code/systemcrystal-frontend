@@ -301,3 +301,15 @@
     flex: 1 1 100%;
   }
 }
+
+.inventory-import__filename { align-self: center; overflow-wrap: anywhere; color: var(--of-text-muted); }
+.inventory-import__summary { padding: 1rem; background: var(--of-surface-muted); border-radius: 10px; color: var(--of-title); }
+.inventory-import__summary p { margin: .5rem 0 0; }
+.inventory-import__error { color: var(--mat-sys-error, #b3261e); margin: .3rem 0; }
+.inventory-import__table { width: 100%; border-collapse: collapse; text-align: left; font-size: .85rem; }
+.inventory-import__table caption { text-align: left; padding: 0 0 .75rem; color: var(--of-text-muted); }
+.inventory-import__table th, .inventory-import__table td { padding: .8rem; border-bottom: 1px solid rgba(var(--of-accent-rgb), .15); vertical-align: top; }
+.inventory-import__table th { background: var(--of-surface-muted); white-space: nowrap; }
+.inventory-import__row--invalid { background: rgba(179, 38, 30, .05); }
+.inventory-table__fallback { display: block; color: var(--of-text-muted); }
+.inventory-card__content--table, .inventory-import { min-width: 0; }

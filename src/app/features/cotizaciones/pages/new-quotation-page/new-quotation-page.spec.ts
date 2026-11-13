@@ -78,6 +78,117 @@ describe('Quotation form', () => {
     expect(quotation).toEqual(original);
   });
 
+  it.each([
+    [new Date(2026, 10, 14), 50],
+    [new Date(2026, 10, 15), 80],
+    [new Date(2026, 11, 31), 80],
+    [new Date(2027, 0, 1), 80],
+    [new Date(2027, 0, 2), 50],
+  ])('uses the event date %s to select rental price %s', async (date, expected) => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const item = { id: 7, name: 'Silla', quantity: 20, unitPrice: 50, highSeasonPrice: 80, category: 'MOBILIARIO' as const };
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    page.scheduleForm.controls.eventDate.setValue(date);
+    page.applyInventorySelection(page.equipmentRows.at(0), { option: { value: item.name } } as any);
+    expect(page.equipmentRows.at(0).controls.unitPrice.value).toBe(expected);
+    expect(page.summary().subtotal).toBe(expected);
+  });
+
+  it('updates automatic prices when the date changes but preserves manual prices', async () => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const item = { id: 7, name: 'Silla', quantity: 20, unitPrice: 50, highSeasonPrice: 80, category: 'MOBILIARIO' as const };
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    page.applyInventorySelection(page.equipmentRows.at(0), { option: { value: item.name } } as any);
+    const row = page.equipmentRows.at(0);
+    expect(row.controls.unitPrice.value).toBe(50);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 10, 15));
+    expect(row.controls.unitPrice.value).toBe(80);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2027, 0, 2));
+    expect(row.controls.unitPrice.value).toBe(50);
+    row.controls.unitPrice.setValue(65);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 11, 20));
+    expect(row.controls.unitPrice.value).toBe(65);
+    expect(page.summary().subtotal).toBe(65);
+  });
+
+  it.each([null, 0])('uses normal price for null high tariff, but accepts zero (%s)', async highSeasonPrice => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const item = { id: 7, name: 'Silla', quantity: 20, unitPrice: 50, highSeasonPrice, category: 'MOBILIARIO' as const };
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 11, 20));
+    page.applyInventorySelection(page.equipmentRows.at(0), { option: { value: item.name } } as any);
+    expect(page.equipmentRows.at(0).controls.unitPrice.value).toBe(highSeasonPrice ?? 50);
+  });
+
+  it('uses the seasonal price when equipment is matched by Enter', async () => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const item = { id: 7, name: 'Silla', quantity: 20, unitPrice: 50, highSeasonPrice: 80, category: 'MOBILIARIO' as const };
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 11, 20));
+    const row = page.equipmentRows.at(0);
+    row.controls.equipment.setValue(item.name);
+    page.onEquipmentEnter(row, new KeyboardEvent('keydown', { key: 'Enter' }), { panelOpen: false } as any);
+    expect(row.controls.unitPrice.value).toBe(80);
+  });
+
+  it('keeps saved quotation prices when loading and changing the event date', async () => {
+    const quotation = {
+      clientInfo: { fullName: 'Ana', phoneNumber: '5512345678', birthDate: null,
+        address: 'Calle 1', neighborhood: 'Centro', reference: '', deliveryInstructions: '' },
+      schedule: { deliveryDate: '2026-11-15', eventDate: '2026-11-16', collectionDate: '2026-11-17' },
+      logistics: { freight: 0, securityDeposit: 0, applyTax: false },
+      equipmentItems: [{ productId: 7, quantity: 2, equipment: 'Silla', unitPrice: 35, total: 70 }],
+      summary: { subtotal: 70, freight: 0, taxAmount: 0, securityDeposit: 0,
+        discount: 0, advancePayment: 0, totalEstimated: 70, balanceDue: 70 },
+    };
+    TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: {
+      paramMap: convertToParamMap({ quotationId: '001COTI-26' }), queryParamMap: convertToParamMap({}),
+    } } });
+    TestBed.overrideProvider(QuotationRecordsService, { useValue: {
+      loadQuotationById: vi.fn().mockResolvedValue({ quotationId: '001COTI-26', quotation }),
+    } });
+    const item = { id: 7, name: 'Silla', quantity: 20, unitPrice: 50, highSeasonPrice: 80, category: 'MOBILIARIO' as const };
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    expect(page.isEditMode).toBe(true);
+    expect(page.equipmentRows.at(0).controls.unitPrice.value).toBe(35);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2027, 0, 2));
+    expect(page.equipmentRows.at(0).controls.unitPrice.value).toBe(35);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 11, 20));
+    expect(page.equipmentRows.at(0).controls.unitPrice.value).toBe(35);
+    expect(page.summary().subtotal).toBe(70);
+  });
+
+  it.each([false, true])('preserves pricing behavior after deleting and restoring a row (manual: %s)', async manual => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const item = { id: 7, name: 'Silla', quantity: 20, unitPrice: 50, highSeasonPrice: 80, category: 'MOBILIARIO' as const };
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 10, 14));
+    page.applyInventorySelection(page.equipmentRows.at(0), { option: { value: item.name } } as any);
+    if (manual) page.equipmentRows.at(0).controls.unitPrice.setValue(65);
+    page.addEquipmentRow();
+    TestBed.inject(ConfirmService).confirmDelete = vi.fn().mockResolvedValue(true);
+    vi.mocked(TestBed.inject(NotificationService).info).mockReturnValue({ onAction: () => of() } as any);
+    await page.removeEquipmentRow(0);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 10, 15));
+    page.undoLastDelete();
+    expect(page.equipmentRows.at(0).controls.unitPrice.value).toBe(manual ? 65 : 80);
+    page.scheduleForm.controls.eventDate.setValue(new Date(2027, 0, 2));
+    expect(page.equipmentRows.at(0).controls.unitPrice.value).toBe(manual ? 65 : 50);
+  });
+
   it('applies each percentage to equipment only and allows a manual amount', async () => {
     const fixture = TestBed.createComponent(NewQuotationPageComponent);
     await fixture.whenStable();
@@ -113,14 +224,15 @@ describe('Quotation form', () => {
     await fixture.whenStable();
     const page = fixture.componentInstance;
     page.clientInfoForm.controls.fullName.setValue('Cliente de prueba');
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 11, 20));
     const row = page.equipmentRows.at(0);
     row.patchValue({ equipment: 'Mantel azul', quantity: 3, unitPrice: 10, productLinkDirty: true });
-    openDialog.mockReturnValue({ afterClosed: () => of({ id: 42, name: 'Mantel azul', unitPrice: 50 }) });
+    openDialog.mockReturnValue({ afterClosed: () => of({ id: 42, name: 'Mantel azul', unitPrice: 50, highSeasonPrice: 80 }) });
     await page.createInventoryProduct(row);
     expect(row.controls.productId.value).toBe(42);
     expect(row.controls.quantity.value).toBe(3);
     expect(row.controls.equipment.valid).toBe(true);
-    expect(page.summary().subtotal).toBe(150);
+    expect(page.summary().subtotal).toBe(240);
     expect(page.clientInfoForm.controls.fullName.value).toBe('Cliente de prueba');
     expect(page.quotationForm.dirty).toBe(true);
   });

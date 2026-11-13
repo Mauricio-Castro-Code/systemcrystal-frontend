@@ -31,7 +31,7 @@ describe('CreateInventoryDialogComponent', () => {
     createItem.mockResolvedValue(item);
     await page.save();
     expect(createItem).toHaveBeenCalledExactlyOnceWith({
-      name: 'Mantel azul', category: 'MANTELERIA', quantity: 25, unitPrice: 50,
+      name: 'Mantel azul', category: 'MANTELERIA', quantity: 25, unitPrice: 50, highSeasonPrice: null, replacementCost: 0,
     });
     expect(close).toHaveBeenCalledWith(item);
   });

@@ -46,6 +46,61 @@
     </section>
   }
 
+  @if (canManageInventory()) {
+    <mat-card class="inventory-card inventory-import">
+      <mat-card-header>
+        <mat-card-title>Inventario en Excel</mat-card-title>
+        <mat-card-subtitle>Exporta el catálogo, completa filas nuevas o ajusta productos existentes y revisa los cambios antes de importar.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="inventory-card__content">
+        <div class="inventory-form__actions">
+          <button mat-stroked-button type="button" [disabled]="isExporting()" (click)="exportInventory()">
+            <mat-icon>download</mat-icon>{{ isExporting() ? 'Exportando…' : 'Exportar Excel' }}
+          </button>
+          <input #importFile type="file" accept=".xlsx" hidden (change)="onImportFileChange($event)" />
+          <button mat-stroked-button type="button" [disabled]="isImporting()" (click)="importFile.click()">
+            <mat-icon>upload_file</mat-icon>Seleccionar Excel
+          </button>
+          @if (importFileName()) {
+            <span class="inventory-import__filename">{{ importFileName() }}</span>
+            <button mat-button type="button" [disabled]="isImporting()" (click)="cancelImport()">Cancelar importación</button>
+          }
+        </div>
+        @if (isPreviewing()) { <p role="status">Validando filas del archivo…</p> }
+        @if (importError()) { <p role="alert" class="inventory-import__error">{{ importError() }}</p> }
+        @if (importPreview(); as preview) {
+          <div class="inventory-import__summary" role="status">
+            <strong>Vista previa: {{ preview.createCount }} productos nuevos · {{ preview.updateCount }} actualizados</strong>
+            <p>El inventario se guardará al confirmar la importación.</p>
+          </div>
+          @for (error of preview.errors; track $index) { <p role="alert" class="inventory-import__error">{{ error }}</p> }
+          @if (!preview.canImport) { <p class="inventory-import__error">Corrige los errores en Excel y vuelve a seleccionar el archivo.</p> }
+          <div class="inventory-table__wrap">
+            <table class="inventory-import__table">
+              <caption>Filas del archivo y resultado de validación</caption>
+              <thead><tr><th>Fila</th><th>Acción</th><th>Equipo</th><th>Categoría</th><th>Cantidad</th><th>Renta normal</th><th>Temporada alta</th><th>Reposición</th><th>Validación</th></tr></thead>
+              <tbody>
+                @for (row of preview.rows; track row.rowNumber) {
+                  <tr [class.inventory-import__row--invalid]="row.errors.length > 0">
+                    <td>{{ row.rowNumber }}</td><td>{{ row.action === 'create' ? 'Nuevo' : 'Actualizar' }}</td>
+                    <td>{{ row.name }}</td><td>{{ row.category }}</td><td>{{ row.quantity }}</td>
+                    <td>{{ row.unitPrice | currency:'MXN':'symbol-narrow' }}</td>
+                    <td>{{ row.highSeasonPrice === null ? 'Usar precio normal' : (row.highSeasonPrice | currency:'MXN':'symbol-narrow') }}</td>
+                    <td>{{ row.replacementCost | currency:'MXN':'symbol-narrow' }}</td>
+                    <td>@for (error of row.errors; track $index) { <p class="inventory-import__error">{{ error }}</p> } @empty { Válida }</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="inventory-form__actions">
+            <button mat-flat-button type="button" [disabled]="!canConfirmImport()" (click)="confirmImport()">{{ isImporting() ? 'Importando…' : 'Confirmar importación' }}</button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
   <section class="inventory-page__stack">
     @if (canManageInventory()) {
       <mat-card class="inventory-card inventory-card--form">
@@ -96,7 +151,7 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Precio Unitario Base</mat-label>
+              <mat-label>Renta normal</mat-label>
               <span matTextPrefix>$&nbsp;</span>
               <input matInput type="number" min="0" formControlName="unitPrice" />
               @if (
@@ -105,6 +160,20 @@
               ) {
                 <mat-error>El precio unitario es requerido.</mat-error>
               }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Renta en temporada alta</mat-label>
+              <span matTextPrefix>$&nbsp;</span>
+              <input matInput type="number" min="0" step="0.01" formControlName="highSeasonPrice" />
+              <mat-hint>Vacío: usar precio normal. Cero es válido.</mat-hint>
+              <mat-error>Captura un precio mayor o igual a cero.</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Costo de reposición</mat-label>
+              <span matTextPrefix>$&nbsp;</span>
+              <input matInput type="number" min="0" step="0.01" formControlName="replacementCost" />
+              <mat-error>Captura un costo mayor o igual a cero.</mat-error>
             </mat-form-field>
 
             <div class="inventory-form__actions">
@@ -190,10 +259,21 @@
             </ng-container>
 
             <ng-container matColumnDef="unitPrice">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Precio Unitario</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Renta normal</th>
               <td mat-cell *matCellDef="let item">
                 {{ item.unitPrice | currency: 'MXN' : 'symbol-narrow' : '1.0-2' }}
               </td>
+            </ng-container>
+
+            <ng-container matColumnDef="highSeasonPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Temporada alta</th>
+              <td mat-cell *matCellDef="let item">{{ (item.highSeasonPrice ?? item.unitPrice) | currency:'MXN':'symbol-narrow':'1.0-2' }}
+                @if (item.highSeasonPrice == null) { <small class="inventory-table__fallback">Precio normal</small> }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="replacementCost">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Reposición</th>
+              <td mat-cell *matCellDef="let item">{{ (item.replacementCost ?? 0) | currency:'MXN':'symbol-narrow':'1.0-2' }}</td>
             </ng-container>
 
             @if (canManageInventory()) {

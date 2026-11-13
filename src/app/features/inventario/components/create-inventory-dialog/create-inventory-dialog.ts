@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -43,6 +43,20 @@ import { INVENTORY_CATEGORIES, InventoryCategory, InventoryItem } from '../../mo
           <input matInput type="number" min="0" step="0.01" formControlName="unitPrice" />
           <mat-error>Captura un precio mayor o igual a cero.</mat-error>
         </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Renta en temporada alta</mat-label>
+          <span matTextPrefix>$&nbsp;</span>
+          <input matInput type="number" min="0" step="0.01" formControlName="highSeasonPrice" />
+          <mat-hint>Vacío: usar precio normal. Cero es válido.</mat-hint>
+          <mat-error>Captura un precio mayor o igual a cero.</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Costo de reposición</mat-label>
+          <span matTextPrefix>$&nbsp;</span>
+          <input matInput type="number" min="0" step="0.01" formControlName="replacementCost" />
+          <mat-error>Captura un costo mayor o igual a cero.</mat-error>
+        </mat-form-field>
+
         @if (errorMessage()) { <p role="alert">{{ errorMessage() }}</p> }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -68,6 +82,8 @@ export class CreateInventoryDialogComponent {
     category: ['OTROS' as InventoryCategory, Validators.required],
     quantity: [0, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
     unitPrice: [this.data.unitPrice, [Validators.required, Validators.min(0)]],
+    highSeasonPrice: new FormControl<number | null>(null, Validators.min(0)),
+    replacementCost: [0, [Validators.required, Validators.min(0)]],
   });
 
   async save(): Promise<void> {

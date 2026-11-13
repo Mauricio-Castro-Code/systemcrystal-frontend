@@ -33,6 +33,7 @@ import {
   InventoryCategory,
   InventoryItem,
   InventoryItemPayload,
+  InventoryImportPreview,
 } from '../../models/inventory-item.model';
 
 type CategoryFilter = InventoryCategory | 'ALL';
@@ -80,14 +81,29 @@ export class InventoryPageComponent implements AfterViewInit {
     category: ['OTROS' as InventoryCategory, [Validators.required]],
     quantity: [0, [Validators.required, Validators.min(0)]],
     unitPrice: [0, [Validators.required, Validators.min(0)]],
+    highSeasonPrice: new FormControl<number | null>(null, Validators.min(0)),
+    replacementCost: [0, [Validators.required, Validators.min(0)]],
   });
   readonly displayedColumns = computed(() => this.canManageInventory()
-    ? ['name', 'category', 'quantity', 'unitPrice', 'actions']
-    : ['name', 'category', 'quantity', 'unitPrice']);
+    ? ['name', 'category', 'quantity', 'unitPrice', 'highSeasonPrice', 'replacementCost', 'actions']
+    : ['name', 'category', 'quantity', 'unitPrice', 'highSeasonPrice', 'replacementCost']);
   readonly dataSource = new MatTableDataSource<InventoryItem>([]);
   readonly editingItemId = signal<number | null>(null);
   readonly actionMessage = signal('');
   readonly isSaving = signal(false);
+  readonly isExporting = signal(false);
+  readonly isPreviewing = signal(false);
+  readonly isImporting = signal(false);
+  readonly importPreview = signal<InventoryImportPreview | null>(null);
+  readonly importError = signal('');
+  readonly importFileName = signal('');
+  readonly canConfirmImport = computed(() => {
+    const preview = this.importPreview();
+    return this.canManageInventory() && !!preview?.canImport && !!preview.token &&
+      preview.errors.length === 0 && preview.rows.every(row => row.errors.length === 0) &&
+      !this.isPreviewing() && !this.isImporting();
+  });
+  private importSelection = 0;
   readonly isLoading = this.inventoryService.isLoading;
   readonly errorMessage = this.inventoryService.errorMessage;
   readonly totalItems = this.inventoryService.totalItems;
@@ -192,6 +208,8 @@ export class InventoryPageComponent implements AfterViewInit {
       category: item.category,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
+      highSeasonPrice: item.highSeasonPrice ?? null,
+      replacementCost: item.replacementCost ?? 0,
     });
     this.actionMessage.set(`Editando ${item.name}.`);
   }
@@ -226,6 +244,81 @@ export class InventoryPageComponent implements AfterViewInit {
     }
   }
 
+  async exportInventory(): Promise<void> {
+    if (!this.canManageInventory() || this.isExporting()) return;
+    this.isExporting.set(true);
+    try {
+      const file = await this.inventoryService.exportExcel();
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'inventario-crystal.xlsx';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      this.notifications.error(this.resolveErrorMessage(error));
+    } finally {
+      this.isExporting.set(false);
+    }
+  }
+
+  onImportFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    void this.selectImportFile(input.files?.[0] ?? null);
+    input.value = '';
+  }
+
+  async selectImportFile(file: File | null): Promise<void> {
+    if (!this.canManageInventory() || this.isImporting()) return;
+    const selection = ++this.importSelection;
+    this.importPreview.set(null);
+    this.importError.set('');
+    this.importFileName.set(file?.name ?? '');
+    this.isPreviewing.set(false);
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.importError.set('Selecciona un archivo de Excel con extensión .xlsx.');
+      return;
+    }
+    this.isPreviewing.set(true);
+    try {
+      const preview = await this.inventoryService.previewImport(file);
+      if (selection === this.importSelection) this.importPreview.set(preview);
+    } catch (error) {
+      if (selection === this.importSelection) this.importError.set(this.resolveErrorMessage(error));
+    } finally {
+      if (selection === this.importSelection) this.isPreviewing.set(false);
+    }
+  }
+
+  cancelImport(): void {
+    if (this.isImporting()) return;
+    ++this.importSelection;
+    this.importPreview.set(null);
+    this.importError.set('');
+    this.importFileName.set('');
+    this.isPreviewing.set(false);
+  }
+
+  async confirmImport(): Promise<void> {
+    if (!this.canConfirmImport()) return;
+    const token = this.importPreview()!.token!;
+    this.isImporting.set(true);
+    this.importError.set('');
+    try {
+      const result = await this.inventoryService.confirmImport(token);
+      this.importPreview.set(null);
+      this.importFileName.set('');
+      this.notifications.success(`Importación completada: ${result.created} productos nuevos y ${result.updated} actualizados.`);
+      await this.reloadInventory();
+    } catch (error) {
+      this.importPreview.set(null);
+      this.importError.set(this.resolveErrorMessage(error));
+    } finally {
+      this.isImporting.set(false);
+    }
+  }
+
   trackByProductId(_: number, item: InventoryItem): number {
     return item.id;
   }
@@ -242,6 +335,8 @@ export class InventoryPageComponent implements AfterViewInit {
         category,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        highSeasonPrice: item.highSeasonPrice ?? null,
+        replacementCost: item.replacementCost ?? 0,
       });
       this.notifications.success(`Categoria actualizada: ${item.name}.`);
     } catch (error) {
@@ -261,6 +356,8 @@ export class InventoryPageComponent implements AfterViewInit {
       category: formValue.category ?? 'OTROS',
       quantity: Number(formValue.quantity ?? 0),
       unitPrice: Number(formValue.unitPrice ?? 0),
+      highSeasonPrice: formValue.highSeasonPrice == null ? null : Number(formValue.highSeasonPrice),
+      replacementCost: Number(formValue.replacementCost ?? 0),
     };
   }
 
@@ -271,6 +368,8 @@ export class InventoryPageComponent implements AfterViewInit {
       category: 'OTROS',
       quantity: 0,
       unitPrice: 0,
+      highSeasonPrice: null,
+      replacementCost: 0,
     });
     this.inventoryForm.markAsPristine();
     this.inventoryForm.markAsUntouched();

@@ -165,7 +165,9 @@ export class NewQuotationPageComponent {
   private readonly router = inject(Router);
 
   // Pila de productos eliminados para poder deshacer (último eliminado, primero en restaurarse).
-  private readonly deletedRows = signal<Array<{ index: number; value: QuotationEquipmentItem }>>([]);
+  private readonly automaticPrices = new WeakMap<EquipmentRowForm, { item: InventoryItem; price: number }>();
+  readonly seasonalPricingMessage = signal('Selecciona la fecha del evento para aplicar la tarifa correspondiente.');
+  private readonly deletedRows = signal<Array<{ index: number; row: EquipmentRowForm }>>([]);
   readonly canUndoDelete = computed(() => this.deletedRows().length > 0);
 
   @ViewChild(MatTable) equipmentTable?: MatTable<EquipmentRowForm>;
@@ -298,6 +300,10 @@ export class NewQuotationPageComponent {
       void this.loadSelectedClientPrefill();
     }
 
+    this.scheduleForm.controls.eventDate.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateAutomaticPrices());
+
     this.quotationForm.valueChanges
       .pipe(startWith(this.quotationForm.getRawValue()), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -355,7 +361,7 @@ export class NewQuotationPageComponent {
     this.quotationForm.markAsDirty();
 
     // Guardamos el producto eliminado (y su posición) para poder restaurarlo.
-    this.deletedRows.update((stack) => [...stack, { index, value }]);
+    this.deletedRows.update((stack) => [...stack, { index, row }]);
 
     const toast = this.notifications.info('Producto eliminado.', { actionLabel: 'Deshacer' });
     toast.onAction().subscribe(() => this.undoLastDelete());
@@ -370,9 +376,10 @@ export class NewQuotationPageComponent {
     const last = stack[stack.length - 1];
     this.deletedRows.update((current) => current.slice(0, -1));
 
-    const restoredRow = this.createEquipmentRow(last.value);
+    const restoredRow = last.row;
     const targetIndex = Math.min(last.index, this.equipmentRows.length);
     this.equipmentRows.insert(targetIndex, restoredRow);
+    this.updateAutomaticPrices();
 
     this.equipmentTable?.renderRows();
     this.recalculateSummary();
@@ -585,9 +592,7 @@ export class NewQuotationPageComponent {
       return;
     }
 
-    row.controls.equipment.setValue(inventoryItem.name);
-    row.controls.unitPrice.setValue(inventoryItem.unitPrice);
-    row.controls.productId.setValue(inventoryItem.id);
+    this.applyInventoryPrice(row, inventoryItem);
 
   }
 
@@ -599,7 +604,7 @@ export class NewQuotationPageComponent {
     if (!name || row.controls.productId.value || this.inventoryLoading() || this.inventoryErrorMessage()) return;
     const existing = this.inventoryService.findByName(name);
     if (existing) {
-      row.patchValue({ equipment: existing.name, productId: existing.id, unitPrice: existing.unitPrice });
+      this.applyInventoryPrice(row, existing);
       return;
     }
     if (!this.canManageInventory()) return;
@@ -655,9 +660,47 @@ export class NewQuotationPageComponent {
       }
     }
     if (!this.equipmentRows.controls.includes(targetRow)) return;
-    targetRow.patchValue({ equipment: item.name, unitPrice: item.unitPrice, productId: item.id, productLinkDirty: false });
+    this.applyInventoryPrice(targetRow, item);
     this.quotationForm.markAsDirty();
     this.notifications.success(`Producto registrado y agregado: ${item.name}.`);
+  }
+
+  private isHighSeason(): boolean {
+    const date = this.scheduleForm.controls.eventDate.value;
+    if (!date || Number.isNaN(date.getTime())) return false;
+    const month = date.getMonth();
+    const day = date.getDate();
+    return (month === 10 && day >= 15) || month === 11 || (month === 0 && day === 1);
+  }
+
+  private priceForEvent(item: InventoryItem): number {
+    return this.isHighSeason() ? (item.highSeasonPrice ?? item.unitPrice) : item.unitPrice;
+  }
+
+  private applyInventoryPrice(row: EquipmentRowForm, item: InventoryItem): void {
+    const price = this.priceForEvent(item);
+    this.automaticPrices.set(row, { item, price });
+    row.patchValue({ equipment: item.name, unitPrice: price, productId: item.id, productLinkDirty: false });
+  }
+
+  private updateAutomaticPrices(): void {
+    const date = this.scheduleForm.controls.eventDate.value;
+    this.seasonalPricingMessage.set(!date
+      ? 'Selecciona la fecha del evento para aplicar la tarifa correspondiente.'
+      : this.isHighSeason()
+        ? 'Temporada alta: del 15 de noviembre al 1 de enero. Si un equipo no tiene tarifa alta, se usa la normal.'
+        : 'Tarifa normal según la fecha del evento.');
+    for (const row of this.equipmentRows.controls) {
+      const automatic = this.automaticPrices.get(row);
+      if (!automatic) continue;
+      if (row.controls.productId.value !== automatic.item.id || row.controls.unitPrice.value !== automatic.price) {
+        this.automaticPrices.delete(row);
+        continue;
+      }
+      const price = this.priceForEvent(automatic.item);
+      this.automaticPrices.set(row, { item: automatic.item, price });
+      row.controls.unitPrice.setValue(price);
+    }
   }
 
   private async loadFreightZones(): Promise<void> {
