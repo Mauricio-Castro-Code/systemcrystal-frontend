@@ -387,8 +387,8 @@
 
         <div class="qcard__body actions-body">
           @if (isEditingOrder) {
-            <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="goToOrderRecords()">
-              Volver al Registro
+            <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="goBack()">
+              {{ backLabel() }}
             </button>
             <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="goToOrderPreview()">
               Ver Nota PDF
@@ -397,8 +397,8 @@
               Guardar Cambios
             </button>
           } @else if (isEditingQuotation) {
-            <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="goToQuotationRecords()">
-              Volver al Registro
+            <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="goBack()">
+              {{ backLabel() }}
             </button>
             <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="goToQuotationPreview()">
               Ver PDF

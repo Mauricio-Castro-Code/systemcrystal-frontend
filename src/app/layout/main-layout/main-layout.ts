@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 
+import { BackNavigationService } from '../../core/services/back-navigation.service';
 import { AuthService } from '../../core/services/auth.service';
 import { NavigationItem } from '../../core/models/navigation-item.model';
 import { SidebarComponent } from '../sidebar/sidebar';
@@ -28,6 +29,7 @@ interface NavigationItemDef extends NavigationItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayoutComponent {
+  readonly backNavigation = inject(BackNavigationService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly currentUrl = toSignal(

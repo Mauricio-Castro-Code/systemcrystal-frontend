@@ -15,9 +15,6 @@
       </div>
 
       <div class="client-detail-page__actions">
-        <button mat-stroked-button type="button" (click)="goBack()">
-          Volver a Clientes
-        </button>
         @if (isAdmin()) {
           <button mat-stroked-button type="button" (click)="editClientInfo()" [disabled]="isMutating()">
             <mat-icon>edit</mat-icon>
@@ -187,7 +184,7 @@
       <h2>Cliente no encontrado</h2>
       <p>{{ errorMessage() || 'No fue posible localizar la ficha del cliente solicitado.' }}</p>
       <button mat-raised-button type="button" (click)="goBack()">
-        Volver a Clientes
+        {{ backLabel() }}
       </button>
     </section>
   }

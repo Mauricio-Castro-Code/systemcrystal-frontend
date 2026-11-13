@@ -1,3 +1,4 @@
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
@@ -22,6 +23,7 @@ describe('Quotation form', () => {
       imports: [NewQuotationPageComponent],
       providers: [
         provideRouter([]),
+        { provide: BackNavigationService, useValue: { label: signal('Volver a Clientes'), goBack: vi.fn().mockResolvedValue(undefined), returnToRecord: vi.fn().mockResolvedValue(true) } },
         { provide: MatDialog, useValue: { open: openDialog } },
         { provide: AuthService, useValue: { isAdmin: signal(true) } },
         { provide: ActivatedRoute, useValue: { snapshot: {
@@ -32,11 +34,45 @@ describe('Quotation form', () => {
           loadInventory: vi.fn(), findByName: vi.fn(),
         } },
         { provide: FreightZonesService, useValue: { fetchAll: vi.fn().mockResolvedValue([]) } },
-        { provide: NotificationService, useValue: { info: vi.fn(), success: vi.fn() } },
+        { provide: NotificationService, useValue: { info: vi.fn(), success: vi.fn(), error: vi.fn() } },
         ...[OrderRecordsService, QuotationRecordsService, FolioStrategyService,
           ClientDirectoryService, ConfirmService].map(provide => ({ provide, useValue: {} })),
       ],
     }).compileComponents();
+  });
+
+  it('delegates contextual back navigation and its label', async () => {
+    const page = TestBed.createComponent(NewQuotationPageComponent).componentInstance;
+    await page.goBack();
+    expect(page.backLabel()).toBe('Volver a Clientes');
+    expect(TestBed.inject(BackNavigationService).goBack).toHaveBeenCalled();
+  });
+
+  it.each(['order', 'quotation'] as const)('returns to the %s record only after a successful edit', async kind => {
+    const page = TestBed.createComponent(NewQuotationPageComponent).componentInstance;
+    const mutablePage = page as any;
+    const id = '001-26';
+    mutablePage.validateBeforePersist = () => true;
+    mutablePage.buildQuotationSnapshot = () => ({});
+    mutablePage.editingOrderId = kind === 'order' ? id : null;
+    mutablePage.editingQuotationId = kind === 'quotation' ? id : null;
+    mutablePage.isEditingQuotation = kind === 'quotation';
+    const update = vi.fn().mockResolvedValue(null);
+    if (kind === 'order') {
+      (TestBed.inject(OrderRecordsService) as any).updateOrder = update;
+    } else {
+      (TestBed.inject(QuotationRecordsService) as any).updateDraft = update;
+    }
+    const save = () => kind === 'order' ? page.saveOrderChanges() : page.saveDraft();
+    await save();
+    const navigation = TestBed.inject(BackNavigationService);
+    expect(navigation.returnToRecord).not.toHaveBeenCalled();
+    update.mockResolvedValue({ orderId: id, quotationId: id });
+    await save();
+    expect(navigation.returnToRecord).toHaveBeenCalledWith(`/${kind === 'order' ? 'pedidos' : 'cotizaciones'}/${id}`);
+    vi.mocked(navigation.returnToRecord).mockClear();
+    await (kind === 'order' ? page.goToOrderPreview() : page.goToQuotationPreview());
+    expect(navigation.returnToRecord).toHaveBeenCalledWith(`/${kind === 'order' ? 'pedidos' : 'cotizaciones'}/${id}`);
   });
 
   it.each(['birthDate', 'deliveryDate', 'eventDate', 'collectionDate'])('accepts typed short dates and rejects impossible dates in %s', async field => {

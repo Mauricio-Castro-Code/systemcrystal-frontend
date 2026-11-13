@@ -1,3 +1,4 @@
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { PdfPreviewComponent } from '../../../../shared/components/pdf-preview/pdf-preview';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -29,6 +30,8 @@ import { WhatsAppMessageDialogComponent } from '../../../../shared/components/wh
 export class QuotationNotePageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly backNavigation = inject(BackNavigationService);
+  readonly backLabel = this.backNavigation.label;
   private readonly quotationRecordsService = inject(QuotationRecordsService);
   private readonly folioStrategyService = inject(FolioStrategyService);
   private readonly dialog = inject(MatDialog);
@@ -65,7 +68,7 @@ export class QuotationNotePageComponent {
   }
 
   async goBack(): Promise<void> {
-    await this.router.navigateByUrl('/cotizaciones/registro');
+    await this.backNavigation.goBack();
   }
 
   async goToEdit(): Promise<void> {

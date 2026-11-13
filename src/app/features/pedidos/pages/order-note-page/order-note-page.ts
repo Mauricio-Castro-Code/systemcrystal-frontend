@@ -1,3 +1,4 @@
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { PdfPreviewComponent } from '../../../../shared/components/pdf-preview/pdf-preview';
 import {
@@ -69,6 +70,7 @@ const BILLING_STATUS_OPTIONS: Array<{
 export class OrderNotePageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly backNavigation = inject(BackNavigationService);
   private readonly orderRecordsService = inject(OrderRecordsService);
   private readonly authService = inject(AuthService);
   private readonly teamService = inject(TeamService);
@@ -101,9 +103,7 @@ export class OrderNotePageComponent {
   readonly sectionLabel = computed(() =>
     this.isArchiveRoute() ? 'Registro Notas' : 'Notas Activas',
   );
-  readonly backLabel = computed(() =>
-    this.isArchiveRoute() ? 'Volver al Archivo' : 'Volver a Notas Activas',
-  );
+  readonly backLabel = this.backNavigation.label;
   readonly operationalStatusOptions = OPERATIONAL_STATUS_OPTIONS;
   readonly billingStatusOptions = BILLING_STATUS_OPTIONS;
   readonly operationalStatusControl = new FormControl<OrderOperationalStatus>('PROGRAMADA', {
@@ -204,7 +204,7 @@ export class OrderNotePageComponent {
   }
 
   async goBack(): Promise<void> {
-    await this.router.navigateByUrl(this.isArchiveRoute() ? '/pedidos/registro' : '/pedidos');
+    await this.backNavigation.goBack();
   }
 
   async goToEdit(): Promise<void> {

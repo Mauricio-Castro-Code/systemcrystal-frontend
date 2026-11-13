@@ -3,6 +3,8 @@ import {
   importProvidersFrom,
   isDevMode,
   provideBrowserGlobalErrorListeners,
+  provideEnvironmentInitializer,
+  inject,
 } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -12,12 +14,14 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 import { AppRoutingModule } from './app-routing.module';
 import { CrystalTitleStrategy } from './core/title-strategy';
+import { BackNavigationService } from './core/services/back-navigation.service';
 import { CrystalDateAdapter } from './core/crystal-date-adapter';
 import { authErrorInterceptor } from './core/interceptors/auth-error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideEnvironmentInitializer(() => { inject(BackNavigationService); }),
     provideHttpClient(withInterceptors([authErrorInterceptor])),
     provideAnimationsAsync(),
     importProvidersFrom(AppRoutingModule),

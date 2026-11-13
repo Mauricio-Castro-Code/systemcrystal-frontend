@@ -6,13 +6,7 @@
     </section>
   } @else if (quotationRecord(); as record) {
     <header class="quotation-note-page__header">
-      <nav class="quotation-note-page__navigation" aria-label="Navegación de la cotización">
-        <button mat-button class="quotation-note-page__back" type="button" (click)="goBack()">
-          <mat-icon>arrow_back</mat-icon>
-          Volver al registro
-        </button>
-        <span class="quotation-note-page__location">Detalle de la cotización</span>
-      </nav>
+      <p class="quotation-note-page__location">Detalle de la cotización</p>
       <div class="quotation-note-page__heading-row">
         <div class="quotation-note-page__identity">
           <p class="quotation-note-page__eyebrow">Cotización activa</p>
@@ -307,7 +301,7 @@
             'El borrador solicitado ya no existe o no pudo cargarse correctamente.'
         }}
       </p>
-      <button mat-raised-button type="button" (click)="goBack()">Volver al Registro</button>
+      <button mat-raised-button type="button" (click)="goBack()">{{ backLabel() }}</button>
     </section>
   }
 </section>

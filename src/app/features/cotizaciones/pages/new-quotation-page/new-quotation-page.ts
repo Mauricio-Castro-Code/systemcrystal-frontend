@@ -1,3 +1,4 @@
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -166,6 +167,8 @@ export class NewQuotationPageComponent {
   private readonly confirmService = inject(ConfirmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly backNavigation = inject(BackNavigationService);
+  readonly backLabel = this.backNavigation.label;
 
   // Pila de productos eliminados para poder deshacer (último eliminado, primero en restaurarse).
   private readonly automaticPrices = new WeakMap<EquipmentRowForm, { item: InventoryItem; price: number }>();
@@ -413,7 +416,7 @@ export class NewQuotationPageComponent {
         this.notifications.success(
           `Cotización ${updatedQuotation.quotationId} actualizada y cliente sincronizado.`,
         );
-        await this.router.navigate(['/cotizaciones', updatedQuotation.quotationId]);
+        await this.backNavigation.returnToRecord(`/cotizaciones/${updatedQuotation.quotationId}`);
         return;
       }
 
@@ -491,6 +494,7 @@ export class NewQuotationPageComponent {
       this.notifications.success(
         `Pedido ${updatedOrder.orderId} actualizado y cliente sincronizado.`,
       );
+      await this.backNavigation.returnToRecord(`/pedidos/${updatedOrder.orderId}`);
     } catch (error) {
       this.notifications.error(
         this.resolveActionError(error, 'No fue posible actualizar el pedido solicitado.'),
@@ -505,11 +509,11 @@ export class NewQuotationPageComponent {
       return;
     }
 
-    await this.router.navigate(['/pedidos', this.editingOrderId]);
+    await this.backNavigation.returnToRecord(`/pedidos/${this.editingOrderId}`);
   }
 
-  async goToOrderRecords(): Promise<void> {
-    await this.router.navigateByUrl('/pedidos');
+  async goBack(): Promise<void> {
+    await this.backNavigation.goBack();
   }
 
   async goToQuotationPreview(): Promise<void> {
@@ -517,11 +521,7 @@ export class NewQuotationPageComponent {
       return;
     }
 
-    await this.router.navigate(['/cotizaciones', this.editingQuotationId]);
-  }
-
-  async goToQuotationRecords(): Promise<void> {
-    await this.router.navigateByUrl('/cotizaciones/registro');
+    await this.backNavigation.returnToRecord(`/cotizaciones/${this.editingQuotationId}`);
   }
 
   async confirmQuotationAsOrder(): Promise<void> {

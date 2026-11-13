@@ -6,13 +6,7 @@
     </section>
   } @else if (orderRecord(); as record) {
     <header class="note-page__header">
-      <nav class="note-page__navigation" aria-label="Navegación de la nota">
-        <button mat-button class="note-page__back" type="button" (click)="goBack()">
-          <mat-icon>arrow_back</mat-icon>
-          {{ backLabel() }}
-        </button>
-        <span class="note-page__location">Detalle del pedido</span>
-      </nav>
+      <p class="note-page__location">Detalle del pedido</p>
 
       <div class="note-page__heading-row">
         <div class="note-page__identity">

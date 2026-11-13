@@ -1,3 +1,4 @@
+import { BackNavigationService } from '../../../../core/services/back-navigation.service';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -35,6 +36,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
 export class ClientDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly backNavigation = inject(BackNavigationService);
+  readonly backLabel = this.backNavigation.label;
   private readonly clientDirectoryService = inject(ClientDirectoryService);
   private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -55,7 +58,7 @@ export class ClientDetailPageComponent {
   }
 
   async goBack(): Promise<void> {
-    await this.router.navigateByUrl('/clientes');
+    await this.backNavigation.goBack();
   }
 
   async editClientInfo(): Promise<void> {
