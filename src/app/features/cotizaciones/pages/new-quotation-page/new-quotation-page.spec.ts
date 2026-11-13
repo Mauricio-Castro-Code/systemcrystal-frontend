@@ -39,6 +39,27 @@ describe('Quotation form', () => {
     }).compileComponents();
   });
 
+  it.each(['birthDate', 'deliveryDate', 'eventDate', 'collectionDate'])('accepts typed short dates and rejects impossible dates in %s', async field => {
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const control = field === 'birthDate' ? page.clientInfoForm.controls.birthDate : page.scheduleForm.get(field)!;
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(`input[formControlName="${field}"]`);
+    input.value = '24-12-26';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('blur'));
+    await fixture.whenStable();
+    expect(control.value).toEqual(new Date(2026, 11, 24));
+    expect(input.value).toBe('24-12-2026');
+    input.value = '31-02-2026';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('blur'));
+    await fixture.whenStable();
+    expect(control.hasError('matDatepickerParse')).toBe(true);
+    expect(page.quotationForm.invalid).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('fecha válida');
+  });
+
   it('opens a quotation copy as a new editable draft without changing or saving the source', async () => {
     const quotation = {
       clientInfo: { fullName: 'Ana', phoneNumber: '5512345678', birthDate: null,

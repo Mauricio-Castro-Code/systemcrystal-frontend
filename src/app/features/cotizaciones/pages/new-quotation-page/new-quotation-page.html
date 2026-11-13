@@ -7,15 +7,14 @@
 
   <form class="quotation-form" [formGroup]="quotationForm">
 
-    <!-- ── Paso 1 + 2 en grid ── -->
-    <div class="quotation-form__top-grid">
+    <div class="quotation-form__main">
 
       <!-- Paso 1: Cliente -->
       <div class="qcard" formGroupName="clientInfo">
         <div class="qcard__header">
           <span class="qcard__step">1</span>
           <div>
-            <h2 class="qcard__title">Cliente y Ubicacion</h2>
+            <h2 class="qcard__title">Cliente y Ubicación</h2>
             <p class="qcard__subtitle">Datos de contacto y domicilio del evento</p>
           </div>
         </div>
@@ -49,9 +48,13 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Fecha de Nacimiento</mat-label>
-            <input matInput [matDatepicker]="birthDatePicker" formControlName="birthDate" />
+            <input matInput [matDatepicker]="birthDatePicker" formControlName="birthDate" placeholder="DD-MM-AAAA" />
             <mat-datepicker-toggle matSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
             <mat-datepicker #birthDatePicker></mat-datepicker>
+              <mat-hint>DD-MM-AAAA o DD-MM-AA</mat-hint>
+              @if (hasControlError(clientInfoForm.controls.birthDate, 'matDatepickerParse')) {
+                <mat-error>Ingresa una fecha válida: DD-MM-AAAA o DD-MM-AA.</mat-error>
+              }
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -81,8 +84,8 @@
         <div class="qcard__header">
           <span class="qcard__step">2</span>
           <div>
-            <h2 class="qcard__title">Programacion</h2>
-            <p class="qcard__subtitle">Fechas de entrega, evento y recoleccion</p>
+            <h2 class="qcard__title">Programación</h2>
+            <p class="qcard__subtitle">Fechas de entrega, evento y recolección</p>
           </div>
         </div>
 
@@ -91,9 +94,13 @@
             <p class="date-field__label">Entrega</p>
             <mat-form-field appearance="outline">
               <mat-label>Fecha de Entrega</mat-label>
-              <input matInput [matDatepicker]="deliveryDatePicker" formControlName="deliveryDate" />
+              <input matInput [matDatepicker]="deliveryDatePicker" formControlName="deliveryDate" placeholder="DD-MM-AAAA" />
               <mat-datepicker-toggle matSuffix [for]="deliveryDatePicker"></mat-datepicker-toggle>
               <mat-datepicker #deliveryDatePicker></mat-datepicker>
+              <mat-hint>DD-MM-AAAA o DD-MM-AA</mat-hint>
+              @if (hasControlError(scheduleForm.controls.deliveryDate, 'matDatepickerParse')) {
+                <mat-error>Ingresa una fecha válida: DD-MM-AAAA o DD-MM-AA.</mat-error>
+              }
               @if (hasControlError(scheduleForm.controls.deliveryDate, 'required')) {
                 <mat-error>Requerida.</mat-error>
               }
@@ -104,9 +111,13 @@
             <p class="date-field__label">Evento</p>
             <mat-form-field appearance="outline">
               <mat-label>Fecha del Evento</mat-label>
-              <input matInput [matDatepicker]="eventDatePicker" formControlName="eventDate" />
+              <input matInput [matDatepicker]="eventDatePicker" formControlName="eventDate" placeholder="DD-MM-AAAA" />
               <mat-datepicker-toggle matSuffix [for]="eventDatePicker"></mat-datepicker-toggle>
               <mat-datepicker #eventDatePicker></mat-datepicker>
+              <mat-hint>DD-MM-AAAA o DD-MM-AA</mat-hint>
+              @if (hasControlError(scheduleForm.controls.eventDate, 'matDatepickerParse')) {
+                <mat-error>Ingresa una fecha válida: DD-MM-AAAA o DD-MM-AA.</mat-error>
+              }
               @if (hasControlError(scheduleForm.controls.eventDate, 'required')) {
                 <mat-error>Requerida.</mat-error>
               }
@@ -117,9 +128,13 @@
             <p class="date-field__label">Recoleccion</p>
             <mat-form-field appearance="outline">
               <mat-label>Fecha de Recoleccion</mat-label>
-              <input matInput [matDatepicker]="collectionDatePicker" formControlName="collectionDate" />
+              <input matInput [matDatepicker]="collectionDatePicker" formControlName="collectionDate" placeholder="DD-MM-AAAA" />
               <mat-datepicker-toggle matSuffix [for]="collectionDatePicker"></mat-datepicker-toggle>
               <mat-datepicker #collectionDatePicker></mat-datepicker>
+              <mat-hint>DD-MM-AAAA o DD-MM-AA</mat-hint>
+              @if (hasControlError(scheduleForm.controls.collectionDate, 'matDatepickerParse')) {
+                <mat-error>Ingresa una fecha válida: DD-MM-AAAA o DD-MM-AA.</mat-error>
+              }
               @if (hasControlError(scheduleForm.controls.collectionDate, 'required')) {
                 <mat-error>Requerida.</mat-error>
               }
@@ -133,7 +148,6 @@
           </div>
         }
       </div>
-    </div>
 
     <!-- ── Paso 3: Equipo ── -->
     <div class="qcard">
@@ -167,7 +181,7 @@
               <th mat-header-cell *matHeaderCellDef>Cantidad</th>
               <td mat-cell *matCellDef="let row" [formGroup]="row">
                 <mat-form-field appearance="outline">
-                  <input matInput type="number" min="1" formControlName="quantity" placeholder="0" />
+                  <input matInput type="number" min="1" aria-label="Cantidad" formControlName="quantity" placeholder="0" />
                 </mat-form-field>
               </td>
             </ng-container>
@@ -216,7 +230,7 @@
               <td mat-cell *matCellDef="let row" [formGroup]="row">
                 <mat-form-field appearance="outline">
                   <span matTextPrefix>$&nbsp;</span>
-                  <input matInput type="number" min="0" formControlName="unitPrice" placeholder="0" />
+                  <input matInput type="number" min="0" aria-label="Precio unitario" formControlName="unitPrice" placeholder="0" />
                 </mat-form-field>
               </td>
             </ng-container>
@@ -226,7 +240,7 @@
               <td mat-cell *matCellDef="let row" [formGroup]="row">
                 <mat-form-field appearance="outline">
                   <span matTextPrefix>$&nbsp;</span>
-                  <input matInput [value]="row.controls.total.getRawValue() | number: '1.0-0'" readonly />
+                  <input matInput aria-label="Total del artículo" [value]="row.controls.total.getRawValue() | number: '1.2-2'" readonly />
                 </mat-form-field>
               </td>
             </ng-container>
@@ -253,6 +267,7 @@
         </div>
 
         <div class="equipment-table-footer">
+          <span class="equipment-count">{{ equipmentRows.length }} artículo(s)</span>
           <button class="btn-add-row" mat-stroked-button type="button" (click)="addEquipmentRow()">
             <mat-icon>add</mat-icon>
             <span>Agregar articulo</span>
@@ -272,8 +287,9 @@
       </div>
     </div>
 
-    <!-- ── Paso 4 + 5 en grid ── -->
-    <div class="quotation-form__bottom-grid">
+    </div>
+
+    <aside class="quotation-form__sidebar" aria-label="Resumen y acciones" tabindex="0">
 
       <!-- Paso 4: Resumen -->
       <div class="qcard qcard--accent" formGroupName="logistics">
@@ -394,11 +410,12 @@
               Confirmar Pedido
             </button>
           } @else {
+            <button class="action-btn action-btn--primary" mat-raised-button type="button" [disabled]="isSaving()" (click)="saveNote()">
+              <mat-icon>check_circle_outline</mat-icon>
+              Guardar Nota
+            </button>
             <button class="action-btn action-btn--secondary" mat-stroked-button type="button" [disabled]="isSaving()" (click)="saveDraft()">
               Guardar Cotización
-            </button>
-            <button class="action-btn action-btn--primary" mat-raised-button type="button" [disabled]="isSaving()" (click)="saveNote()">
-              Guardar Nota
             </button>
           }
 
@@ -411,7 +428,7 @@
           }
         </div>
       </div>
-    </div>
+    </aside>
 
   </form>
 </section>
