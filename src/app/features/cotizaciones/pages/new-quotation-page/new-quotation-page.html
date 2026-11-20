@@ -326,6 +326,13 @@
             <input matInput type="number" min="0" formControlName="securityDeposit" />
           </mat-form-field>
 
+
+          <mat-form-field appearance="outline">
+            <mat-label>Descuento</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input matInput type="number" min="0" formControlName="discount" />
+            <mat-hint>Porcentaje sobre el subtotal. Puedes editar el monto.</mat-hint>
+          </mat-form-field>
           <div class="discount-options" role="group" aria-label="Aplicar descuento sobre el subtotal">
             @for (percentage of discountPercentages; track percentage) {
               <button mat-stroked-button type="button" (click)="applyDiscountPercentage(percentage)">
@@ -334,14 +341,7 @@
             }
           </div>
           <mat-form-field appearance="outline">
-            <mat-label>Descuento</mat-label>
-            <span matTextPrefix>$&nbsp;</span>
-            <input matInput type="number" min="0" formControlName="discount" />
-            <mat-hint>Porcentaje sobre el subtotal. Puedes editar el monto.</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Anticipo Recibido</mat-label>
+            <mat-label>Anticipo</mat-label>
             <span matTextPrefix>$&nbsp;</span>
             <input matInput type="number" min="0" formControlName="advancePayment" />
           </mat-form-field>
