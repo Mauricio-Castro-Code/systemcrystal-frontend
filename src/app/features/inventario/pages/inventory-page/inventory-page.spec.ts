@@ -1,3 +1,6 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -41,6 +44,147 @@ describe('Inventory permissions', () => {
       ],
     }).compileComponents();
   });
+  it('keeps all products hidden until two search characters or a category are supplied', async () => {
+    service.items.set([item, { ...item, id: 2, name: 'Mantel redondo', category: 'MANTELERIA' } as any]);
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    expect(page.dataSource.filteredData).toHaveLength(0);
+    expect(fixture.nativeElement.textContent).toContain('Busca un equipo');
+    expect(fixture.nativeElement.querySelector('table')).toBeNull();
+    page.searchControl.setValue('s');
+    await fixture.whenStable();
+    expect(page.dataSource.filteredData).toHaveLength(0);
+    page.searchControl.setValue('si');
+    await fixture.whenStable();
+    expect(page.dataSource.filteredData.map(row => row.name)).toEqual(['Silla']);
+    expect(fixture.nativeElement.querySelector('table')).not.toBeNull();
+    page.categoryFilterControl.setValue('MANTELERIA');
+    await fixture.whenStable();
+    expect(page.dataSource.filteredData).toHaveLength(0);
+    page.searchControl.setValue('');
+    await fixture.whenStable();
+    expect(page.dataSource.filteredData.map(row => row.name)).toEqual(['Mantel redondo']);
+    page.categoryFilterControl.setValue('ALL');
+    await fixture.whenStable();
+    expect(page.dataSource.filteredData).toHaveLength(0);
+    expect(fixture.nativeElement.querySelector('table')).toBeNull();
+  });
+
+  it('attaches pagination when results first appear and restores the first page after filtering', async () => {
+    service.items.set(Array.from({ length: 60 }, (_, index) => ({ ...item, id: index + 1, name: `Silla ${index + 1}` })));
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.searchControl.setValue('silla');
+    await fixture.whenStable();
+    expect(page.dataSource.paginator).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('tr.mat-mdc-row')).toHaveLength(20);
+    page.dataSource.paginator!.nextPage();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('tr.mat-mdc-row').textContent).toContain('Silla 21');
+    page.searchControl.setValue('silla 60');
+    await fixture.whenStable();
+    expect(page.dataSource.paginator!.pageIndex).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('tr.mat-mdc-row')).toHaveLength(1);
+    page.clearFilters();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('table')).toBeNull();
+  });
+
+  it('adds through a modal, prevents closing while saving and reveals the saved product', async () => {
+    isAdmin.set(true);
+    let finish!: (item: unknown) => void;
+    service.createItem.mockReturnValueOnce(new Promise(resolve => finish = resolve));
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const add: HTMLButtonElement = Array.from(fixture.nativeElement.querySelectorAll('.inventory-page__admin-actions button'))
+      .find(button => (button as HTMLButtonElement).textContent?.includes('Agregar')) as HTMLButtonElement;
+    add.click();
+    await fixture.whenStable();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(1);
+    const overlay = TestBed.inject(OverlayContainer).getContainerElement();
+    expect(overlay.querySelector('input[formControlName="name"]')).not.toBeNull();
+    page.inventoryForm.patchValue({ name: 'Mesa', category: 'MOBILIARIO', quantity: 4, unitPrice: 100 });
+    const pending = page.submitForm();
+    expect(TestBed.inject(MatDialog).openDialogs[0].disableClose).toBe(true);
+    page.closeItemDialog();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(1);
+    const closed = firstValueFrom(TestBed.inject(MatDialog).openDialogs[0].afterClosed());
+    finish({ id: 2, name: 'Mesa', category: 'MOBILIARIO', quantity: 4, unitPrice: 100 });
+    await pending;
+    await closed;
+    await fixture.whenStable();
+    expect(service.createItem).toHaveBeenCalledWith(expect.objectContaining({ name: 'Mesa', quantity: 4 }));
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(0);
+    expect(page.searchControl.value).toBe('Mesa');
+    expect(page.categoryFilterControl.value).toBe('MOBILIARIO');
+    expect(page.editingItemId()).toBeNull();
+  });
+
+  it('cancels editing without writing and clears data before opening Add', async () => {
+    isAdmin.set(true);
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.startEdit(item);
+    await fixture.whenStable();
+    expect(TestBed.inject(OverlayContainer).getContainerElement().textContent).toContain('Editar producto');
+    expect(page.inventoryForm.controls.name.value).toBe('Silla');
+    page.inventoryForm.controls.name.setValue('Sin guardar');
+    const closed = firstValueFrom(TestBed.inject(MatDialog).openDialogs[0].afterClosed());
+    page.closeItemDialog();
+    await closed;
+    await fixture.whenStable();
+    page.openAddDialog();
+    await fixture.whenStable();
+    expect(page.inventoryForm.controls.name.value).toBe('');
+    expect(page.editingItemId()).toBeNull();
+    expect(service.updateItem).not.toHaveBeenCalled();
+    expect(service.createItem).not.toHaveBeenCalled();
+  });
+
+  it('ignores a pending file preview when its modal is closed and reopened', async () => {
+    isAdmin.set(true);
+    let finish!: (value: unknown) => void;
+    service.previewImport.mockReturnValueOnce(new Promise(resolve => finish = resolve));
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.openImportDialog();
+    const pending = page.selectImportFile(new File(['xlsx'], 'old.xlsx'));
+    const closed = firstValueFrom(TestBed.inject(MatDialog).openDialogs[0].afterClosed());
+    page.closeImportDialog();
+    await closed;
+    await fixture.whenStable();
+    page.openImportDialog();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(1);
+    finish({ rows: [], errors: [], createCount: 1, updateCount: 0, canImport: true, token: 'old' });
+    await pending;
+    await fixture.whenStable();
+    expect(page.importPreview()).toBeNull();
+    expect(page.importFileName()).toBe('');
+    expect(page.canConfirmImport()).toBe(false);
+    expect(service.confirmImport).not.toHaveBeenCalled();
+  });
+
+  it('invalidates an import token immediately when the dialog is dismissed externally', async () => {
+    isAdmin.set(true);
+    service.previewImport.mockResolvedValueOnce({ rows: [], errors: [], createCount: 1, updateCount: 0, canImport: true, token: 'ready' });
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.openImportDialog();
+    await page.selectImportFile(new File(['xlsx'], 'inventory.xlsx'));
+    expect(page.canConfirmImport()).toBe(true);
+    const ref = TestBed.inject(MatDialog).openDialogs[0];
+    const closed = firstValueFrom(ref.afterClosed());
+    ref.close();
+    expect(page.canConfirmImport()).toBe(false);
+    await closed;
+  });
+
   it('shows read-only inventory to office users and prevents mutations', async () => {
     const fixture = TestBed.createComponent(InventoryPageComponent);
     await fixture.whenStable();
@@ -49,6 +193,9 @@ describe('Inventory permissions', () => {
     expect(root.querySelector('[aria-label="Editar producto"]')).toBeNull();
     expect(root.querySelector('[aria-label="Desactivar producto"]')).toBeNull();
     expect(root.querySelector('.category-select')).toBeNull();
+    expect(root.textContent).not.toContain('Silla');
+    fixture.componentInstance.searchControl.setValue('si');
+    await fixture.whenStable();
     expect(root.textContent).toContain('Silla');
     await fixture.componentInstance.deleteItem(item);
     await fixture.componentInstance.submitForm();
@@ -65,10 +212,14 @@ describe('Inventory permissions', () => {
     const fixture = TestBed.createComponent(InventoryPageComponent);
     await fixture.whenStable();
     const root: HTMLElement = fixture.nativeElement;
-    expect(root.querySelector('.inventory-card--form')).not.toBeNull();
-    expect(root.querySelector('[aria-label="Editar producto"]')).not.toBeNull();
-    expect(root.querySelector('[aria-label="Desactivar producto"]')).not.toBeNull();
-    expect(root.querySelector('.category-select')).not.toBeNull();
+    expect(root.querySelector('.inventory-card--form')).toBeNull();
+    expect(root.querySelectorAll('.inventory-page__admin-actions button')).toHaveLength(3);
+    fixture.componentInstance.searchControl.setValue('si');
+    await fixture.whenStable();
+    expect(root.querySelector('[aria-label="Acciones de Silla"]')).not.toBeNull();
+    fixture.componentInstance.openAddDialog();
+    await fixture.whenStable();
+    expect(TestBed.inject(OverlayContainer).getContainerElement().textContent).toContain('Agregar producto');
   });
   it('preserves seasonal and replacement prices when changing category', async () => {
     isAdmin.set(true);
@@ -127,9 +278,11 @@ describe('Inventory permissions', () => {
       errors: [], createCount: 0, updateCount: 0, canImport: false, token: null,
     });
     const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    fixture.componentInstance.openImportDialog();
     await fixture.componentInstance.selectImportFile(new File(['xlsx'], 'inventory.xlsx'));
     await fixture.whenStable();
-    const root: HTMLElement = fixture.nativeElement;
+    const root: HTMLElement = TestBed.inject(OverlayContainer).getContainerElement();
     expect(root.textContent).toContain('La cantidad debe ser mayor o igual a cero.');
     expect(root.textContent).toContain('Mesa');
     const confirm = Array.from(root.querySelectorAll('button')).find(button => button.textContent?.includes('Confirmar importación'))!;
@@ -207,20 +360,26 @@ describe('Inventory permissions', () => {
     expect(component.groupingPreview()).toBeNull();
   });
 
-  it('offers registered colors and explicit grouping review to administrators', async () => {
+  it('opens colors and grouping from results without leaving forms on the main page', async () => {
     isAdmin.set(true);
-    service.items.set([{ ...item, name: 'Bandas', requiresColor: true, colors: [{ id: 1, name: 'Azul', quantity: 10 }] } as any]);
+    const family = { ...item, id: 2, name: 'Bandas', requiresColor: true, colors: [{ id: 1, name: 'Azul', quantity: 10 }] };
+    service.items.set([item, family] as any);
     const fixture = TestBed.createComponent(InventoryPageComponent);
     await fixture.whenStable();
-    const root: HTMLElement = fixture.nativeElement;
-    expect(root.textContent).toContain('Colores');
-    fixture.componentInstance.openColors(service.items()[0]);
-    fixture.componentInstance.groupingOpen.set(true);
+    expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    fixture.componentInstance.openColors(family);
     await fixture.whenStable();
-    expect(root.textContent).toContain('Existencias por color');
-    expect(root.textContent).toContain('Azul');
-    expect(root.textContent).toContain('Revisar reorganización');
-    expect(root.textContent).toContain('Las notas históricas se conservarán');
+    const overlay = TestBed.inject(OverlayContainer).getContainerElement();
+    expect(overlay.textContent).toContain('Existencias por color');
+    expect(overlay.textContent).toContain('Azul');
+    const closed = firstValueFrom(TestBed.inject(MatDialog).openDialogs[0].afterClosed());
+    fixture.componentInstance.closeColors();
+    await closed;
+    await fixture.whenStable();
+    fixture.componentInstance.openGrouping(item);
+    await fixture.whenStable();
+    expect(overlay.textContent).toContain('Revisar reorganización');
+    expect(overlay.textContent).toContain('Las notas históricas se conservarán');
   });
 
   it('requires review before replacing unassigned legacy stock with color totals', async () => {
@@ -242,9 +401,11 @@ describe('Inventory permissions', () => {
     isAdmin.set(true);
     service.previewImport.mockResolvedValue({ rows: [], colors: [{ rowNumber: 4, productId: 7, name: 'Plateado', quantity: -1, action: 'update', errors: ['La cantidad del color debe ser mayor o igual a cero.'] }], errors: [], createCount: 0, updateCount: 0, canImport: true, token: 'invalid-color' });
     const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    fixture.componentInstance.openImportDialog();
     await fixture.componentInstance.selectImportFile(new File(['xlsx'], 'inventory.xlsx'));
     await fixture.whenStable();
-    const root: HTMLElement = fixture.nativeElement;
+    const root: HTMLElement = TestBed.inject(OverlayContainer).getContainerElement();
     expect(root.textContent).toContain('Hoja Colores');
     expect(root.textContent).toContain('Plateado');
     expect(root.textContent).toContain('La cantidad del color debe ser mayor o igual a cero.');

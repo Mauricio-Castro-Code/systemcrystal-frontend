@@ -1,22 +1,24 @@
 import { AuthService } from '../../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   ViewChild,
+  TemplateRef,
   effect,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { combineLatest, startWith } from 'rxjs';
+import { combineLatest, startWith, take } from 'rxjs';
 
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -55,6 +57,8 @@ interface InventoryTableFilter {
     MatButtonModule,
     MatAutocompleteModule,
     MatCardModule,
+    MatDialogModule,
+    MatMenuModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -67,16 +71,29 @@ interface InventoryTableFilter {
   styleUrl: './inventory-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InventoryPageComponent implements AfterViewInit {
+export class InventoryPageComponent {
   readonly canManageInventory = inject(AuthService).isAdmin;
   private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly confirmService = inject(ConfirmService);
   private readonly notifications = inject(NotificationService);
+  private readonly dialog = inject(MatDialog);
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
+  private paginatorRef?: MatPaginator;
+  @ViewChild(MatPaginator) set paginator(value: MatPaginator | undefined) {
+    this.paginatorRef = value;
+    this.dataSource.paginator = value ?? null;
+  }
+  @ViewChild(MatSort) set sort(value: MatSort | undefined) { this.dataSource.sort = value ?? null; }
+  @ViewChild('itemDialog') private itemDialog?: TemplateRef<unknown>;
+  @ViewChild('importDialog') private importDialog?: TemplateRef<unknown>;
+  @ViewChild('colorsDialog') private colorsDialog?: TemplateRef<unknown>;
+  @ViewChild('groupingDialog') private groupingDialog?: TemplateRef<unknown>;
+  private activeDialog: MatDialogRef<unknown> | null = null;
+  private activeDialogKind: 'item' | 'import' | 'colors' | 'grouping' | null = null;
+  readonly hasActiveFilter = signal(false);
+  readonly resultCount = signal(0);
 
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly categoryFilterControl = new FormControl<CategoryFilter>('ALL', { nonNullable: true });
@@ -156,6 +173,7 @@ export class InventoryPageComponent implements AfterViewInit {
     this.dataSource.filterPredicate = (item, filter) => {
       const { search, category } = JSON.parse(filter) as InventoryTableFilter;
 
+      if (search.length < 2 && category === 'ALL') return false;
       if (category !== 'ALL' && item.category !== category) {
         return false;
       }
@@ -166,12 +184,11 @@ export class InventoryPageComponent implements AfterViewInit {
 
       const searchableValues = [
         item.name,
-        String(item.quantity),
-        String(item.unitPrice),
+        ...(item.colors ?? []).map(color => color.name),
       ];
 
       return searchableValues.some((value) =>
-        value.toLowerCase().includes(search),
+        this.normalizeSearch(value).includes(search),
       );
     };
 
@@ -182,28 +199,102 @@ export class InventoryPageComponent implements AfterViewInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([search, category]) => {
         const tableFilter: InventoryTableFilter = {
-          search: search.trim().toLowerCase(),
+          search: this.normalizeSearch(search),
           category,
         };
+        this.hasActiveFilter.set(tableFilter.search.length >= 2 || category !== 'ALL');
         this.dataSource.filter = JSON.stringify(tableFilter);
-        this.paginator?.firstPage();
+        this.resultCount.set(this.dataSource.filteredData.length);
+        this.paginatorRef?.firstPage();
       });
 
     effect(() => {
       this.dataSource.data = this.inventoryService.items();
+      this.resultCount.set(this.dataSource.filteredData.length);
     });
 
+    this.destroyRef.onDestroy(() => this.activeDialog?.close());
     void this.reloadInventory();
   }
 
-  ngAfterViewInit(): void {
-    if (this.paginator) {
-      this.dataSource.paginator = this.paginator;
-    }
+  private normalizeSearch(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
 
-    if (this.sort) {
-      this.dataSource.sort = this.sort;
-    }
+  clearFilters(): void {
+    this.searchControl.setValue('');
+    this.categoryFilterControl.setValue('ALL');
+  }
+
+  openAddDialog(): void {
+    if (!this.canManageInventory() || this.activeDialog || this.isSaving()) return;
+    this.resetForm();
+    this.actionMessage.set('');
+    this.openModal('item', this.itemDialog);
+  }
+
+  openImportDialog(): void {
+    if (!this.canManageInventory() || this.activeDialog || this.isImporting()) return;
+    this.cancelImport();
+    this.openModal('import', this.importDialog);
+  }
+
+  closeItemDialog(): void {
+    if (this.isSaving()) return;
+    this.closeModal('item');
+  }
+
+  closeImportDialog(): void {
+    if (this.isImporting()) return;
+    this.cancelImport();
+    this.closeModal('import');
+  }
+
+  openGrouping(item: InventoryItem): void {
+    if (!this.canManageInventory() || this.activeDialog || this.isGrouping() || item.requiresColor) return;
+    this.invalidateGrouping();
+    this.groupingMappings.clear();
+    this.groupingForm.reset({ targetName: '', unitPrice: item.unitPrice,
+      highSeasonPrice: item.highSeasonPrice ?? null, replacementCost: item.replacementCost ?? 0 });
+    this.addGroupingSource(item.id);
+    this.groupingOpen.set(true);
+    this.openModal('grouping', this.groupingDialog);
+  }
+
+  private openModal(kind: 'item' | 'import' | 'colors' | 'grouping', template?: TemplateRef<unknown>): void {
+    if (!template || this.activeDialog) return;
+    const ref = this.dialog.open(template, { width: kind === 'item' ? '660px' : '1000px',
+      maxWidth: 'calc(100vw - 24px)', maxHeight: '92dvh', autoFocus: 'first-tabbable', restoreFocus: true,
+      panelClass: 'inventory-dialog',
+    });
+    this.activeDialog = ref;
+    this.activeDialogKind = kind;
+    ref.beforeClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (kind === 'import') this.cancelImport();
+      if (kind === 'grouping') this.invalidateGrouping();
+    });
+    ref.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.activeDialog !== ref) return;
+      this.activeDialog = null;
+      this.activeDialogKind = null;
+      if (kind === 'item') { this.resetForm(); this.actionMessage.set(''); }
+      if (kind === 'import') this.cancelImport();
+      if (kind === 'colors') { this.colorItem.set(null); this.resetColorForm(); }
+      if (kind === 'grouping') { this.invalidateGrouping(); this.groupingOpen.set(false); this.groupingMappings.clear(); }
+    });
+  }
+
+  private closeModal(kind: 'item' | 'import' | 'colors' | 'grouping'): void {
+    if (this.activeDialogKind === kind) this.activeDialog?.close();
+  }
+
+  private setModalBusy(kind: 'item' | 'import' | 'colors' | 'grouping', busy: boolean): void {
+    if (this.activeDialogKind === kind && this.activeDialog) this.activeDialog.disableClose = busy;
+  }
+
+  private revealItem(item: InventoryItem): void {
+    this.categoryFilterControl.setValue(item.category);
+    this.searchControl.setValue(item.name);
   }
 
   async reloadInventory(): Promise<void> {
@@ -222,6 +313,8 @@ export class InventoryPageComponent implements AfterViewInit {
     }
 
     this.isSaving.set(true);
+    this.setModalBusy('item', true);
+    let saved = false;
     this.actionMessage.set('');
 
     try {
@@ -231,21 +324,27 @@ export class InventoryPageComponent implements AfterViewInit {
       if (editingItemId !== null) {
         const updatedItem = await this.inventoryService.updateItem(editingItemId, payload);
         this.notifications.success(`Producto actualizado: ${updatedItem.name}.`);
+        this.revealItem(updatedItem);
       } else {
         const createdItem = await this.inventoryService.createItem(payload);
         this.notifications.success(`Producto registrado: ${createdItem.name}.`);
+        this.revealItem(createdItem);
       }
 
-      this.resetForm();
+      saved = true;
+      if (!this.activeDialog) this.resetForm();
     } catch (error) {
+      this.actionMessage.set(this.resolveErrorMessage(error));
       this.notifications.error(this.resolveErrorMessage(error));
     } finally {
       this.isSaving.set(false);
+      this.setModalBusy('item', false);
+      if (saved) this.closeItemDialog();
     }
   }
 
   startEdit(item: InventoryItem): void {
-    if (!this.canManageInventory()) return;
+    if (!this.canManageInventory() || this.activeDialog || this.isSaving()) return;
     this.editingItemId.set(item.id);
     this.inventoryForm.setValue({
       name: item.name,
@@ -257,12 +356,14 @@ export class InventoryPageComponent implements AfterViewInit {
     });
     if (item.requiresColor || this.isColorFamily(item.name)) this.inventoryForm.controls.quantity.disable({ emitEvent: false });
     else this.inventoryForm.controls.quantity.enable({ emitEvent: false });
-    this.actionMessage.set(`Editando ${item.name}.`);
+    this.actionMessage.set('');
+    this.openModal('item', this.itemDialog);
   }
 
   cancelEdit(): void {
     this.resetForm();
-    this.actionMessage.set('Edicion cancelada.');
+    this.actionMessage.set('');
+    this.closeItemDialog();
   }
 
   async deleteItem(item: InventoryItem): Promise<void> {
@@ -299,15 +400,17 @@ export class InventoryPageComponent implements AfterViewInit {
   }
 
   openColors(item: InventoryItem): void {
-    if (!this.canManageInventory() || !item.requiresColor || this.isSavingColor()) return;
+    if (!this.canManageInventory() || this.activeDialog || !item.requiresColor || this.isSavingColor()) return;
     this.colorItem.set(item);
     this.resetColorForm();
+    this.openModal('colors', this.colorsDialog);
   }
 
   closeColors(): void {
     if (this.isSavingColor()) return;
     this.colorItem.set(null);
     this.resetColorForm();
+    this.closeModal('colors');
   }
 
   editColor(color: InventoryColor): void {
@@ -347,6 +450,7 @@ export class InventoryPageComponent implements AfterViewInit {
       return;
     }
     this.isSavingColor.set(true);
+    this.setModalBusy('colors', true);
     this.colorError.set('');
     try {
       const values = this.colorForm.getRawValue();
@@ -360,6 +464,7 @@ export class InventoryPageComponent implements AfterViewInit {
       this.colorError.set(this.resolveErrorMessage(error));
     } finally {
       this.isSavingColor.set(false);
+      this.setModalBusy('colors', false);
     }
   }
 
@@ -396,6 +501,7 @@ export class InventoryPageComponent implements AfterViewInit {
     if (this.isGrouping()) return;
     this.invalidateGrouping();
     this.groupingOpen.set(false);
+    this.closeModal('grouping');
   }
 
   async previewGrouping(): Promise<void> {
@@ -423,6 +529,9 @@ export class InventoryPageComponent implements AfterViewInit {
     if (!this.canConfirmGrouping()) return;
     const token = this.groupingPreview()!.token!;
     this.isGrouping.set(true);
+    this.setModalBusy('grouping', true);
+    let grouped = false;
+    const targetName = this.groupingForm.controls.targetName.value;
     this.groupingForm.disable({ emitEvent: false });
     try {
       const result = await this.inventoryService.confirmGrouping(token);
@@ -433,12 +542,17 @@ export class InventoryPageComponent implements AfterViewInit {
       this.closeColors();
       await this.reloadInventory();
       this.notifications.success(`Reorganización completada: ${result.grouped} productos agrupados.`);
+      this.categoryFilterControl.setValue('ALL');
+      this.searchControl.setValue(targetName);
+      grouped = true;
     } catch (error) {
       this.groupingPreview.set(null);
       this.groupingError.set(this.resolveErrorMessage(error));
     } finally {
       this.isGrouping.set(false);
       this.groupingForm.enable({ emitEvent: false });
+      this.setModalBusy('grouping', false);
+      if (grouped) this.closeModal('grouping');
     }
   }
 
@@ -502,6 +616,8 @@ export class InventoryPageComponent implements AfterViewInit {
     if (!this.canConfirmImport()) return;
     const token = this.importPreview()!.token!;
     this.isImporting.set(true);
+    this.setModalBusy('import', true);
+    let imported = false;
     this.importError.set('');
     try {
       const result = await this.inventoryService.confirmImport(token);
@@ -509,11 +625,14 @@ export class InventoryPageComponent implements AfterViewInit {
       this.importFileName.set('');
       this.notifications.success(`Importación completada: ${result.created} productos nuevos y ${result.updated} actualizados.`);
       await this.reloadInventory();
+      imported = true;
     } catch (error) {
       this.importPreview.set(null);
       this.importError.set(this.resolveErrorMessage(error));
     } finally {
       this.isImporting.set(false);
+      this.setModalBusy('import', false);
+      if (imported) this.closeImportDialog();
     }
   }
 

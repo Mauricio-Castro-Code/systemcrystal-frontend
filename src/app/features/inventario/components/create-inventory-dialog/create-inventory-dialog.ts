@@ -22,7 +22,7 @@ import { COLOR_PRODUCT_FAMILIES, INVENTORY_CATEGORIES, InventoryCategory, Invent
         <mat-form-field appearance="outline">
           <mat-label>Nombre del producto</mat-label>
           <input matInput formControlName="name" />
-          <mat-hint>Incluye el color, por ejemplo: Mantel redondo azul.</mat-hint>
+          <mat-hint>Para mantelería registra el equipo principal, por ejemplo: Mantel redondo. Administra sus colores en Inventario.</mat-hint>
           <mat-error>Captura un nombre de hasta 120 caracteres.</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline">

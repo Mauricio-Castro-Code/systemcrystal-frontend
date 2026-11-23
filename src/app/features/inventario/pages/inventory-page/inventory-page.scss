@@ -1,12 +1,15 @@
 :host {
   display: block;
+  background: #f5f6f9;
+  min-height: 100%;
 }
 
 .inventory-page {
   display: grid;
   gap: 1.25rem;
-  max-width: 1280px;
-  padding: 4.8rem clamp(1.25rem, 3vw, 2rem) 2rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 2vw, 2rem) 3rem;
 }
 
 .inventory-page__breadcrumbs {
@@ -19,17 +22,19 @@
 }
 
 .inventory-page__header h1 {
-  margin: 1rem 0 0;
+  margin: 0.6rem 0 0;
   color: var(--of-title);
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.65rem, 3vw, 2.2rem);
+  letter-spacing: -0.035em;
   font-weight: 700;
 }
 
 .inventory-page__description {
-  margin: 1rem 0 0;
+  margin: 0.65rem 0 0;
   max-width: 52rem;
   color: var(--of-text-muted);
-  line-height: 1.75;
+  line-height: 1.6;
+  font-size: 0.9rem;
 }
 
 .inventory-page__actions {
@@ -38,6 +43,10 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  padding: 1.25rem 1.25rem 0.5rem;
+  border: 1px solid var(--of-border);
+  border-radius: 12px;
+  background: #fff;
 }
 
 .inventory-page__search {
@@ -49,23 +58,6 @@
   min-width: 180px;
 }
 
-.inventory-page__refresh {
-  min-height: 3rem;
-  padding: 0 1.2rem;
-  border: 1px solid rgba(var(--of-accent-rgb), 0.2);
-  border-radius: 999px;
-  background: rgba(var(--of-surface-strong-rgb), 0.45);
-  color: var(--of-accent-strong);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 160ms ease, border-color 160ms ease;
-}
-
-.inventory-page__refresh:hover {
-  background: rgba(var(--of-surface-strong-rgb), 0.65);
-  border-color: rgba(var(--of-accent-rgb), 0.32);
-}
-
 .inventory-page__stack {
   display: grid;
   gap: 1.25rem;
@@ -74,9 +66,9 @@
 .inventory-page__state {
   padding: 1rem 1.1rem;
   border-radius: 16px;
-  border: var(--of-glass-border);
-  background: var(--of-glass);
-  box-shadow: var(--of-glass-shadow);
+  border: 1px solid var(--of-border);
+  background: #fff;
+  box-shadow: none;
 }
 
 .inventory-page__state strong {
@@ -96,12 +88,10 @@
 }
 
 .inventory-card {
-  border-radius: 18px;
-  border: var(--of-glass-border);
-  background: var(--of-glass);
-  box-shadow:
-    var(--of-glass-shadow),
-    var(--of-glass-highlight);
+  border-radius: 12px;
+  border: 1px solid var(--of-border);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(29, 47, 88, 0.025);
 }
 
 .inventory-card__content {
@@ -120,12 +110,12 @@
 }
 
 .inventory-form--horizontal {
-  grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr) minmax(140px, 1fr) minmax(160px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
 }
 
 .inventory-form__name {
-  grid-column: span 1;
+  grid-column: 1 / -1;
 }
 
 .inventory-form__actions {
@@ -150,55 +140,11 @@
 
 .inventory-table {
   width: 100%;
+  min-width: 780px;
 }
 
 .inventory-table__name {
   color: var(--of-title);
-}
-
-.category-select {
-  width: 155px;
-  --category-color: var(--of-text-muted);
-}
-
-.category-select[data-category='VAJILLA'] {
-  --category-color: #1d2f58;
-}
-
-.category-select[data-category='MOBILIARIO'] {
-  --category-color: #277740;
-}
-
-.category-select[data-category='MANTELERIA'] {
-  --category-color: #9f3d8a;
-}
-
-.category-select[data-category='CARPAS'] {
-  --category-color: #a8690a;
-}
-
-.category-select[data-category='OTROS'] {
-  --category-color: #5a5a5a;
-}
-
-:host ::ng-deep .category-select .mat-mdc-text-field-wrapper {
-  background: transparent;
-}
-
-:host ::ng-deep .category-select .mat-mdc-form-field-infix {
-  padding-top: 0.45rem;
-  padding-bottom: 0.45rem;
-  min-height: 0;
-}
-
-:host ::ng-deep .category-select .mat-mdc-select-value-text {
-  color: var(--category-color);
-  font-weight: 700;
-  font-size: 0.82rem;
-}
-
-:host ::ng-deep .category-select .mat-mdc-select-arrow {
-  color: var(--category-color);
 }
 
 .inventory-table__actions {
@@ -242,12 +188,12 @@
 :host ::ng-deep .mat-mdc-outlined-button,
 :host ::ng-deep .mat-mdc-header-cell,
 :host ::ng-deep .mat-mdc-cell {
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
 }
 
 :host ::ng-deep .mat-mdc-text-field-wrapper {
   border-radius: 8px;
-  background: var(--of-surface-strong);
+  background: #fff;
 }
 
 :host ::ng-deep .mat-mdc-raised-button {
@@ -326,3 +272,151 @@
 }
 
 .inventory-colors__warning { padding: 1rem; border: 1px solid #b57a13; border-radius: 10px; background: #fff4d6; color: #61420b; }
+
+.inventory-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.inventory-page__admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  gap: 0.6rem;
+  padding-top: 1.8rem;
+}
+
+.inventory-page__admin-actions button {
+  min-height: 44px;
+  border-radius: 8px;
+  color: #1d2f58;
+}
+
+.inventory-page__admin-actions .inventory-page__add {
+  background: #277740;
+  color: #fff;
+}
+
+.inventory-page__empty--initial {
+  display: grid;
+  justify-items: center;
+  padding: 5rem 1.5rem 6rem;
+  border: 1px solid var(--of-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.inventory-page__empty-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #edf1f8;
+  color: #1d2f58;
+}
+
+.inventory-page__empty-icon mat-icon {
+  width: 30px;
+  height: 30px;
+  font-size: 30px;
+}
+
+.inventory-page__empty h2 {
+  margin: 1.25rem 0 0.25rem;
+  font-size: 1.15rem;
+  color: #1d2f58;
+}
+
+.inventory-page__empty p {
+  max-width: 28rem;
+  line-height: 1.65;
+  font-size: 0.9rem;
+}
+
+.inventory-category {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  background: #edf1f8;
+  color: #1d2f58;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.inventory-category[data-category='MOBILIARIO'] {
+  background: #eaf4ed;
+  color: #277740;
+}
+
+.inventory-dialog__content {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.5rem !important;
+}
+
+.inventory-dialog__description {
+  margin: 0 0 0.5rem;
+  color: var(--of-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.inventory-dialog__footnote {
+  color: var(--of-text-muted);
+  font-size: 0.78rem;
+  padding: 0 0.5rem;
+}
+
+.inventory-dialog__content mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.inventory-form__actions button {
+  min-height: 44px;
+}
+
+:host ::ng-deep .inventory-table .mat-column-actions {
+  width: 64px;
+  text-align: center;
+}
+
+@media (max-width: 1199px) {
+  .inventory-page__header {
+    flex-direction: column;
+  }
+
+  .inventory-page__admin-actions {
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .inventory-page__actions {
+    padding: 1rem 1rem 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .inventory-page__search,
+  .inventory-page__category-filter {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .inventory-page__admin-actions {
+    width: 100%;
+  }
+
+  .inventory-page__admin-actions button {
+    flex: 1;
+    padding-inline: 10px;
+  }
+
+  .inventory-page__empty--initial {
+    padding: 3rem 1.25rem 4rem;
+  }
+}

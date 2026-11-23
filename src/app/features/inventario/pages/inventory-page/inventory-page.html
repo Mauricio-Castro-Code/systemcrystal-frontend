@@ -7,6 +7,13 @@
         Consulta los productos, sus existencias y precios base para tus cotizaciones.
       </p>
     </div>
+    @if (canManageInventory()) {
+      <div class="inventory-page__admin-actions" aria-label="Administrar inventario">
+        <button mat-stroked-button type="button" (click)="openImportDialog()"><mat-icon>upload_file</mat-icon>Importar</button>
+        <button mat-stroked-button type="button" [disabled]="isExporting()" (click)="exportInventory()"><mat-icon>download</mat-icon>Exportar</button>
+        <button class="inventory-page__add" mat-flat-button type="button" (click)="openAddDialog()"><mat-icon>add</mat-icon>Agregar</button>
+      </div>
+    }
   </header>
 
   <section class="inventory-page__actions">
@@ -15,23 +22,26 @@
       <input
         matInput
         [formControl]="searchControl"
-        placeholder="Buscar por nombre, cantidad o precio..."
+        placeholder="Buscar productos…"
+        aria-label="Buscar productos"
       />
+      @if (searchControl.value || categoryFilterControl.value !== 'ALL') {
+        <button mat-icon-button matSuffix type="button" aria-label="Limpiar búsqueda y categoría" (click)="clearFilters()"><mat-icon>close</mat-icon></button>
+      }
+      <mat-hint>Escribe al menos 2 letras o elige una categoría.</mat-hint>
     </mat-form-field>
 
     <mat-form-field class="inventory-page__category-filter" appearance="outline">
-      <mat-label>Categoria</mat-label>
+      <mat-label>Categoría</mat-label>
       <mat-select [formControl]="categoryFilterControl">
-        <mat-option value="ALL">Todas las categorias</mat-option>
+        <mat-option value="ALL">Todas las categorías</mat-option>
         @for (category of categories; track category.value) {
           <mat-option [value]="category.value">{{ category.label }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
 
-    <button class="inventory-page__refresh" type="button" (click)="reloadInventory()">
-      {{ isLoading() ? 'Actualizando...' : 'Recargar inventario' }}
-    </button>
+
   </section>
 
   @if (errorMessage()) {
@@ -46,24 +56,219 @@
     </section>
   }
 
-  @if (canManageInventory()) {
-    <mat-card class="inventory-card inventory-import">
+  @if (actionMessage()) {
+    <p class="inventory-card__action-message" role="status">{{ actionMessage() }}</p>
+  }
+  @if (hasActiveFilter()) {
+    <mat-card class="inventory-card inventory-card--table">
       <mat-card-header>
-        <mat-card-title>Inventario en Excel</mat-card-title>
-        <mat-card-subtitle>Exporta el catálogo y sigue las instrucciones de la hoja Colores. Crea primero la familia en Inventario y exporta para obtener su ID antes de agregar colores. Revisa ambas hojas antes de importar.</mat-card-subtitle>
+        <mat-card-title>Resultados de búsqueda</mat-card-title>
+        <mat-card-subtitle>
+          {{ resultCount() }} producto{{ resultCount() === 1 ? '' : 's' }} encontrado{{ resultCount() === 1 ? '' : 's' }}
+        </mat-card-subtitle>
       </mat-card-header>
-      <mat-card-content class="inventory-card__content">
+
+      <mat-card-content class="inventory-card__content inventory-card__content--table">
+        <div class="inventory-table__wrap">
+          <table
+            mat-table
+            [dataSource]="dataSource"
+            [trackBy]="trackByProductId"
+            matSort
+            class="inventory-table"
+          >
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Producto</th>
+              <td mat-cell *matCellDef="let item">
+                <strong class="inventory-table__name">{{ item.name }}</strong>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Categoría</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="inventory-category" [attr.data-category]="item.category">{{ categoryLabel(item.category) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="quantity">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Cantidad</th>
+              <td mat-cell *matCellDef="let item">{{ item.quantity }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="unitPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Renta normal</th>
+              <td mat-cell *matCellDef="let item">
+                {{ item.unitPrice | currency: 'MXN' : 'symbol-narrow' : '1.0-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="highSeasonPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Temporada alta</th>
+              <td mat-cell *matCellDef="let item">{{ (item.highSeasonPrice ?? item.unitPrice) | currency:'MXN':'symbol-narrow':'1.0-2' }}
+                @if (item.highSeasonPrice == null) { <small class="inventory-table__fallback">Precio normal</small> }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="replacementCost">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Reposición</th>
+              <td mat-cell *matCellDef="let item">{{ (item.replacementCost ?? 0) | currency:'MXN':'symbol-narrow':'1.0-2' }}</td>
+            </ng-container>
+
+            @if (canManageInventory()) {
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button type="button" [matMenuTriggerFor]="itemMenu" [attr.aria-label]="'Acciones de ' + item.name">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #itemMenu="matMenu">
+                    <button mat-menu-item type="button" (click)="startEdit(item)"><mat-icon>edit</mat-icon><span>Editar</span></button>
+                    @if (item.requiresColor) {
+                      <button mat-menu-item type="button" [disabled]="isSavingColor()" (click)="openColors(item)"><mat-icon>palette</mat-icon><span>Colores</span></button>
+                    } @else {
+                      <button mat-menu-item type="button" (click)="openGrouping(item)"><mat-icon>account_tree</mat-icon><span>Reorganizar</span></button>
+                    }
+                    <button mat-menu-item type="button" (click)="deleteItem(item)"><mat-icon>inventory_2</mat-icon><span>Desactivar</span></button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+            }
+            <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+          </table>
+
+          @if (!isLoading() && resultCount() === 0) {
+            <div class="inventory-page__empty">
+              <strong>No hay productos para mostrar.</strong>
+              <p>Ajusta los filtros para buscar coincidencias.</p>
+            </div>
+          }
+        </div>
+
+        <mat-paginator
+          [pageSize]="20"
+          [pageSizeOptions]="[10, 20, 50, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </mat-card-content>
+        </mat-card>
+  } @else {
+    <section class="inventory-page__empty inventory-page__empty--initial" aria-label="Buscar en el inventario">
+      <span class="inventory-page__empty-icon"><mat-icon>search</mat-icon></span>
+      <h2>Encuentra lo que necesitas</h2>
+      <p>Busca un equipo con al menos 2 letras o selecciona una categoría para consultar sus existencias y precios.</p>
+    </section>
+  }
+</section>
+
+<ng-template #itemDialog>
+  <h2 mat-dialog-title>{{ editingItemId() !== null ? 'Editar producto' : 'Agregar producto' }}</h2>
+  <mat-dialog-content class="inventory-dialog__content">
+    <p class="inventory-dialog__description">Captura los datos del producto y sus precios de renta.</p>
+
+          <form class="inventory-form inventory-form--horizontal" [formGroup]="inventoryForm">
+            <mat-form-field appearance="outline" class="inventory-form__name">
+              <mat-label>Nombre del Producto</mat-label>
+              <input matInput formControlName="name" [matAutocomplete]="familyOptions" />
+              <mat-autocomplete #familyOptions="matAutocomplete">
+                @for (family of colorFamilies; track family) { <mat-option [value]="family">{{ family }}</mat-option> }
+              </mat-autocomplete>
+              @if (
+                inventoryForm.controls.name.touched &&
+                inventoryForm.controls.name.hasError('required')
+              ) {
+                <mat-error>El nombre del producto es requerido.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Categoría</mat-label>
+              <mat-select formControlName="category">
+                @for (category of categories; track category.value) {
+                  <mat-option [value]="category.value">{{ category.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Cantidad Disponible</mat-label>
+              <input matInput type="number" min="0" formControlName="quantity" />
+              @if (inventoryForm.controls.quantity.disabled) { <mat-hint>Se calcula con las existencias de los colores registrados.</mat-hint> }
+              @if (
+                inventoryForm.controls.quantity.touched &&
+                inventoryForm.controls.quantity.hasError('required')
+              ) {
+                <mat-error>La cantidad es requerida.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Renta normal</mat-label>
+              <span matTextPrefix>$&nbsp;</span>
+              <input matInput type="number" min="0" formControlName="unitPrice" />
+              @if (
+                inventoryForm.controls.unitPrice.touched &&
+                inventoryForm.controls.unitPrice.hasError('required')
+              ) {
+                <mat-error>El precio unitario es requerido.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Renta en temporada alta</mat-label>
+              <span matTextPrefix>$&nbsp;</span>
+              <input matInput type="number" min="0" step="0.01" formControlName="highSeasonPrice" />
+              <mat-hint>Vacío: usar precio normal. Cero es válido.</mat-hint>
+              <mat-error>Captura un precio mayor o igual a cero.</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Costo de reposición</mat-label>
+              <span matTextPrefix>$&nbsp;</span>
+              <input matInput type="number" min="0" step="0.01" formControlName="replacementCost" />
+              <mat-error>Captura un costo mayor o igual a cero.</mat-error>
+            </mat-form-field>
+
+
+          </form>
+
+          @if (actionMessage()) {
+            <p class="inventory-card__action-message">{{ actionMessage() }}</p>
+          }
+
+  </mat-dialog-content>
+  <mat-dialog-actions class="inventory-form__actions">
+              <button
+                mat-raised-button
+                type="button"
+                [disabled]="isSaving()"
+                (click)="submitForm()"
+              >
+                {{
+                  isSaving()
+                    ? 'Guardando...'
+                    : editingItemId() !== null
+                      ? 'Guardar cambios'
+                      : 'Agregar producto'
+                }}
+              </button>
+
+              <button mat-stroked-button type="button" [disabled]="isSaving()" (click)="closeItemDialog()">Cancelar</button>
+            </mat-dialog-actions>
+</ng-template>
+
+<ng-template #importDialog>
+  <h2 mat-dialog-title>Importar inventario</h2>
+  <mat-dialog-content class="inventory-dialog__content">
+    <p class="inventory-dialog__description">Selecciona un archivo Excel y revisa los productos y colores antes de confirmar. Para agregar colores, crea primero la familia y exporta el catálogo para obtener su ID.</p>
+
         <div class="inventory-form__actions">
-          <button mat-stroked-button type="button" [disabled]="isExporting()" (click)="exportInventory()">
-            <mat-icon>download</mat-icon>{{ isExporting() ? 'Exportando…' : 'Exportar Excel' }}
-          </button>
           <input #importFile type="file" accept=".xlsx" hidden (change)="onImportFileChange($event)" />
           <button mat-stroked-button type="button" [disabled]="isImporting()" (click)="importFile.click()">
             <mat-icon>upload_file</mat-icon>Seleccionar Excel
           </button>
           @if (importFileName()) {
             <span class="inventory-import__filename">{{ importFileName() }}</span>
-            <button mat-button type="button" [disabled]="isImporting()" (click)="cancelImport()">Cancelar importación</button>
+            <button mat-button type="button" [disabled]="isImporting()" (click)="closeImportDialog()">Cancelar importación</button>
           }
         </div>
         @if (isPreviewing()) { <p role="status">Validando filas del archivo…</p> }
@@ -114,18 +319,17 @@
             <button mat-flat-button type="button" [disabled]="!canConfirmImport()" (click)="confirmImport()">{{ isImporting() ? 'Importando…' : 'Confirmar importación' }}</button>
           </div>
         }
-      </mat-card-content>
-    </mat-card>
-  }
 
-  @if (canManageInventory()) {
-    @if (colorItem(); as item) {
-      <mat-card class="inventory-card">
-        <mat-card-header>
-          <mat-card-title>Existencias por color · {{ item.name }}</mat-card-title>
-          <mat-card-subtitle>{{ item.quantity }} unidades en total. Los precios de renta y reposición se comparten entre todos los colores.</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content class="inventory-card__content">
+  </mat-dialog-content>
+  <mat-dialog-actions><button mat-button type="button" [disabled]="isImporting()" (click)="closeImportDialog()">Cerrar</button></mat-dialog-actions>
+</ng-template>
+
+<ng-template #colorsDialog>
+  @if (colorItem(); as item) {
+    <h2 mat-dialog-title>Existencias por color · {{ item.name }}</h2>
+    <mat-dialog-content class="inventory-dialog__content">
+      <p class="inventory-dialog__description">{{ item.quantity }} unidades en total. Los precios de renta y reposición se comparten entre todos los colores.</p>
+
           <div class="inventory-colors__list">
             @for (color of item.colors ?? []; track color.id) {
               <div class="inventory-colors__row"><strong>{{ color.name }}</strong><span>{{ color.quantity }} unidades</span><button mat-button type="button" [disabled]="isSavingColor()" (click)="editColor(color)">Editar color</button></div>
@@ -140,20 +344,22 @@
             <div class="inventory-form__actions">
               <button mat-flat-button type="submit" [disabled]="isSavingColor()">{{ isSavingColor() ? 'Guardando…' : editingColorId() !== null ? 'Guardar color' : 'Registrar color' }}</button>
               @if (editingColorId() !== null) { <button mat-button type="button" [disabled]="isSavingColor()" (click)="resetColorForm()">Nuevo color</button> }
-              <button mat-button type="button" [disabled]="isSavingColor()" (click)="closeColors()">Cerrar colores</button>
+
             </div>
           </form>
           @if (colorError()) { <p role="alert" class="inventory-import__error">{{ colorError() }}</p> }
-        </mat-card-content>
-      </mat-card>
-    }
-    <mat-card class="inventory-card inventory-grouping">
-      <mat-card-header>
-        <mat-card-title>Reorganizar productos por color</mat-card-title>
-        <mat-card-subtitle>Selecciona únicamente los productos que deseas reunir en una familia. Los demás productos conservarán su registro individual.</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content class="inventory-card__content">
-        @if (!groupingOpen()) { <button mat-stroked-button type="button" (click)="groupingOpen.set(true)">Preparar reorganización</button> }
+
+    </mat-dialog-content>
+    <mat-dialog-actions><button mat-button type="button" [disabled]="isSavingColor()" (click)="closeColors()">Cerrar</button></mat-dialog-actions>
+  }
+</ng-template>
+
+<ng-template #groupingDialog>
+  <h2 mat-dialog-title>Reorganizar productos por color</h2>
+  <mat-dialog-content class="inventory-dialog__content">
+    <p class="inventory-dialog__description">Reúne los productos seleccionados en una familia y asigna sus colores.</p>
+
+
         @if (groupingOpen()) {
           <p>Los productos seleccionados pasarán a estar inactivos al confirmar. Las notas históricas se conservarán.</p>
           <form [formGroup]="groupingForm" class="inventory-grouping__form" (ngSubmit)="previewGrouping()">
@@ -185,236 +391,7 @@
             <button mat-flat-button type="button" [disabled]="!canConfirmGrouping()" (click)="confirmGrouping()">{{ isGrouping() ? 'Reorganizando…' : 'Confirmar reorganización' }}</button>
           }
         }
-      </mat-card-content>
-    </mat-card>
-  }
 
-  <section class="inventory-page__stack">
-    @if (canManageInventory()) {
-      <mat-card class="inventory-card inventory-card--form">
-        <mat-card-header>
-          <mat-card-title>
-            {{ editingItemId() !== null ? 'Editar producto' : 'Nuevo producto' }}
-          </mat-card-title>
-          <mat-card-subtitle>
-            {{
-              editingItemId() !== null
-                ? 'Ajusta existencias o precio base.'
-                : 'Captura el catalogo comercial.'
-            }}
-          </mat-card-subtitle>
-        </mat-card-header>
-
-        <mat-card-content class="inventory-card__content">
-          <form class="inventory-form inventory-form--horizontal" [formGroup]="inventoryForm">
-            <mat-form-field appearance="outline" class="inventory-form__name">
-              <mat-label>Nombre del Producto</mat-label>
-              <input matInput formControlName="name" [matAutocomplete]="familyOptions" />
-              <mat-autocomplete #familyOptions="matAutocomplete">
-                @for (family of colorFamilies; track family) { <mat-option [value]="family">{{ family }}</mat-option> }
-              </mat-autocomplete>
-              @if (
-                inventoryForm.controls.name.touched &&
-                inventoryForm.controls.name.hasError('required')
-              ) {
-                <mat-error>El nombre del producto es requerido.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Categoria</mat-label>
-              <mat-select formControlName="category">
-                @for (category of categories; track category.value) {
-                  <mat-option [value]="category.value">{{ category.label }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Cantidad Disponible</mat-label>
-              <input matInput type="number" min="0" formControlName="quantity" />
-              @if (inventoryForm.controls.quantity.disabled) { <mat-hint>Se calcula con las existencias de los colores registrados.</mat-hint> }
-              @if (
-                inventoryForm.controls.quantity.touched &&
-                inventoryForm.controls.quantity.hasError('required')
-              ) {
-                <mat-error>La cantidad es requerida.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Renta normal</mat-label>
-              <span matTextPrefix>$&nbsp;</span>
-              <input matInput type="number" min="0" formControlName="unitPrice" />
-              @if (
-                inventoryForm.controls.unitPrice.touched &&
-                inventoryForm.controls.unitPrice.hasError('required')
-              ) {
-                <mat-error>El precio unitario es requerido.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Renta en temporada alta</mat-label>
-              <span matTextPrefix>$&nbsp;</span>
-              <input matInput type="number" min="0" step="0.01" formControlName="highSeasonPrice" />
-              <mat-hint>Vacío: usar precio normal. Cero es válido.</mat-hint>
-              <mat-error>Captura un precio mayor o igual a cero.</mat-error>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Costo de reposición</mat-label>
-              <span matTextPrefix>$&nbsp;</span>
-              <input matInput type="number" min="0" step="0.01" formControlName="replacementCost" />
-              <mat-error>Captura un costo mayor o igual a cero.</mat-error>
-            </mat-form-field>
-
-            <div class="inventory-form__actions">
-              <button
-                mat-raised-button
-                type="button"
-                [disabled]="isSaving()"
-                (click)="submitForm()"
-              >
-                {{
-                  isSaving()
-                    ? 'Guardando...'
-                    : editingItemId() !== null
-                      ? 'Guardar cambios'
-                      : 'Agregar producto'
-                }}
-              </button>
-
-              @if (editingItemId() !== null) {
-                <button mat-stroked-button type="button" (click)="cancelEdit()">Cancelar</button>
-              }
-            </div>
-          </form>
-
-          @if (actionMessage()) {
-            <p class="inventory-card__action-message">{{ actionMessage() }}</p>
-          }
-        </mat-card-content>
-      </mat-card>
-    }
-    <mat-card class="inventory-card inventory-card--table">
-      <mat-card-header>
-        <mat-card-title>Productos registrados</mat-card-title>
-        <mat-card-subtitle>
-          {{ totalItems() }} producto{{ totalItems() === 1 ? '' : 's' }} en catalogo
-        </mat-card-subtitle>
-      </mat-card-header>
-
-      <mat-card-content class="inventory-card__content inventory-card__content--table">
-        <div class="inventory-table__wrap">
-          <table
-            mat-table
-            [dataSource]="dataSource"
-            [trackBy]="trackByProductId"
-            matSort
-            class="inventory-table"
-          >
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Producto</th>
-              <td mat-cell *matCellDef="let item">
-                <strong class="inventory-table__name">{{ item.name }}</strong>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="category">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Categoria</th>
-              <td mat-cell *matCellDef="let item">
-                @if (canManageInventory()) {
-                  <mat-form-field
-                    appearance="outline"
-                    class="category-select"
-                    subscriptSizing="dynamic"
-                    [attr.data-category]="item.category"
-                  >
-                    <mat-select
-                      [value]="item.category"
-                      (selectionChange)="changeCategory(item, $event.value)"
-                    >
-                      @for (category of categories; track category.value) {
-                        <mat-option [value]="category.value">{{ category.label }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-                } @else {
-                  <span>{{ categoryLabel(item.category) }}</span>
-                }
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="quantity">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Cantidad</th>
-              <td mat-cell *matCellDef="let item">{{ item.quantity }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="unitPrice">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Renta normal</th>
-              <td mat-cell *matCellDef="let item">
-                {{ item.unitPrice | currency: 'MXN' : 'symbol-narrow' : '1.0-2' }}
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="highSeasonPrice">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Temporada alta</th>
-              <td mat-cell *matCellDef="let item">{{ (item.highSeasonPrice ?? item.unitPrice) | currency:'MXN':'symbol-narrow':'1.0-2' }}
-                @if (item.highSeasonPrice == null) { <small class="inventory-table__fallback">Precio normal</small> }
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="replacementCost">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Reposición</th>
-              <td mat-cell *matCellDef="let item">{{ (item.replacementCost ?? 0) | currency:'MXN':'symbol-narrow':'1.0-2' }}</td>
-            </ng-container>
-
-            @if (canManageInventory()) {
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Acciones</th>
-                <td mat-cell *matCellDef="let item">
-                  <div class="inventory-table__actions">
-                    @if (item.requiresColor) {
-                      <button mat-stroked-button type="button" [disabled]="isSavingColor()" (click)="openColors(item)">Colores</button>
-                    }
-                    <button
-                      mat-icon-button
-                      type="button"
-                      aria-label="Editar producto"
-                      (click)="startEdit(item)"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-
-                    <button
-                      mat-icon-button
-                      type="button"
-                      aria-label="Desactivar producto"
-                      (click)="deleteItem(item)"
-                    >
-                      <mat-icon>inventory_2</mat-icon>
-                    </button>
-                  </div>
-                </td>
-              </ng-container>
-            }
-            <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
-          </table>
-
-          @if (!isLoading() && dataSource.filteredData.length === 0) {
-            <div class="inventory-page__empty">
-              <strong>No hay productos para mostrar.</strong>
-              <p>Ajusta los filtros para buscar coincidencias.</p>
-            </div>
-          }
-        </div>
-
-        <mat-paginator
-          [pageSize]="24"
-          [pageSizeOptions]="[12, 24, 48, 96]"
-          showFirstLastButtons
-        ></mat-paginator>
-      </mat-card-content>
-    </mat-card>
-  </section>
-</section>
+  </mat-dialog-content>
+  <mat-dialog-actions><button mat-button type="button" [disabled]="isGrouping()" (click)="cancelGrouping()">Cerrar</button></mat-dialog-actions>
+</ng-template>
