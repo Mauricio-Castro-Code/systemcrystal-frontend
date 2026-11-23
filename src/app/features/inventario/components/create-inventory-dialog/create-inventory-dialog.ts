@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { InventoryService } from '../../../../core/services/inventory.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { INVENTORY_CATEGORIES, InventoryCategory, InventoryItem } from '../../models/inventory-item.model';
+import { COLOR_PRODUCT_FAMILIES, INVENTORY_CATEGORIES, InventoryCategory, InventoryItem } from '../../models/inventory-item.model';
 
 @Component({
   selector: 'app-create-inventory-dialog',
@@ -35,6 +36,7 @@ import { INVENTORY_CATEGORIES, InventoryCategory, InventoryItem } from '../../mo
         <mat-form-field appearance="outline">
           <mat-label>Cantidad disponible en inventario</mat-label>
           <input matInput type="number" min="0" step="1" formControlName="quantity" />
+          @if (form.controls.quantity.disabled) { <mat-hint>Registra los colores y sus existencias en Inventario después de crear la familia.</mat-hint> }
           <mat-error>Captura una cantidad entera mayor o igual a cero.</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline">
@@ -85,6 +87,18 @@ export class CreateInventoryDialogComponent {
     highSeasonPrice: new FormControl<number | null>(null, Validators.min(0)),
     replacementCost: [0, [Validators.required, Validators.min(0)]],
   });
+
+  constructor() {
+    const updateQuantity = (name: string) => {
+      const requiresColor = COLOR_PRODUCT_FAMILIES.some(family => family.localeCompare(name.trim(), 'es', { sensitivity: 'base' }) === 0);
+      if (requiresColor) {
+        this.form.controls.quantity.setValue(0, { emitEvent: false });
+        this.form.controls.quantity.disable({ emitEvent: false });
+      } else this.form.controls.quantity.enable({ emitEvent: false });
+    };
+    updateQuantity(this.form.controls.name.value);
+    this.form.controls.name.valueChanges.pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe(updateQuantity);
+  }
 
   async save(): Promise<void> {
     if (this.isSaving() || !this.authService.isAdmin()) return;

@@ -225,7 +225,7 @@
               @for (item of record.quotation.equipmentItems; track item.equipment + $index) {
                 <tr>
                   <td>{{ item.quantity }}</td>
-                  <td>{{ item.equipment }}</td>
+                  <td>{{ item.equipment }} @if (item.color) { <small> · {{ item.color }}</small> }</td>
                   <td>{{ item.unitPrice | currency: 'MXN' : 'symbol' : '1.0-0' }}</td>
                   <td>{{ item.total | currency: 'MXN' : 'symbol' : '1.0-0' }}</td>
                 </tr>

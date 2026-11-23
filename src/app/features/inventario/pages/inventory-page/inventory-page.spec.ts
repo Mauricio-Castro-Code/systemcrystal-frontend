@@ -21,17 +21,22 @@ describe('Inventory permissions', () => {
     previewImport: vi.fn(),
     confirmImport: vi.fn(),
     exportExcel: vi.fn(),
+    saveColor: vi.fn(),
+    previewGrouping: vi.fn(),
+    confirmGrouping: vi.fn(),
   };
   const confirmDelete = vi.fn();
+  const confirmAction = vi.fn();
   beforeEach(async () => {
     isAdmin.set(false);
+    service.items.set([item]);
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
       imports: [InventoryPageComponent],
       providers: [
         { provide: AuthService, useValue: { isAdmin } },
         { provide: InventoryService, useValue: service },
-        { provide: ConfirmService, useValue: { confirmDelete } },
+        { provide: ConfirmService, useValue: { confirmDelete, confirmAction } },
         { provide: NotificationService, useValue: { success: vi.fn(), error: vi.fn() } },
       ],
     }).compileComponents();
@@ -42,7 +47,7 @@ describe('Inventory permissions', () => {
     const root: HTMLElement = fixture.nativeElement;
     expect(root.querySelector('.inventory-card--form')).toBeNull();
     expect(root.querySelector('[aria-label="Editar producto"]')).toBeNull();
-    expect(root.querySelector('[aria-label="Eliminar producto"]')).toBeNull();
+    expect(root.querySelector('[aria-label="Desactivar producto"]')).toBeNull();
     expect(root.querySelector('.category-select')).toBeNull();
     expect(root.textContent).toContain('Silla');
     await fixture.componentInstance.deleteItem(item);
@@ -62,7 +67,7 @@ describe('Inventory permissions', () => {
     const root: HTMLElement = fixture.nativeElement;
     expect(root.querySelector('.inventory-card--form')).not.toBeNull();
     expect(root.querySelector('[aria-label="Editar producto"]')).not.toBeNull();
-    expect(root.querySelector('[aria-label="Eliminar producto"]')).not.toBeNull();
+    expect(root.querySelector('[aria-label="Desactivar producto"]')).not.toBeNull();
     expect(root.querySelector('.category-select')).not.toBeNull();
   });
   it('preserves seasonal and replacement prices when changing category', async () => {
@@ -142,6 +147,112 @@ describe('Inventory permissions', () => {
     expect(component.importPreview()).toBeNull();
     expect(component.importError()).toBe('Archivo no válido.');
     expect(component.canConfirmImport()).toBe(false);
+  });
+
+  it('derives family stock from registered colors and saves a color independently', async () => {
+    isAdmin.set(true);
+    const component = TestBed.createComponent(InventoryPageComponent).componentInstance as any;
+    const family = { ...item, name: 'Bandas', requiresColor: true, colors: [{ id: 5, name: 'Azul', quantity: 10 }] };
+    component.startEdit(family);
+    expect(component.inventoryForm.controls.quantity.disabled).toBe(true);
+    component.openColors(family);
+    component.editColor(family.colors[0]);
+    component.colorForm.patchValue({ quantity: 12 });
+    service.saveColor.mockResolvedValue({ ...family, quantity: 12, colors: [{ id: 5, name: 'Azul', quantity: 12 }] });
+    await component.saveColor();
+    expect(service.saveColor).toHaveBeenCalledWith(1, 5, { name: 'Azul', quantity: 12 });
+    expect(component.colorItem().quantity).toBe(12);
+  });
+  it('invalidates grouping preview immediately when mappings or prices change', async () => {
+    isAdmin.set(true);
+    const component = TestBed.createComponent(InventoryPageComponent).componentInstance as any;
+    component.groupingForm.patchValue({ targetName: 'Bandas', unitPrice: 20 });
+    component.addGroupingSource(1);
+    component.groupingMappings.at(0).patchValue({ color: 'Azul' });
+    service.previewGrouping.mockResolvedValue({ targetName: 'Bandas', sourceCount: 1, colorCount: 1, historyLinks: 2, colors: [{ name: 'Azul', quantity: 10 }], warnings: [], errors: [], canConfirm: true, token: 'signed' });
+    await component.previewGrouping();
+    expect(component.groupingPreview()?.token).toBe('signed');
+    expect(service.confirmGrouping).not.toHaveBeenCalled();
+    component.groupingForm.patchValue({ unitPrice: 30 });
+    expect(component.groupingPreview()).toBeNull();
+    await component.confirmGrouping();
+    expect(service.confirmGrouping).not.toHaveBeenCalled();
+  });
+  it('ignores a grouping response if input changed while reviewing', async () => {
+    isAdmin.set(true);
+    const component = TestBed.createComponent(InventoryPageComponent).componentInstance as any;
+    component.groupingForm.patchValue({ targetName: 'Bandas' });
+    component.addGroupingSource(1);
+    component.groupingMappings.at(0).patchValue({ color: 'Azul' });
+    let resolve!: (value: unknown) => void;
+    service.previewGrouping.mockReturnValueOnce(new Promise(done => resolve = done));
+    const pending = component.previewGrouping();
+    component.groupingMappings.at(0).patchValue({ color: 'Rojo' });
+    resolve({ errors: [], canConfirm: true, token: 'old' });
+    await pending;
+    expect(component.groupingPreview()).toBeNull();
+  });
+  it('confirms grouping with the reviewed token and reloads inventory', async () => {
+    isAdmin.set(true);
+    const component = TestBed.createComponent(InventoryPageComponent).componentInstance as any;
+    component.groupingForm.patchValue({ targetName: 'Bandas' });
+    component.addGroupingSource(1);
+    component.groupingMappings.at(0).patchValue({ color: 'Azul' });
+    service.previewGrouping.mockResolvedValue({ targetName: 'Bandas', sourceCount: 1, colorCount: 1, historyLinks: 0, colors: [], warnings: [], errors: [], canConfirm: true, token: 'signed' });
+    service.confirmGrouping.mockResolvedValue({ targetProductId: 2, grouped: 1 });
+    await component.previewGrouping();
+    await component.confirmGrouping();
+    expect(service.confirmGrouping).toHaveBeenCalledWith('signed');
+    expect(service.loadInventory).toHaveBeenCalledWith(true);
+    expect(component.groupingPreview()).toBeNull();
+  });
+
+  it('offers registered colors and explicit grouping review to administrators', async () => {
+    isAdmin.set(true);
+    service.items.set([{ ...item, name: 'Bandas', requiresColor: true, colors: [{ id: 1, name: 'Azul', quantity: 10 }] } as any]);
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.whenStable();
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.textContent).toContain('Colores');
+    fixture.componentInstance.openColors(service.items()[0]);
+    fixture.componentInstance.groupingOpen.set(true);
+    await fixture.whenStable();
+    expect(root.textContent).toContain('Existencias por color');
+    expect(root.textContent).toContain('Azul');
+    expect(root.textContent).toContain('Revisar reorganización');
+    expect(root.textContent).toContain('Las notas históricas se conservarán');
+  });
+
+  it('requires review before replacing unassigned legacy stock with color totals', async () => {
+    isAdmin.set(true);
+    const component = TestBed.createComponent(InventoryPageComponent).componentInstance as any;
+    const family = { ...item, name: 'Bandas', requiresColor: true, quantity: 30, colors: [] };
+    component.openColors(family);
+    component.colorForm.patchValue({ name: 'Azul', quantity: 10 });
+    await component.saveColor();
+    expect(service.saveColor).not.toHaveBeenCalled();
+    expect(component.colorError()).toContain('Revisa');
+    component.legacyStockReviewed.setValue(true);
+    service.saveColor.mockResolvedValue({ ...family, quantity: 10, colors: [{ id: 1, name: 'Azul', quantity: 10 }] });
+    await component.saveColor();
+    expect(service.saveColor).toHaveBeenCalledWith(1, null, { name: 'Azul', quantity: 10 });
+  });
+
+  it('shows invalid Colores worksheet rows and prevents their confirmation', async () => {
+    isAdmin.set(true);
+    service.previewImport.mockResolvedValue({ rows: [], colors: [{ rowNumber: 4, productId: 7, name: 'Plateado', quantity: -1, action: 'update', errors: ['La cantidad del color debe ser mayor o igual a cero.'] }], errors: [], createCount: 0, updateCount: 0, canImport: true, token: 'invalid-color' });
+    const fixture = TestBed.createComponent(InventoryPageComponent);
+    await fixture.componentInstance.selectImportFile(new File(['xlsx'], 'inventory.xlsx'));
+    await fixture.whenStable();
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.textContent).toContain('Hoja Colores');
+    expect(root.textContent).toContain('Plateado');
+    expect(root.textContent).toContain('La cantidad del color debe ser mayor o igual a cero.');
+    expect(fixture.componentInstance.canConfirmImport()).toBe(false);
+    const button = Array.from(root.querySelectorAll('button')).find(button => button.textContent?.includes('Confirmar importación'))!;
+    expect(button.disabled).toBe(true);
+    await fixture.componentInstance.confirmImport();
+    expect(service.confirmImport).not.toHaveBeenCalled();
   });
 
 });

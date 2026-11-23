@@ -50,7 +50,7 @@
     <mat-card class="inventory-card inventory-import">
       <mat-card-header>
         <mat-card-title>Inventario en Excel</mat-card-title>
-        <mat-card-subtitle>Exporta el catálogo, completa filas nuevas o ajusta productos existentes y revisa los cambios antes de importar.</mat-card-subtitle>
+        <mat-card-subtitle>Exporta el catálogo y sigue las instrucciones de la hoja Colores. Crea primero la familia en Inventario y exporta para obtener su ID antes de agregar colores. Revisa ambas hojas antes de importar.</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="inventory-card__content">
         <div class="inventory-form__actions">
@@ -71,7 +71,7 @@
         @if (importPreview(); as preview) {
           <div class="inventory-import__summary" role="status">
             <strong>Vista previa: {{ preview.createCount }} productos nuevos · {{ preview.updateCount }} actualizados</strong>
-            <p>El inventario se guardará al confirmar la importación.</p>
+            <p>{{ preview.colors?.length ?? 0 }} filas de colores para revisar. El inventario y los colores se guardarán al confirmar la importación.</p>
           </div>
           @for (error of preview.errors; track $index) { <p role="alert" class="inventory-import__error">{{ error }}</p> }
           @if (!preview.canImport) { <p class="inventory-import__error">Corrige los errores en Excel y vuelve a seleccionar el archivo.</p> }
@@ -93,9 +93,97 @@
               </tbody>
             </table>
           </div>
+          @if (preview.colors?.length) {
+            <div class="inventory-table__wrap">
+              <table class="inventory-import__table">
+                <caption>Hoja Colores · {{ preview.colors?.length }} filas</caption>
+                <thead><tr><th>Fila</th><th>ID del producto</th><th>Color</th><th>Existencias</th><th>Acción</th><th>Validación</th></tr></thead>
+                <tbody>
+                  @for (row of preview.colors ?? []; track row.rowNumber) {
+                    <tr [class.inventory-import__row--invalid]="row.errors.length > 0">
+                      <td>{{ row.rowNumber }}</td><td>{{ row.productId }}</td><td>{{ row.name }}</td><td>{{ row.quantity ?? 'Sin cantidad' }}</td>
+                      <td>{{ row.action === 'create' ? 'Nuevo' : 'Actualizar' }}</td>
+                      <td>@for (error of row.errors; track $index) { <p class="inventory-import__error">{{ error }}</p> } @empty { Válida }</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
           <div class="inventory-form__actions">
             <button mat-flat-button type="button" [disabled]="!canConfirmImport()" (click)="confirmImport()">{{ isImporting() ? 'Importando…' : 'Confirmar importación' }}</button>
           </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (canManageInventory()) {
+    @if (colorItem(); as item) {
+      <mat-card class="inventory-card">
+        <mat-card-header>
+          <mat-card-title>Existencias por color · {{ item.name }}</mat-card-title>
+          <mat-card-subtitle>{{ item.quantity }} unidades en total. Los precios de renta y reposición se comparten entre todos los colores.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="inventory-card__content">
+          <div class="inventory-colors__list">
+            @for (color of item.colors ?? []; track color.id) {
+              <div class="inventory-colors__row"><strong>{{ color.name }}</strong><span>{{ color.quantity }} unidades</span><button mat-button type="button" [disabled]="isSavingColor()" (click)="editColor(color)">Editar color</button></div>
+            } @empty { <p>Registra el primer color y sus existencias.</p> }
+          </div>
+          @if (hasUnassignedStock()) {
+            <div class="inventory-colors__warning" role="alert"><strong>Hay existencias históricas sin distribuir por color.</strong><p>Inventario actual: {{ item.quantity }}. Total de colores registrados: {{ registeredColorQuantity() }}. Después de guardar: {{ proposedColorQuantity() }} unidades.</p><p>El total del producto se calculará únicamente con los colores registrados. Revisa la distribución antes de continuar.</p><label><input type="checkbox" [formControl]="legacyStockReviewed" [attr.disabled]="isSavingColor() ? true : null" /> Revisé las cantidades y confirmo el nuevo total de {{ proposedColorQuantity() }} unidades.</label></div>
+          }
+          <form [formGroup]="colorForm" class="inventory-colors__form" (ngSubmit)="saveColor()">
+            <mat-form-field appearance="outline"><mat-label>Color registrado</mat-label><input matInput formControlName="name" /><mat-error>Captura el nombre del color.</mat-error></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Existencias de este color</mat-label><input matInput formControlName="quantity" type="number" min="0" step="1" /><mat-error>Captura una cantidad entera mayor o igual a cero.</mat-error></mat-form-field>
+            <div class="inventory-form__actions">
+              <button mat-flat-button type="submit" [disabled]="isSavingColor()">{{ isSavingColor() ? 'Guardando…' : editingColorId() !== null ? 'Guardar color' : 'Registrar color' }}</button>
+              @if (editingColorId() !== null) { <button mat-button type="button" [disabled]="isSavingColor()" (click)="resetColorForm()">Nuevo color</button> }
+              <button mat-button type="button" [disabled]="isSavingColor()" (click)="closeColors()">Cerrar colores</button>
+            </div>
+          </form>
+          @if (colorError()) { <p role="alert" class="inventory-import__error">{{ colorError() }}</p> }
+        </mat-card-content>
+      </mat-card>
+    }
+    <mat-card class="inventory-card inventory-grouping">
+      <mat-card-header>
+        <mat-card-title>Reorganizar productos por color</mat-card-title>
+        <mat-card-subtitle>Selecciona únicamente los productos que deseas reunir en una familia. Los demás productos conservarán su registro individual.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="inventory-card__content">
+        @if (!groupingOpen()) { <button mat-stroked-button type="button" (click)="groupingOpen.set(true)">Preparar reorganización</button> }
+        @if (groupingOpen()) {
+          <p>Los productos seleccionados pasarán a estar inactivos al confirmar. Las notas históricas se conservarán.</p>
+          <form [formGroup]="groupingForm" class="inventory-grouping__form" (ngSubmit)="previewGrouping()">
+            <mat-form-field appearance="outline"><mat-label>Familia de destino</mat-label><mat-select formControlName="targetName">@for (family of colorFamilies; track family) { <mat-option [value]="family">{{ family }}</mat-option> }</mat-select></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Renta normal compartida</mat-label><input matInput type="number" min="0" step="0.01" formControlName="unitPrice" /><mat-error>Captura un precio mayor o igual a cero.</mat-error></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Renta en temporada alta</mat-label><input matInput type="number" min="0" step="0.01" formControlName="highSeasonPrice" /><mat-hint>Vacío: usar renta normal.</mat-hint><mat-error>Captura un precio mayor o igual a cero.</mat-error></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Costo de reposición compartido</mat-label><input matInput type="number" min="0" step="0.01" formControlName="replacementCost" /><mat-error>Captura un costo mayor o igual a cero.</mat-error></mat-form-field>
+            <mat-form-field appearance="outline" class="inventory-grouping__sources"><mat-label>Agregar producto de origen</mat-label><mat-select [disabled]="isGrouping()" (selectionChange)="addGroupingSource($event.value); sourceSelector.value = null" #sourceSelector>
+              @for (item of dataSource.data; track item.id) { <mat-option [value]="item.id" [disabled]="groupingSourceSelected(item.id)">{{ item.name }} · {{ item.quantity }} unidades</mat-option> }
+            </mat-select></mat-form-field>
+            <div formArrayName="sourceMappings" class="inventory-grouping__mappings">
+              @for (mapping of groupingMappings.controls; track mapping; let index = $index) {
+                <div [formGroupName]="index" class="inventory-grouping__mapping">
+                  <div><strong>{{ groupingSource(mapping.controls.sourceId.value)?.name ?? 'Producto no disponible' }}</strong><p>{{ groupingSource(mapping.controls.sourceId.value)?.quantity ?? 0 }} unidades</p></div>
+                  <mat-form-field appearance="outline"><mat-label>Color de este producto</mat-label><input matInput formControlName="color" /><mat-error>Registra un color para este producto.</mat-error></mat-form-field>
+                  <button mat-button type="button" [disabled]="isGrouping()" (click)="removeGroupingSource(index)">Quitar</button>
+                </div>
+              } @empty { <p>Agrega los productos que deseas agrupar y asigna un color a cada uno.</p> }
+            </div>
+            <div class="inventory-form__actions"><button mat-stroked-button type="submit" [disabled]="isGrouping() || isGroupingPreviewing()">{{ isGroupingPreviewing() ? 'Revisando…' : 'Revisar reorganización' }}</button><button mat-button type="button" [disabled]="isGrouping()" (click)="cancelGrouping()">Cancelar reorganización</button></div>
+          </form>
+          @if (groupingError()) { <p role="alert" class="inventory-import__error">{{ groupingError() }}</p> }
+          @if (groupingPreview(); as preview) {
+            <div class="inventory-import__summary"><strong>{{ preview.targetName }} · {{ preview.sourceCount }} productos de origen · {{ preview.colorCount }} colores</strong><p>{{ preview.historyLinks }} vínculos históricos conservados.</p></div>
+            @for (warning of preview.warnings; track $index) { <p>{{ warning }}</p> }
+            @for (error of preview.errors; track $index) { <p role="alert" class="inventory-import__error">{{ error }}</p> }
+            <div class="inventory-table__wrap"><table class="inventory-import__table"><caption>Existencias por color después de reorganizar</caption><thead><tr><th>Color</th><th>Existencias</th></tr></thead><tbody>@for (color of preview.colors; track color.name) { <tr><td>{{ color.name }}</td><td>{{ color.quantity }}</td></tr> }</tbody></table></div>
+            <p>Al confirmar, los productos de origen quedarán inactivos y las nuevas notas usarán la familia y sus colores registrados.</p>
+            <button mat-flat-button type="button" [disabled]="!canConfirmGrouping()" (click)="confirmGrouping()">{{ isGrouping() ? 'Reorganizando…' : 'Confirmar reorganización' }}</button>
+          }
         }
       </mat-card-content>
     </mat-card>
@@ -121,7 +209,10 @@
           <form class="inventory-form inventory-form--horizontal" [formGroup]="inventoryForm">
             <mat-form-field appearance="outline" class="inventory-form__name">
               <mat-label>Nombre del Producto</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput formControlName="name" [matAutocomplete]="familyOptions" />
+              <mat-autocomplete #familyOptions="matAutocomplete">
+                @for (family of colorFamilies; track family) { <mat-option [value]="family">{{ family }}</mat-option> }
+              </mat-autocomplete>
               @if (
                 inventoryForm.controls.name.touched &&
                 inventoryForm.controls.name.hasError('required')
@@ -142,6 +233,7 @@
             <mat-form-field appearance="outline">
               <mat-label>Cantidad Disponible</mat-label>
               <input matInput type="number" min="0" formControlName="quantity" />
+              @if (inventoryForm.controls.quantity.disabled) { <mat-hint>Se calcula con las existencias de los colores registrados.</mat-hint> }
               @if (
                 inventoryForm.controls.quantity.touched &&
                 inventoryForm.controls.quantity.hasError('required')
@@ -281,6 +373,9 @@
                 <th mat-header-cell *matHeaderCellDef>Acciones</th>
                 <td mat-cell *matCellDef="let item">
                   <div class="inventory-table__actions">
+                    @if (item.requiresColor) {
+                      <button mat-stroked-button type="button" [disabled]="isSavingColor()" (click)="openColors(item)">Colores</button>
+                    }
                     <button
                       mat-icon-button
                       type="button"
@@ -293,10 +388,10 @@
                     <button
                       mat-icon-button
                       type="button"
-                      aria-label="Eliminar producto"
+                      aria-label="Desactivar producto"
                       (click)="deleteItem(item)"
                     >
-                      <mat-icon>delete</mat-icon>
+                      <mat-icon>inventory_2</mat-icon>
                     </button>
                   </div>
                 </td>

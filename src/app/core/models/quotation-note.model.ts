@@ -20,6 +20,12 @@ export interface QuotationEquipmentItem {
   unitPrice: number;
   total: number;
   productId?: number | null;
+  colorId?: number | null;
+  color?: string;
+  canonicalProductId?: number | null;
+  canonicalColorId?: number | null;
+  canonicalColor?: string;
+  canonicalEquipment?: string;
 }
 
 export interface QuotationLogistics {

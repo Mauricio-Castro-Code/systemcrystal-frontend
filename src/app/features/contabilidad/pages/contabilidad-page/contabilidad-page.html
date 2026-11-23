@@ -273,7 +273,7 @@
           @for (product of sorted; track product.name; let rank = $index) {
             <div class="ac-h-chart__row">
               <span class="ac-rank">{{ rank + 1 | number: '2.0-0' }}</span>
-              <span class="ac-h-chart__name" [title]="product.name">{{ product.name }}</span>
+              <span class="ac-h-chart__name" [title]="product.name">{{ product.name }}@if (product.noteCount !== undefined) { <small> · {{ product.noteCount }} notas</small> }</span>
               <div class="ac-h-chart__track">
                 <div
                   class="ac-h-chart__fill"
@@ -391,7 +391,7 @@
           <div>
             <h2 class="ac-panel__title">La paleta de tus eventos</h2>
             <p class="ac-panel__hint">
-              Colores más rentados en mantelería · {{ data.selectedYear }}
+              Piezas rentadas por color en mantelería · {{ data.selectedYear }}
             </p>
           </div>
         </div>

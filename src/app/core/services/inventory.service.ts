@@ -12,6 +12,9 @@ import {
   InventoryItemPayload,
   InventoryImportPreview,
   InventoryImportResult,
+  InventoryColor,
+  InventoryGroupingPayload,
+  InventoryGroupingPreview,
 } from '../../features/inventario/models/inventory-item.model';
 
 const VALID_INVENTORY_CATEGORIES = new Set<string>(
@@ -163,6 +166,42 @@ export class InventoryService {
     }
   }
 
+  async saveColor(productId: number, colorId: number | null, payload: Omit<InventoryColor, 'id'>): Promise<InventoryItem> {
+    const url = `${API_BASE_URL}/inventory/${productId}/colors/${colorId === null ? '' : `${colorId}/`}`;
+    try {
+      const options = { headers: this.requireAuthHeaders() };
+      const response = await firstValueFrom(colorId === null
+        ? this.http.post<InventoryItem>(url, payload, options)
+        : this.http.put<InventoryItem>(url, payload, options));
+      const item = this.normalizeItem(response);
+      this.itemsState.update(items => this.sortItems([...items.filter(existing => existing.id !== item.id), item]));
+      return item;
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible guardar el color y sus existencias.'));
+    }
+  }
+
+  async previewGrouping(payload: InventoryGroupingPayload): Promise<InventoryGroupingPreview> {
+    try {
+      const preview = await firstValueFrom(this.http.post<InventoryGroupingPreview>(
+        `${API_BASE_URL}/inventory/grouping/preview/`, payload, { headers: this.requireAuthHeaders() },
+      ));
+      return { ...preview, colors: preview.colors.map(color => ({ ...color, quantity: Number(color.quantity) })) };
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible revisar la reorganización del inventario.'));
+    }
+  }
+
+  async confirmGrouping(token: string): Promise<{ targetProductId: number; grouped: number }> {
+    try {
+      return await firstValueFrom(this.http.post<{ targetProductId: number; grouped: number }>(
+        `${API_BASE_URL}/inventory/grouping/confirm/`, { token }, { headers: this.requireAuthHeaders() },
+      ));
+    } catch (error) {
+      throw new Error(this.resolveHttpError(error, 'No fue posible reorganizar el inventario. Vuelve a revisar los cambios.'));
+    }
+  }
+
   async exportExcel(): Promise<Blob> {
     try {
       return await firstValueFrom(this.http.get(`${API_BASE_URL}/inventory/export/excel/`, {
@@ -182,6 +221,7 @@ export class InventoryService {
       ));
       return {
         ...preview,
+        colors: (preview.colors ?? []).map(row => ({ ...row, quantity: row.quantity == null ? null : Number(row.quantity) })),
         rows: preview.rows.map(row => ({
           ...row,
           quantity: row.quantity == null ? null : Number(row.quantity),
@@ -239,6 +279,10 @@ export class InventoryService {
       unitPrice: Number(item.unitPrice ?? 0),
       highSeasonPrice: item.highSeasonPrice == null ? null : Number(item.highSeasonPrice),
       replacementCost: Number(item.replacementCost ?? 0),
+      requiresColor: item.requiresColor ?? false,
+      isActive: item.isActive ?? true,
+      canonicalProductId: item.canonicalProductId == null ? null : Number(item.canonicalProductId),
+      colors: (item.colors ?? []).map(color => ({ id: Number(color.id), name: String(color.name), quantity: Number(color.quantity) })),
       category: VALID_INVENTORY_CATEGORIES.has(item.category)
         ? (item.category as InventoryCategory)
         : 'OTROS',

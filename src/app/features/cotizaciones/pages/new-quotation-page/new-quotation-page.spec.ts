@@ -41,6 +41,108 @@ describe('Quotation form', () => {
     }).compileComponents();
   });
 
+  it('requires a registered color for a color-enabled equipment and keeps its shared seasonal price', async () => {
+    const item = { id: 7, name: 'Mantel redondo', category: 'MANTELERIA' as const, quantity: 30,
+      unitPrice: 50, highSeasonPrice: 80, requiresColor: true,
+      colors: [{ id: 11, name: 'Azul', quantity: 10 }, { id: 12, name: 'Blanco', quantity: 20 }] };
+    (TestBed.inject(InventoryService).items as any).set([item]);
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.scheduleForm.controls.eventDate.setValue(new Date(2026, 11, 24));
+    const row = page.equipmentRows.at(0);
+    page.applyInventorySelection(row, { option: { value: item.name } } as any);
+    expect(row.invalid).toBe(true);
+    row.controls.color.setValue('Plateado');
+    page.onColorInput(row);
+    expect(row.controls.color.hasError('registeredColor')).toBe(true);
+    page.applyColorSelection(row, { option: { value: 'Azul' } } as any);
+    expect(row.controls.colorId.value).toBe(11);
+    expect(row.valid).toBe(true);
+    expect(row.controls.unitPrice.value).toBe(80);
+    page.applyColorSelection(row, { option: { value: 'Blanco' } } as any);
+    expect(row.controls.colorId.value).toBe(12);
+    expect(row.controls.unitPrice.value).toBe(80);
+    row.controls.color.setValue('az');
+    expect(page.getColorMatches(row).map(color => color.name)).toEqual(['Azul']);
+  });
+
+  it('saves the base equipment ID and registered color alongside its shared price', async () => {
+    const createDraft = vi.fn().mockResolvedValue({ quotationId: 'new' });
+    TestBed.overrideProvider(QuotationRecordsService, { useValue: { createDraft } });
+    const item = { id: 7, name: 'Mantel redondo', category: 'MANTELERIA' as const, quantity: 30,
+      unitPrice: 50, highSeasonPrice: 80, requiresColor: true, colors: [{ id: 11, name: 'Azul', quantity: 30 }] };
+    (TestBed.inject(InventoryService).items as any).set([item]);
+    vi.mocked(TestBed.inject(InventoryService).findByName).mockReturnValue(item);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.clientInfoForm.patchValue({ fullName: 'Ana', phoneNumber: '5512345678' });
+    page.scheduleForm.patchValue({ deliveryDate: new Date(2026, 11, 23), eventDate: new Date(2026, 11, 24), collectionDate: new Date(2026, 11, 25) });
+    const row = page.equipmentRows.at(0);
+    page.applyInventorySelection(row, { option: { value: item.name } } as any);
+    row.controls.color.setValue('Azul');
+    page.onColorInput(row);
+    await page.saveDraft();
+    expect(createDraft).not.toHaveBeenCalled();
+    page.applyColorSelection(row, { option: { value: 'Azul' } } as any);
+    await page.saveDraft();
+    expect(createDraft).toHaveBeenCalledWith({ quotation: expect.objectContaining({ equipmentItems: [
+      { quantity: 1, equipment: 'Mantel redondo', productId: 7, colorId: 11, color: 'Azul', unitPrice: 80, total: 80 },
+    ] }) });
+  });
+
+  it('requires choosing a registered color when duplicating a legacy base item, even if inventory arrives later', async () => {
+    const quotation = {
+      clientInfo: { fullName: 'Ana', phoneNumber: '5512345678', birthDate: null, address: '', neighborhood: '', reference: '', deliveryInstructions: '' },
+      schedule: { deliveryDate: '2026-12-23', eventDate: '2026-12-24', collectionDate: '2026-12-25' },
+      logistics: { freight: 0, securityDeposit: 0, applyTax: false },
+      equipmentItems: [{ productId: 7, equipment: 'Mantel redondo', quantity: 2, unitPrice: 35, total: 70 }],
+      summary: { subtotal: 70, freight: 0, taxAmount: 0, securityDeposit: 0, discount: 0, advancePayment: 0, totalEstimated: 70, balanceDue: 70 },
+    };
+    TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: {
+      paramMap: convertToParamMap({}), queryParamMap: convertToParamMap({ duplicarCotizacionDe: 'old' }),
+    } } });
+    TestBed.overrideProvider(QuotationRecordsService, { useValue: { loadQuotationById: vi.fn().mockResolvedValue({ quotationId: 'old', quotation }) } });
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const item = { id: 7, name: 'Mantel redondo', category: 'MANTELERIA' as const, quantity: 30,
+      unitPrice: 50, highSeasonPrice: 80, requiresColor: true, colors: [{ id: 11, name: 'Azul', quantity: 30 }] };
+    (TestBed.inject(InventoryService).items as any).set([item]);
+    await fixture.whenStable();
+    const row = page.equipmentRows.at(0);
+    expect(row.controls.colorRequired.value).toBe(true);
+    expect(row.invalid).toBe(true);
+    expect(row.controls.unitPrice.value).toBe(35);
+    page.applyColorSelection(row, { option: { value: 'Azul' } } as any);
+    expect(row.valid).toBe(true);
+    expect(row.controls.unitPrice.value).toBe(35);
+    expect(quotation.equipmentItems[0]).not.toHaveProperty('colorId');
+  });
+
+  it('clears the previous color when another equipment is selected', async () => {
+    const item = { id: 7, name: 'Mantel redondo', category: 'MANTELERIA' as const, quantity: 10, unitPrice: 50,
+      requiresColor: true, colors: [{ id: 11, name: 'Azul', quantity: 10 }] };
+    (TestBed.inject(InventoryService).items as any).set([item]);
+    const find = vi.mocked(TestBed.inject(InventoryService).findByName);
+    find.mockReturnValue(item);
+    const fixture = TestBed.createComponent(NewQuotationPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const row = page.equipmentRows.at(0);
+    page.applyInventorySelection(row, { option: { value: item.name } } as any);
+    page.applyColorSelection(row, { option: { value: 'Azul' } } as any);
+    find.mockReturnValue({ id: 8, name: 'Mesa', category: 'MOBILIARIO', quantity: 1, unitPrice: 100 });
+    page.applyInventorySelection(row, { option: { value: 'Mesa' } } as any);
+    expect(row.controls.colorId.value).toBeNull();
+    expect(row.controls.color.value).toBe('');
+    expect(row.controls.colorRequired.value).toBe(false);
+    expect(row.valid).toBe(true);
+  });
+
   it('delegates contextual back navigation and its label', async () => {
     const page = TestBed.createComponent(NewQuotationPageComponent).componentInstance;
     await page.goBack();
@@ -102,7 +204,8 @@ describe('Quotation form', () => {
         address: 'Calle 1', neighborhood: 'Centro', reference: '', deliveryInstructions: 'Portón' },
       schedule: { deliveryDate: '2026-11-15', eventDate: '2026-11-16', collectionDate: '2026-11-17' },
       logistics: { freight: 200, securityDeposit: 100, applyTax: false },
-      equipmentItems: [{ quantity: 2, equipment: 'Silla', unitPrice: 50, total: 100 }],
+      equipmentItems: [{ quantity: 2, equipment: 'Mantel redondo azul', unitPrice: 50, total: 100, productId: 9,
+        canonicalProductId: 70, canonicalEquipment: 'Mantel redondo', canonicalColorId: 11, canonicalColor: 'Azul' }],
       summary: { subtotal: 100, freight: 200, taxAmount: 0, securityDeposit: 100,
         discount: 10, advancePayment: 0, totalEstimated: 400, balanceDue: 390 },
     };
@@ -120,6 +223,10 @@ describe('Quotation form', () => {
     expect(page.clientInfoForm.controls.fullName.value).toBe('Ana');
     expect(page.scheduleForm.controls.eventDate.value).toEqual(new Date(2026, 10, 16));
     expect(page.equipmentRows.at(0).controls.quantity.value).toBe(2);
+    expect(page.equipmentRows.at(0).controls.productId.value).toBe(70);
+    expect(page.equipmentRows.at(0).controls.colorId.value).toBe(11);
+    expect(page.equipmentRows.at(0).controls.color.value).toBe('Azul');
+    expect(page.equipmentRows.at(0).controls.equipment.value).toBe('Mantel redondo');
     expect(page.summary().discount).toBe(10);
     expect(page.isEditMode).toBe(false);
     expect(page.quotationForm.dirty).toBe(true);

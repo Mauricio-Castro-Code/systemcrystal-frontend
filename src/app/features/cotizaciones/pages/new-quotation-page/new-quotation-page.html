@@ -217,6 +217,25 @@
                     <mat-error>Selecciona un producto de la lista de inventario.</mat-error>
                   }
                 </mat-form-field>
+                @if (row.controls.colorRequired.value || row.controls.color.value) {
+                  <mat-form-field appearance="outline" class="equipment-color-field">
+                    <mat-label>Color</mat-label>
+                    <input matInput formControlName="color" autocomplete="off"
+                      placeholder="Selecciona un color registrado" [readonly]="!row.controls.colorRequired.value"
+                      [matAutocomplete]="colorAutocomplete" [matAutocompleteDisabled]="!row.controls.colorRequired.value"
+                      (input)="onColorInput(row)" aria-label="Color del equipo" />
+                    <mat-autocomplete #colorAutocomplete="matAutocomplete" (optionSelected)="applyColorSelection(row, $event)">
+                      @for (color of getColorMatches(row); track color.id) {
+                        <mat-option [value]="color.name">{{ color.name }} · {{ color.quantity }} disponibles</mat-option>
+                      } @empty {
+                        <mat-option disabled>No hay colores coincidentes. Regístralos en Inventario.</mat-option>
+                      }
+                    </mat-autocomplete>
+                    @if (hasControlError(row.controls.color, 'registeredColor')) {
+                      <mat-error>Selecciona un color registrado para este equipo.</mat-error>
+                    }
+                  </mat-form-field>
+                }
                 @if (canRegisterInventoryProduct(row)) {
                   <button mat-button type="button" (click)="createInventoryProduct(row)">
                     <mat-icon>add</mat-icon> Registrar en Inventario

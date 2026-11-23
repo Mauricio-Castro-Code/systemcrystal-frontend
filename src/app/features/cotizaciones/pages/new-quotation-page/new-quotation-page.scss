@@ -560,3 +560,6 @@
 :host ::ng-deep .equipment-table .mat-mdc-form-field-error {
   font-size: 0.7rem;
 }
+
+:host ::ng-deep .equipment-table .equipment-color-field .mat-mdc-form-field-subscript-wrapper { display: block; }
+.equipment-color-field { margin-top: 0.4rem; }

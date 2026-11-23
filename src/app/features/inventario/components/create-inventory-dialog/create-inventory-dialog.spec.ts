@@ -56,4 +56,12 @@ describe('CreateInventoryDialogComponent', () => {
     await fixture.componentInstance.save();
     expect(createItem).not.toHaveBeenCalled();
   });
+  it('disables direct stock entry for the six color families', () => {
+    const page = TestBed.createComponent(CreateInventoryDialogComponent).componentInstance;
+    page.form.controls.name.setValue('Mantel para tablón');
+    expect(page.form.controls.quantity.disabled).toBe(true);
+    page.form.controls.name.setValue('Mantel cuadrado');
+    expect(page.form.controls.quantity.enabled).toBe(true);
+  });
+
 });

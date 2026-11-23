@@ -815,6 +815,13 @@ export class OrderRecordsService {
 
           return {
             quantity,
+            productId: item?.productId == null ? null : Number(item.productId),
+            colorId: item?.colorId == null ? null : Number(item.colorId),
+            color: String(item?.color ?? '').trim(),
+            canonicalProductId: item?.canonicalProductId == null ? null : Number(item.canonicalProductId),
+            canonicalColorId: item?.canonicalColorId == null ? null : Number(item.canonicalColorId),
+            canonicalColor: String(item?.canonicalColor ?? '').trim(),
+            canonicalEquipment: String(item?.canonicalEquipment ?? '').trim(),
             equipment: String(item?.equipment ?? '').trim(),
             unitPrice,
             total: Number(item?.total ?? quantity * unitPrice),

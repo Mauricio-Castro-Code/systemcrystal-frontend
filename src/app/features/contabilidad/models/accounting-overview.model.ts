@@ -10,6 +10,7 @@ export interface TopProduct {
   name: string;
   totalQty: number;
   totalRevenue: number;
+  noteCount?: number;
 }
 
 export interface TopColor {

@@ -17,6 +17,7 @@ import {
   DestroyRef,
   ViewChild,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -46,7 +47,7 @@ import {
   QuotationEquipmentItem,
   QuotationNote,
 } from '../../../../core/models/quotation-note.model';
-import { InventoryItem } from '../../../inventario/models/inventory-item.model';
+import { InventoryColor, InventoryItem } from '../../../inventario/models/inventory-item.model';
 import { CRYSTAL_DATE_FORMATS, CrystalDateAdapter } from '../../../../core/crystal-date-adapter';
 import { InventoryService } from '../../../../core/services/inventory.service';
 import { OrderRecordsService } from '../../../../core/services/order-records.service';
@@ -63,6 +64,9 @@ type EquipmentRowForm = FormGroup<{
   equipment: FormControl<string>;
   productId: FormControl<number | null>;
   productLinkDirty: FormControl<boolean>;
+  colorId: FormControl<number | null>;
+  color: FormControl<string>;
+  colorRequired: FormControl<boolean>;
   unitPrice: FormControl<number>;
   total: FormControl<number>;
 }>;
@@ -94,6 +98,19 @@ const productLinkValidator: ValidatorFn = (
     );
   }
 
+  return null;
+};
+
+const registeredColorValidator: ValidatorFn = (control): ValidationErrors | null => {
+  const color = control.get('color');
+  if (!color) return null;
+  const requiresSelection = control.get('colorRequired')?.value && !control.get('colorId')?.value;
+  const errors = { ...color.errors };
+  if (requiresSelection) errors['registeredColor'] = true;
+  else delete errors['registeredColor'];
+  if (requiresSelection !== !!color.errors?.['registeredColor']) {
+    color.setErrors(Object.keys(errors).length ? errors : null);
+  }
   return null;
 };
 
@@ -171,6 +188,7 @@ export class NewQuotationPageComponent {
   readonly backLabel = this.backNavigation.label;
 
   // Pila de productos eliminados para poder deshacer (último eliminado, primero en restaurarse).
+  private readonly duplicatePrefillReady = signal(false);
   private readonly automaticPrices = new WeakMap<EquipmentRowForm, { item: InventoryItem; price: number }>();
   readonly seasonalPricingMessage = signal('Selecciona la fecha del evento para aplicar la tarifa correspondiente.');
   private readonly deletedRows = signal<Array<{ index: number; row: EquipmentRowForm }>>([]);
@@ -294,6 +312,21 @@ export class NewQuotationPageComponent {
   });
 
   constructor() {
+    effect(() => {
+      const items = this.inventoryItems();
+      if (!this.duplicatePrefillReady()) return;
+      const key = (name: string) => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+      for (const row of this.equipmentRows.controls) {
+        if (row.controls.productLinkDirty.value) continue;
+        const matches = items.filter(item => row.controls.productId.value
+          ? item.id === row.controls.productId.value : key(item.name) === key(row.controls.equipment.value));
+        const item = matches.length === 1 ? matches[0] : null;
+        if (item?.requiresColor) {
+          if (!row.controls.productId.value) row.controls.productId.setValue(item.id);
+          if (!row.controls.colorRequired.value) row.controls.colorRequired.setValue(true);
+        }
+      }
+    });
     void this.inventoryService.loadInventory();
     void this.loadFreightZones();
     this.addEquipmentRow();
@@ -629,7 +662,26 @@ export class NewQuotationPageComponent {
       return updated;
     });
     row.controls.productLinkDirty.setValue(true);
-    row.controls.productId.setValue(null);
+    row.patchValue({ productId: null, colorId: null, color: '', colorRequired: false });
+  }
+
+  getColorMatches(row: EquipmentRowForm): InventoryColor[] {
+    const product = this.inventoryItems().find(item => item.id === row.controls.productId.value);
+    const search = row.controls.color.value.trim().toLocaleLowerCase('es');
+    return (product?.colors ?? []).filter(color => color.name.toLocaleLowerCase('es').includes(search));
+  }
+
+  applyColorSelection(row: EquipmentRowForm, event: MatAutocompleteSelectedEvent): void {
+    const name = String(event.option.value ?? '');
+    const product = this.inventoryItems().find(item => item.id === row.controls.productId.value);
+    const color = product?.colors?.find(option => option.name === name);
+    if (!color) return;
+    row.patchValue({ colorId: color.id, color: color.name });
+    this.quotationForm.markAsDirty();
+  }
+
+  onColorInput(row: EquipmentRowForm): void {
+    row.controls.colorId.setValue(null);
   }
 
   getInventoryMatches(searchTerm: string): InventoryItem[] {
@@ -683,7 +735,10 @@ export class NewQuotationPageComponent {
   private applyInventoryPrice(row: EquipmentRowForm, item: InventoryItem): void {
     const price = this.priceForEvent(item);
     this.automaticPrices.set(row, { item, price });
-    row.patchValue({ equipment: item.name, unitPrice: price, productId: item.id, productLinkDirty: false });
+    const color = item.colors?.find(option => option.id === row.controls.colorId.value);
+    row.patchValue({ equipment: item.name, unitPrice: price, productId: item.id, productLinkDirty: false,
+      colorRequired: !!item.requiresColor, colorId: color?.id ?? null, color: color?.name ?? '',
+    });
   }
 
   private updateAutomaticPrices(): void {
@@ -797,6 +852,9 @@ export class NewQuotationPageComponent {
         }),
         productId: this.formBuilder.control<number | null>(initialValue?.productId ?? null),
         productLinkDirty: this.formBuilder.nonNullable.control(false),
+        colorId: this.formBuilder.control<number | null>(initialValue?.colorId ?? null),
+        color: this.formBuilder.nonNullable.control(initialValue?.color ?? ''),
+        colorRequired: this.formBuilder.nonNullable.control(!!initialValue?.colorId),
         unitPrice: this.formBuilder.nonNullable.control(unitPrice, {
           validators: [Validators.required, Validators.min(0)],
         }),
@@ -805,7 +863,7 @@ export class NewQuotationPageComponent {
           { nonNullable: true },
         ),
       },
-      { validators: [productLinkValidator] },
+      { validators: [productLinkValidator, registeredColorValidator] },
     );
 
     row.controls.quantity.valueChanges
@@ -885,6 +943,8 @@ export class NewQuotationPageComponent {
         unitPrice,
         total: quantity * unitPrice,
         productId: row.controls.productId.value,
+        colorId: row.controls.colorId.value,
+        color: row.controls.color.value.trim(),
       };
     });
     const subtotal = this.roundCurrency(
@@ -1011,7 +1071,13 @@ export class NewQuotationPageComponent {
         return;
       }
 
-      this.applyQuotationToForms(record.quotation);
+      this.applyQuotationToForms({ ...record.quotation,
+        equipmentItems: record.quotation.equipmentItems.map(item => item.canonicalProductId && item.canonicalColorId
+          ? { ...item, productId: item.canonicalProductId, equipment: item.canonicalEquipment || item.equipment,
+              colorId: item.canonicalColorId, color: item.canonicalColor || item.color || '' }
+          : { ...item }),
+      });
+      this.duplicatePrefillReady.set(true);
       this.quotationForm.markAsDirty();
       this.actionMessage.set(
         `Se copió la información de la ${sourceLabel} ${this.duplicateFromQuotationId ?? this.duplicateFromOrderId}. Ajusta lo que necesites y guarda la nueva cotización.`,

@@ -16,6 +16,10 @@ export interface InventoryItem {
   category: InventoryCategory;
   highSeasonPrice?: number | null;
   replacementCost?: number;
+  requiresColor?: boolean;
+  isActive?: boolean;
+  colors?: InventoryColor[];
+  canonicalProductId?: number | null;
 }
 
 export type InventoryItemPayload = Omit<InventoryItem, 'id'>;
@@ -32,7 +36,17 @@ export interface InventoryImportRow {
   errors: string[];
 }
 
+export interface InventoryImportColorRow {
+  rowNumber: number;
+  productId: number;
+  name: string;
+  quantity: number | null;
+  action: 'create' | 'update';
+  errors: string[];
+}
+
 export interface InventoryImportPreview {
+  colors?: InventoryImportColorRow[];
   rows: InventoryImportRow[];
   errors: string[];
   createCount: number;
@@ -44,4 +58,25 @@ export interface InventoryImportPreview {
 export interface InventoryImportResult {
   created: number;
   updated: number;
+}
+
+export interface InventoryColor { id: number; name: string; quantity: number; }
+export const COLOR_PRODUCT_FAMILIES = ['Mantel para tablón', 'Mantel redondo', 'Cubremantel', 'Servilletas', 'Mantel para sombrilla', 'Bandas'] as const;
+export interface InventoryGroupingPayload {
+  targetName: string;
+  unitPrice: number;
+  highSeasonPrice: number | null;
+  replacementCost: number;
+  sourceMappings: { sourceId: number; color: string }[];
+}
+export interface InventoryGroupingPreview {
+  targetName: string;
+  sourceCount: number;
+  colorCount: number;
+  historyLinks: number;
+  colors: { name: string; quantity: number }[];
+  warnings: string[];
+  errors: string[];
+  canConfirm: boolean;
+  token: string | null;
 }
