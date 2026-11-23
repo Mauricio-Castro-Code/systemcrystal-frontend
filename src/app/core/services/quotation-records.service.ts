@@ -1,3 +1,4 @@
+import { SessionStateService } from './session-state.service';
 import { sessionSignal } from './session-state.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
@@ -19,6 +20,7 @@ interface CreateQuotationRecordInput {
 })
 export class QuotationRecordsService {
   private readonly http = inject(HttpClient);
+  private readonly sessionState = inject(SessionStateService);
   private readonly authService = inject(AuthService);
   private readonly orderRecordsService = inject(OrderRecordsService);
 
@@ -73,10 +75,7 @@ export class QuotationRecordsService {
     return this.recordsState().find((record) => record.quotationId === quotationId);
   }
 
-  async loadQuotationById(
-    quotationId: string,
-    force = false,
-  ): Promise<QuotationRecord | null> {
+  async loadQuotationById(quotationId: string, force = false): Promise<QuotationRecord | null> {
     if (!force) {
       const cachedRecord = this.getQuotationById(quotationId);
 
@@ -120,16 +119,16 @@ export class QuotationRecordsService {
       this.loadedState.set(true);
       return this.upsertQuotationRecord(createdQuotation);
     } catch (error) {
-      const message = this.resolveHttpError(
-        error,
-        'No fue posible guardar la cotizacion.',
-      );
+      const message = this.resolveHttpError(error, 'No fue posible guardar la cotizacion.');
       this.errorState.set(message);
       throw new Error(message);
     }
   }
 
-  async updateDraft(quotationId: string, quotation: QuotationNote): Promise<QuotationRecord | null> {
+  async updateDraft(
+    quotationId: string,
+    quotation: QuotationNote,
+  ): Promise<QuotationRecord | null> {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
@@ -180,6 +179,7 @@ export class QuotationRecordsService {
     quotationId: string,
     folioSelection: FolioSelection = { strategy: 'fill', value: null },
   ): Promise<OrderRecord | null> {
+    const generation = this.sessionState.generation();
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
@@ -194,10 +194,11 @@ export class QuotationRecordsService {
         ),
       );
 
+      if (generation !== this.sessionState.generation()) throw new Error('La sesión cambió.');
       this.recordsState.update((records) =>
         records.filter((record) => record.quotationId !== quotationId),
       );
-      return this.orderRecordsService.upsertOrderRecord(createdOrder);
+      return this.orderRecordsService.upsertOrderRecord(createdOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(
         error,
@@ -329,12 +330,9 @@ export class QuotationRecordsService {
 
     return {
       quotationId: String(record.quotationId ?? '').trim(),
-      clientName:
-        String(record.clientName ?? '').trim() || normalizedQuotation.clientInfo.fullName,
+      clientName: String(record.clientName ?? '').trim() || normalizedQuotation.clientInfo.fullName,
       date: String(record.date ?? '').trim() || new Date().toISOString(),
-      totalEstimated: Number(
-        record.totalEstimated ?? normalizedQuotation.summary.totalEstimated,
-      ),
+      totalEstimated: Number(record.totalEstimated ?? normalizedQuotation.summary.totalEstimated),
       quotation: normalizedQuotation,
     };
   }
@@ -354,7 +352,8 @@ export class QuotationRecordsService {
             productId: item?.productId == null ? null : Number(item.productId),
             colorId: item?.colorId == null ? null : Number(item.colorId),
             color: String(item?.color ?? '').trim(),
-            canonicalProductId: item?.canonicalProductId == null ? null : Number(item.canonicalProductId),
+            canonicalProductId:
+              item?.canonicalProductId == null ? null : Number(item.canonicalProductId),
             canonicalColorId: item?.canonicalColorId == null ? null : Number(item.canonicalColorId),
             canonicalColor: String(item?.canonicalColor ?? '').trim(),
             canonicalEquipment: String(item?.canonicalEquipment ?? '').trim(),
@@ -369,9 +368,7 @@ export class QuotationRecordsService {
       return runningTotal + item.total;
     }, 0);
     const subtotal =
-      equipmentItems.length > 0
-        ? subtotalFromItems
-        : Number(quotation?.summary?.subtotal ?? 0);
+      equipmentItems.length > 0 ? subtotalFromItems : Number(quotation?.summary?.subtotal ?? 0);
     const freight = Number(quotation?.logistics?.freight ?? quotation?.summary?.freight ?? 0);
     const taxAmount = applyTax
       ? Number(quotation?.summary?.taxAmount ?? (subtotal + freight) * 0.16)
@@ -385,8 +382,7 @@ export class QuotationRecordsService {
       equipmentItems.length > 0
         ? subtotal + freight + taxAmount + securityDeposit
         : Number(
-            quotation?.summary?.totalEstimated
-              ?? subtotal + freight + taxAmount + securityDeposit,
+            quotation?.summary?.totalEstimated ?? subtotal + freight + taxAmount + securityDeposit,
           );
     const balanceDue = Number(
       quotation?.summary?.balanceDue ?? totalEstimated - discount - advancePayment,
@@ -394,16 +390,13 @@ export class QuotationRecordsService {
 
     return {
       clientInfo: {
-        fullName:
-          String(quotation?.clientInfo?.fullName ?? '').trim() || fallbackClientName,
+        fullName: String(quotation?.clientInfo?.fullName ?? '').trim() || fallbackClientName,
         phoneNumber: String(quotation?.clientInfo?.phoneNumber ?? '').trim(),
         birthDate: quotation?.clientInfo?.birthDate ?? null,
         address: String(quotation?.clientInfo?.address ?? '').trim(),
         neighborhood: String(quotation?.clientInfo?.neighborhood ?? '').trim(),
         reference: String(quotation?.clientInfo?.reference ?? '').trim(),
-        deliveryInstructions: String(
-          quotation?.clientInfo?.deliveryInstructions ?? '',
-        ).trim(),
+        deliveryInstructions: String(quotation?.clientInfo?.deliveryInstructions ?? '').trim(),
       },
       schedule: {
         deliveryDate: quotation?.schedule?.deliveryDate ?? null,
@@ -439,9 +432,7 @@ export class QuotationRecordsService {
   }
 
   private resolveThrownMessage(error: unknown): string {
-    return error instanceof Error
-      ? error.message
-      : 'No fue posible administrar las cotizaciones.';
+    return error instanceof Error ? error.message : 'No fue posible administrar las cotizaciones.';
   }
 
   private resolveHttpError(error: unknown, fallbackMessage: string): string {
@@ -510,11 +501,7 @@ export class QuotationRecordsService {
     return plainMatch?.[1]?.trim() || fallbackFileName;
   }
 
-  private triggerBrowserDownload(
-    file: Blob | null,
-    fileName: string,
-    fileLabel = 'archivo',
-  ): void {
+  private triggerBrowserDownload(file: Blob | null, fileName: string, fileLabel = 'archivo'): void {
     if (!file) {
       throw new Error(`El backend no devolvio ningun ${fileLabel}.`);
     }

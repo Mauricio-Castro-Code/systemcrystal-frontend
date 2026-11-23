@@ -1,0 +1,37 @@
+@if (queue.pending().length) {
+  <aside class="print-queue" aria-label="Impresiones pendientes">
+    <details>
+      <summary>
+        <app-icon name="printer" />
+        <span
+          ><strong
+            >{{ queue.pending().length }}
+            {{ queue.pending().length === 1 ? 'nota pendiente' : 'notas pendientes' }} de
+            impresión</strong
+          ><small>Ver pendientes y retomar impresión</small></span
+        >
+        <app-icon name="chevron-down" />
+      </summary>
+      <ul>
+        @for (note of queue.pending(); track note.orderId) {
+          <li>
+            <div>
+              <strong>Nota {{ note.orderId }}</strong
+              ><span>{{ note.clientName }}</span>
+              @if (note.printPostponedReason) {
+                <small>Pospuesta: {{ note.printPostponedReason }}</small>
+              }
+            </div>
+            <button type="button" (click)="resume(note)">Retomar impresión</button>
+          </li>
+        }
+      </ul>
+    </details>
+  </aside>
+}
+@if (queue.error()) {
+  <div class="print-queue print-queue--error" role="status">
+    <span>{{ queue.error() }}</span
+    ><button type="button" (click)="refresh()">Reintentar</button>
+  </div>
+}

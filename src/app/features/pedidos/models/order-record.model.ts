@@ -6,7 +6,7 @@ export const EXPENSE_CATEGORIES = [
   { value: 'CARPAS', label: 'Carpas' },
   { value: 'OTROS', label: 'Otros' },
 ] as const;
-export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number]['value'];
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]['value'];
 
 export interface ExtraCost {
   categoria?: ExpenseCategory | 'UNCLASSIFIED';
@@ -16,12 +16,7 @@ export interface ExtraCost {
 }
 
 export type OrderOperationalStatus =
-  | 'PROGRAMADA'
-  | 'EN_CAMINO'
-  | 'ENTREGADO'
-  | 'POR_RECOGER'
-  | 'CLIENTE_ENTREGA'
-  | 'RECOGIDO';
+  'PROGRAMADA' | 'EN_CAMINO' | 'ENTREGADO' | 'POR_RECOGER' | 'CLIENTE_ENTREGA' | 'RECOGIDO';
 
 export interface AssignedDriver {
   id: number;
@@ -56,6 +51,11 @@ export interface OrderRecord {
   folderLabels: string[];
   totalEstimated: number;
   printedAt: string | null;
+  printVersion?: string | null;
+  printRequiredAt?: string | null;
+  printPostponedAt?: string | null;
+  printPostponedReason?: string;
+  printPostponedBy?: string | null;
   isCancelled: boolean;
   mapsUrl: string;
   officeClosed: boolean;

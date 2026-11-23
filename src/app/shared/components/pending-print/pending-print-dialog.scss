@@ -1,0 +1,154 @@
+:host {
+  display: block;
+  color: var(--of-title, #1d2f58);
+}
+.print-dialog {
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+header {
+  padding: 0.25rem 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--of-border, #dce2eb);
+}
+.print-dialog__icon {
+  display: inline-flex;
+  padding: 0.8rem;
+  border-radius: 14px;
+  color: #277740;
+  background: #edf5ef;
+  margin-bottom: 1rem;
+}
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: #277740;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+}
+h2[mat-dialog-title] {
+  margin: 0;
+  padding: 0;
+  color: #1d2f58;
+  font: inherit;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+h2[mat-dialog-title]::before {
+  display: none;
+}
+.print-dialog__folio {
+  margin: 0.8rem 0 0;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.print-dialog__folio span {
+  font-weight: 400;
+}
+mat-dialog-content {
+  padding: 1.25rem 0.5rem !important;
+  color: inherit !important;
+}
+mat-dialog-content > p {
+  margin: 0 0 1.25rem;
+  line-height: 1.6;
+}
+button {
+  min-height: 44px;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #277740;
+  outline-offset: 3px;
+}
+.print-dialog__pdf {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid #ccd6e4;
+  background: #fff;
+  color: #1d2f58;
+}
+.print-dialog__confirmation {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+input {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  accent-color: #277740;
+  margin-top: 0.15rem;
+}
+.print-dialog__notice,
+.print-dialog__postpone {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #f5f7fa;
+  margin-bottom: 1rem;
+  overflow-wrap: anywhere;
+}
+.print-dialog__postpone {
+  margin: 0;
+}
+.print-dialog__postpone label {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #ccd6e4;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font: inherit;
+  color: inherit;
+}
+small {
+  color: #64748b;
+}
+.print-dialog__error {
+  margin: 1rem 0 0 !important;
+  color: #a12828;
+}
+mat-dialog-actions {
+  padding: 1rem 0.5rem 0 !important;
+  gap: 0.75rem;
+  border-top: 1px solid #dce2eb;
+}
+.print-dialog__primary {
+  flex: 1;
+  border: 1px solid #277740;
+  background: #277740;
+  color: #fff;
+}
+.print-dialog__secondary {
+  border: 1px solid #ccd6e4;
+  background: #fff;
+  color: #1d2f58;
+}
+@media (max-width: 540px) {
+  mat-dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}

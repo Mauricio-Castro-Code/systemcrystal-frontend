@@ -1,3 +1,5 @@
+import { PrintQueueService, PrintStatus } from './print-queue.service';
+import { SessionStateService } from './session-state.service';
 import { sessionSignal } from './session-state.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
@@ -57,6 +59,8 @@ interface UpdateOrderStatusesInput {
 })
 export class OrderRecordsService {
   private readonly http = inject(HttpClient);
+  private readonly printQueue = inject(PrintQueueService);
+  private readonly sessionState = inject(SessionStateService);
   private readonly authService = inject(AuthService);
 
   private readonly recordsState = sessionSignal<OrderRecord[]>([]);
@@ -168,14 +172,16 @@ export class OrderRecordsService {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
+    const generation = this.sessionState.generation();
     try {
       const order = await firstValueFrom(
         this.http.get<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/`, {
           headers,
         }),
       );
+      this.requireSameSession(generation);
 
-      return this.upsertOrderRecord(order);
+      return this.upsertOrderRecord(order, generation);
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible cargar la nota solicitada.');
       this.errorState.set(message);
@@ -197,6 +203,7 @@ export class OrderRecordsService {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
+    const generation = this.sessionState.generation();
     try {
       const selection = input.folioSelection ?? { strategy: 'fill', value: null };
       const createdOrder = await firstValueFrom(
@@ -210,9 +217,10 @@ export class OrderRecordsService {
           { headers },
         ),
       );
+      this.requireSameSession(generation);
 
       this.loadedState.set(true);
-      return this.upsertOrderRecord(createdOrder);
+      return this.upsertOrderRecord(createdOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible guardar la nota del pedido.');
       this.errorState.set(message);
@@ -227,15 +235,17 @@ export class OrderRecordsService {
     const formData = new FormData();
     formData.append('file', file, file.name);
 
+    const generation = this.sessionState.generation();
     try {
       const createdOrder = await firstValueFrom(
         this.http.post<OrderRecord>(`${API_BASE_URL}/orders/import/`, formData, {
           headers,
         }),
       );
+      this.requireSameSession(generation);
 
       this.loadedState.set(true);
-      return this.upsertOrderRecord(createdOrder);
+      return this.upsertOrderRecord(createdOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(
         error,
@@ -250,15 +260,17 @@ export class OrderRecordsService {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
+    const generation = this.sessionState.generation();
     try {
       const updatedOrder = await firstValueFrom(
         this.http.put<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/`, quotation, {
           headers,
         }),
       );
+      this.requireSameSession(generation);
 
       this.loadedState.set(true);
-      return this.upsertOrderRecord(updatedOrder);
+      return this.upsertOrderRecord(updatedOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible actualizar la nota solicitada.');
       this.errorState.set(message);
@@ -273,14 +285,16 @@ export class OrderRecordsService {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
+    const generation = this.sessionState.generation();
     try {
       const updatedOrder = await firstValueFrom(
         this.http.post<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/status/`, input, {
           headers,
         }),
       );
+      this.requireSameSession(generation);
 
-      return this.upsertOrderRecord(updatedOrder);
+      return this.upsertOrderRecord(updatedOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(
         error,
@@ -298,14 +312,16 @@ export class OrderRecordsService {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
+    const generation = this.sessionState.generation();
     try {
       const updatedOrder = await firstValueFrom(
         this.http.post<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/assign/`, input, {
           headers,
         }),
       );
+      this.requireSameSession(generation);
 
-      return this.upsertOrderRecord(updatedOrder);
+      return this.upsertOrderRecord(updatedOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(
         error,
@@ -322,11 +338,13 @@ export class OrderRecordsService {
   ): Promise<OrderRecord> {
     const headers = this.requireAuthHeaders();
 
+    const generation = this.sessionState.generation();
     try {
       const updatedOrder = await firstValueFrom(
         this.http.post<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/costs/`, cost, { headers }),
       );
-      return this.upsertOrderRecord(updatedOrder);
+      this.requireSameSession(generation);
+      return this.upsertOrderRecord(updatedOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible agregar el costo.');
       throw new Error(message);
@@ -334,24 +352,38 @@ export class OrderRecordsService {
   }
 
   async updateRetainedDeposit(orderId: string, retainedDeposit: number): Promise<OrderRecord> {
+    const generation = this.sessionState.generation();
     try {
-      const updated = await firstValueFrom(this.http.patch<OrderRecord>(
-        `${API_BASE_URL}/orders/${orderId}/costs/`, { retainedDeposit },
-        { headers: this.requireAuthHeaders() },
-      ));
-      return this.upsertOrderRecord(updated);
+      const updated = await firstValueFrom(
+        this.http.patch<OrderRecord>(
+          `${API_BASE_URL}/orders/${orderId}/costs/`,
+          { retainedDeposit },
+          { headers: this.requireAuthHeaders() },
+        ),
+      );
+      this.requireSameSession(generation);
+      return this.upsertOrderRecord(updated, generation);
     } catch (error) {
       throw new Error(this.resolveHttpError(error, 'No fue posible guardar el depósito retenido.'));
     }
   }
 
-  async categorizeExtraCost(orderId: string, costId: number, categoria: ExpenseCategory): Promise<OrderRecord> {
+  async categorizeExtraCost(
+    orderId: string,
+    costId: number,
+    categoria: ExpenseCategory,
+  ): Promise<OrderRecord> {
+    const generation = this.sessionState.generation();
     try {
-      const updated = await firstValueFrom(this.http.patch<OrderRecord>(
-        `${API_BASE_URL}/orders/${orderId}/costs/${costId}/`, { categoria },
-        { headers: this.requireAuthHeaders() },
-      ));
-      return this.upsertOrderRecord(updated);
+      const updated = await firstValueFrom(
+        this.http.patch<OrderRecord>(
+          `${API_BASE_URL}/orders/${orderId}/costs/${costId}/`,
+          { categoria },
+          { headers: this.requireAuthHeaders() },
+        ),
+      );
+      this.requireSameSession(generation);
+      return this.upsertOrderRecord(updated, generation);
     } catch (error) {
       throw new Error(this.resolveHttpError(error, 'No fue posible cambiar la categoría.'));
     }
@@ -360,13 +392,15 @@ export class OrderRecordsService {
   async deleteExtraCost(orderId: string, costId: number): Promise<OrderRecord> {
     const headers = this.requireAuthHeaders();
 
+    const generation = this.sessionState.generation();
     try {
       const updatedOrder = await firstValueFrom(
         this.http.delete<OrderRecord>(`${API_BASE_URL}/orders/${orderId}/costs/${costId}/`, {
           headers,
         }),
       );
-      return this.upsertOrderRecord(updatedOrder);
+      this.requireSameSession(generation);
+      return this.upsertOrderRecord(updatedOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible eliminar el costo.');
       throw new Error(message);
@@ -376,6 +410,7 @@ export class OrderRecordsService {
   async toggleCloseRegistro(orderId: string): Promise<OrderRecord> {
     const headers = this.requireAuthHeaders();
 
+    const generation = this.sessionState.generation();
     try {
       const updatedOrder = await firstValueFrom(
         this.http.post<OrderRecord>(
@@ -384,7 +419,8 @@ export class OrderRecordsService {
           { headers },
         ),
       );
-      return this.upsertOrderRecord(updatedOrder);
+      this.requireSameSession(generation);
+      return this.upsertOrderRecord(updatedOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible actualizar el registro.');
       throw new Error(message);
@@ -402,6 +438,7 @@ export class OrderRecordsService {
         }),
       );
 
+      this.printQueue.remove(orderId);
       this.recordsState.update((records) => records.filter((record) => record.orderId !== orderId));
       this.archivedRecordsState.update((records) =>
         records.filter((record) => record.orderId !== orderId),
@@ -417,6 +454,7 @@ export class OrderRecordsService {
     const headers = this.requireAuthHeaders();
     this.errorState.set('');
 
+    const generation = this.sessionState.generation();
     try {
       const updatedOrder = await firstValueFrom(
         this.http.patch<OrderRecord>(
@@ -425,12 +463,14 @@ export class OrderRecordsService {
           { headers },
         ),
       );
+      this.requireSameSession(generation);
 
+      this.printQueue.remove(orderId);
       // Remove old ID entry before inserting the renamed record
       this.recordsState.update((records) => records.filter((r) => r.orderId !== orderId));
       this.archivedRecordsState.update((records) => records.filter((r) => r.orderId !== orderId));
 
-      return this.upsertOrderRecord(updatedOrder);
+      return this.upsertOrderRecord(updatedOrder, generation);
     } catch (error) {
       const message = this.resolveHttpError(error, 'No fue posible renombrar la nota.');
       this.errorState.set(message);
@@ -456,27 +496,47 @@ export class OrderRecordsService {
       records.map((r) => (r.orderId === orderId ? { ...r, isCancelled: cancel } : r));
     this.recordsState.update(patch);
     this.archivedRecordsState.update(patch);
+    const record = this.getOrderById(orderId);
+    if (record) this.printQueue.track(record);
   }
 
-  async setPrinted(orderId: string, printed: boolean): Promise<void> {
+  async setPrinted(orderId: string, printed: boolean, printVersion?: string | null): Promise<void> {
+    const generation = this.sessionState.generation();
+    const version = printVersion ?? this.getOrderById(orderId)?.printVersion ?? null;
     const headers = this.requireAuthHeaders();
     const req$ = printed
-      ? this.http.post<{ printedAt: string | null }>(
+      ? this.http.post<PrintStatus>(
           `${API_BASE_URL}/orders/${orderId}/print-status/`,
-          {},
+          { printVersion: version },
           { headers },
         )
-      : this.http.delete<{ printedAt: string | null }>(
-          `${API_BASE_URL}/orders/${orderId}/print-status/`,
-          { headers },
-        );
+      : this.http.delete<PrintStatus>(`${API_BASE_URL}/orders/${orderId}/print-status/`, {
+          headers,
+          body: { printVersion: version },
+        });
 
     const result = await firstValueFrom(req$);
 
+    if (generation !== this.sessionState.generation()) throw new Error('La sesión cambió.');
+    const currentVersion =
+      this.printQueue.pending().find((row) => row.orderId === orderId)?.printVersion ??
+      this.getOrderById(orderId)?.printVersion;
+    if (version && currentVersion && currentVersion !== version)
+      throw new Error('La nota cambió. Usa la versión vigente.');
+    this.applyPrintStatus(orderId, result);
+  }
+
+  applyPrintStatus(orderId: string, result: PrintStatus): void {
     const patch = (records: OrderRecord[]) =>
-      records.map((r) => (r.orderId === orderId ? { ...r, printedAt: result.printedAt } : r));
+      records.map((r) => (r.orderId === orderId ? { ...r, ...result } : r));
     this.recordsState.update(patch);
     this.archivedRecordsState.update(patch);
+    const record = this.getOrderById(orderId);
+    if (record) this.printQueue.track(record);
+    else {
+      const queued = this.printQueue.pending().find((row) => row.orderId === orderId);
+      if (queued) this.printQueue.track({ ...queued, ...result });
+    }
   }
 
   async updateMultipleOrderStatuses(
@@ -598,7 +658,8 @@ export class OrderRecordsService {
     }
   }
 
-  upsertOrderRecord(record: OrderRecord): OrderRecord {
+  upsertOrderRecord(record: OrderRecord, generation?: number): OrderRecord {
+    if (generation !== undefined) this.requireSameSession(generation);
     const normalizedRecord = this.normalizeRecord(record);
     const isArchivedRecord = this.isArchivedRecord(normalizedRecord);
 
@@ -617,7 +678,13 @@ export class OrderRecordsService {
       this.recordsState.update((records) => this.sortRecords([normalizedRecord, ...records]));
     }
 
+    this.printQueue.track(normalizedRecord);
     return normalizedRecord;
+  }
+
+  private requireSameSession(generation: number): void {
+    if (generation !== this.sessionState.generation())
+      throw new Error('La sesión cambió. Vuelve a iniciar sesión.');
   }
 
   private requireAuthHeaders(): HttpHeaders {
@@ -658,6 +725,11 @@ export class OrderRecordsService {
       ),
       totalEstimated: Number(record.totalEstimated ?? normalizedQuotation.summary.totalEstimated),
       printedAt: record.printedAt ? String(record.printedAt) : null,
+      printVersion: record.printVersion ?? null,
+      printRequiredAt: record.printRequiredAt ?? null,
+      printPostponedAt: record.printPostponedAt ?? null,
+      printPostponedReason: record.printPostponedReason ?? '',
+      printPostponedBy: record.printPostponedBy ?? null,
       isCancelled: record.isCancelled === true,
       mapsUrl: String(record.mapsUrl ?? '').trim(),
       officeClosed: record.officeClosed === true,
@@ -818,7 +890,8 @@ export class OrderRecordsService {
             productId: item?.productId == null ? null : Number(item.productId),
             colorId: item?.colorId == null ? null : Number(item.colorId),
             color: String(item?.color ?? '').trim(),
-            canonicalProductId: item?.canonicalProductId == null ? null : Number(item.canonicalProductId),
+            canonicalProductId:
+              item?.canonicalProductId == null ? null : Number(item.canonicalProductId),
             canonicalColorId: item?.canonicalColorId == null ? null : Number(item.canonicalColorId),
             canonicalColor: String(item?.canonicalColor ?? '').trim(),
             canonicalEquipment: String(item?.canonicalEquipment ?? '').trim(),

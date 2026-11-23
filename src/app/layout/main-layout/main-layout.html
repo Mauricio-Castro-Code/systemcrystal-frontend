@@ -1,9 +1,5 @@
 <div class="main-layout">
-  <div
-    class="main-layout__backdrop"
-    *ngIf="isSidebarOpen()"
-    (click)="closeSidebar()"
-  ></div>
+  <div class="main-layout__backdrop" *ngIf="isSidebarOpen()" (click)="closeSidebar()"></div>
 
   <app-sidebar
     [navigationItems]="navigationItems()"
@@ -28,9 +24,15 @@
     </header>
 
     <main class="main-layout__content">
+      <app-pending-print-queue />
       @if (backNavigation.showBack()) {
         <nav class="main-layout__backbar" aria-label="Navegación de regreso">
-          <button class="main-layout__back" type="button" [disabled]="backNavigation.isNavigating()" (click)="backNavigation.goBack()">
+          <button
+            class="main-layout__back"
+            type="button"
+            [disabled]="backNavigation.isNavigating()"
+            (click)="backNavigation.goBack()"
+          >
             <app-icon name="arrow-left" />
             <span>{{ backNavigation.label() }}</span>
           </button>

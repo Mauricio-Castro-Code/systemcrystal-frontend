@@ -1,0 +1,78 @@
+<div class="print-dialog">
+  <header>
+    <span class="print-dialog__icon"><app-icon name="printer" /></span>
+    <p class="eyebrow">CIERRE DE LA NOTA</p>
+    <h2 mat-dialog-title>Esperando impresión de la nota</h2>
+    <p class="print-dialog__folio">
+      {{ note.orderId }} <span>· {{ note.clientName }}</span>
+    </p>
+  </header>
+  <mat-dialog-content>
+    <p>
+      La nota está confirmada. Imprime la versión vigente y confirma cuando tengas la copia física.
+    </p>
+    @if (note.printPostponedReason) {
+      <div class="print-dialog__notice">
+        <strong>Impresión pospuesta</strong><span>{{ note.printPostponedReason }}</span>
+      </div>
+    }
+    <button class="print-dialog__pdf" type="button" [disabled]="busy()" (click)="openPdf()">
+      <app-icon name="printer" /> Abrir PDF e imprimir
+    </button>
+    <label class="print-dialog__confirmation">
+      <input
+        type="checkbox"
+        [ngModel]="confirmed()"
+        (ngModelChange)="confirmed.set($event)"
+        [disabled]="busy()"
+      />
+      <span>Confirmo que ya imprimí la versión vigente de esta nota.</span>
+    </label>
+    @if (isAdmin() && showPostpone()) {
+      <div class="print-dialog__postpone">
+        <label for="print-postpone-reason">Motivo de la posposición</label>
+        <textarea
+          id="print-postpone-reason"
+          rows="3"
+          maxlength="500"
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+          [disabled]="busy()"
+          placeholder="Ej. La impresora no tiene papel"
+        ></textarea>
+        <small>La nota seguirá pendiente y podrás retomar su impresión.</small>
+        <button
+          type="button"
+          class="print-dialog__secondary"
+          [disabled]="busy() || !reason().trim()"
+          (click)="postpone()"
+        >
+          Guardar y posponer
+        </button>
+      </div>
+    }
+    @if (error()) {
+      <p class="print-dialog__error" role="alert">{{ error() }}</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    @if (isAdmin()) {
+      <button
+        type="button"
+        class="print-dialog__secondary"
+        [disabled]="busy()"
+        (click)="showPostpone.set(!showPostpone())"
+      >
+        {{ showPostpone() ? 'Cancelar posposición' : 'Posponer impresión' }}
+      </button>
+    }
+    <button
+      type="button"
+      class="print-dialog__primary"
+      [disabled]="busy() || !confirmed()"
+      (click)="confirmPrinted()"
+    >
+      {{ busy() ? 'Procesando…' : 'Confirmar nota impresa' }}
+    </button>
+  </mat-dialog-actions>
+</div>

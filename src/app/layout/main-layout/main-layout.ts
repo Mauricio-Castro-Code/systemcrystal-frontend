@@ -1,3 +1,4 @@
+import { PendingPrintQueueComponent } from '../../shared/components/pending-print/pending-print-queue';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -23,7 +24,13 @@ interface NavigationItemDef extends NavigationItem {
 
 @Component({
   selector: 'app-main-layout',
-  imports: [CommonModule, RouterOutlet, SidebarComponent, AppIconComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    SidebarComponent,
+    AppIconComponent,
+    PendingPrintQueueComponent,
+  ],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,12 +72,29 @@ export class MainLayoutComponent {
     { id: 'clientes', label: 'Clientes', icon: 'users', route: '/clientes' },
     { id: 'inventario', label: 'Inventario', icon: 'boxes', route: '/inventario' },
     { id: 'cotizacion', label: 'Crear Nota', icon: 'file-plus', route: '/cotizaciones/nueva' },
-    { id: 'cotizaciones-registro', label: 'Cotizaciones Activas', icon: 'file-text', route: '/cotizaciones/registro' },
+    {
+      id: 'cotizaciones-registro',
+      label: 'Cotizaciones Activas',
+      icon: 'file-text',
+      route: '/cotizaciones/registro',
+    },
     { id: 'pedidos', label: 'Notas Activas', icon: 'clipboard-list', route: '/pedidos' },
     { id: 'pedidos-registro', label: 'Registro', icon: 'file-text', route: '/pedidos/registro' },
     { id: 'fletes', label: 'Flete', icon: 'map-pin', route: '/fletes' },
-    { id: 'contabilidad', label: 'Análisis de datos', icon: 'bar-chart-2', route: '/contabilidad', adminOnly: true },
-    { id: 'equipo', label: 'Gestion de Usuarios', icon: 'settings', route: '/equipo', adminOnly: true },
+    {
+      id: 'contabilidad',
+      label: 'Análisis de datos',
+      icon: 'bar-chart-2',
+      route: '/contabilidad',
+      adminOnly: true,
+    },
+    {
+      id: 'equipo',
+      label: 'Gestion de Usuarios',
+      icon: 'settings',
+      route: '/equipo',
+      adminOnly: true,
+    },
   ];
 
   readonly navigationItems = computed<NavigationItem[]>(() => {
